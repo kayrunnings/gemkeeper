@@ -1,0 +1,327 @@
+# GemKeeper - Development Workflow
+
+**Author:** Kay  
+**Date:** January 22, 2026  
+**Purpose:** Document the AI-assisted development workflow used to build GemKeeper
+
+---
+
+## Overview
+
+GemKeeper was built using an AI-assisted development workflow combining:
+- **Claude (Chat)** — Planning, strategy, documentation, and debugging
+- **Claude Code** — Autonomous code implementation
+- **Linear** — Project management and issue tracking
+
+This workflow enables a non-developer (Product Manager) to build and ship production applications.
+
+---
+
+## The Two-Claude System
+
+### Claude (Chat) — The Architect
+
+**Role:** Strategic partner for planning, documentation, and problem-solving
+
+**Responsibilities:**
+- Create and refine product requirements
+- Design database schemas
+- Write TASKS.md files that guide Claude Code
+- Debug issues by analyzing error messages
+- Create Linear issues and organize work
+- Answer technical questions
+- Generate documentation
+
+**When to Use:**
+- Starting a new feature or epic
+- When something is broken and you don't know why
+- When you need to make architectural decisions
+- When you need documents, PRDs, or specifications
+- When you need to update project management tools
+
+### Claude Code — The Builder
+
+**Role:** Autonomous developer that implements code based on instructions
+
+**Responsibilities:**
+- Read TASKS.md and implement features
+- Write code following existing patterns
+- Create new files and components
+- Run tests and verify functionality
+- Create git branches and commits
+- Generate pull requests
+
+**When to Use:**
+- When you have a clear TASKS.md with specific instructions
+- For implementation work (not planning)
+- When you need code written, modified, or debugged
+- For testing and verification
+
+---
+
+## The Workflow Loop
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│  1. PLAN (Claude Chat)                                      │
+│     └── Define feature → Create TASKS.md → Update Linear    │
+│                                                             │
+│  2. BUILD (Claude Code)                                     │
+│     └── Read TASKS.md → Implement → Commit → Create PR      │
+│                                                             │
+│  3. REVIEW (You + Claude Chat)                              │
+│     └── Test feature → Report bugs → Debug with Claude      │
+│                                                             │
+│  4. MERGE & DEPLOY                                          │
+│     └── Merge PR → Vercel auto-deploys → Verify in prod     │
+│                                                             │
+│  5. ITERATE                                                 │
+│     └── Back to step 1 for next feature                     │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Step-by-Step Process
+
+### Step 1: Planning with Claude (Chat)
+
+**Start a conversation describing what you want to build.**
+
+Example prompts:
+- "I want to add AI extraction to my app. Help me plan this feature."
+- "Users should be able to organize notes into folders. What do I need?"
+- "Here's an error I'm seeing: [paste error]. Help me debug."
+
+**Claude will:**
+1. Ask clarifying questions
+2. Design the solution
+3. Create database schemas (SQL for Supabase)
+4. Create a TASKS.md file with implementation steps
+5. Update Linear issues if needed
+
+**Your job:**
+1. Answer Claude's questions
+2. Run any SQL in Supabase
+3. Add environment variables to Vercel if needed
+4. Download the TASKS.md file
+
+### Step 2: Building with Claude Code
+
+**Start a NEW Claude Code session for each major feature.**
+
+**Prompt template:**
+```
+Read TASKS.md and implement the features described.
+
+Create a new branch, implement all tasks, test each one works,
+and create a PR when complete.
+```
+
+**Claude Code will:**
+1. Read the TASKS.md file
+2. Create a git branch
+3. Implement each task
+4. Commit changes
+5. Create a pull request
+
+**Your job:**
+1. Let it run (can take 10-30+ minutes for complex features)
+2. Check in periodically to see progress
+3. Answer any questions it asks
+
+### Step 3: Review and Debug
+
+**After Claude Code creates a PR:**
+
+1. **Merge the PR** in GitHub
+2. **Wait for Vercel** to deploy (1-2 minutes)
+3. **Test the feature** in production
+4. **Report any bugs** to Claude (Chat)
+
+**If something is broken:**
+
+1. Check browser console for errors (Cmd+Option+J on Mac)
+2. Check Vercel logs for server errors
+3. Share error messages with Claude (Chat)
+4. Claude will diagnose and provide a fix
+5. Give the fix to Claude Code to implement
+
+### Step 4: Iterate
+
+Repeat the loop for each new feature or fix.
+
+---
+
+## Best Practices
+
+### For Planning (Claude Chat)
+
+| Do | Don't |
+|----|-------|
+| Be specific about what you want | Give vague requirements |
+| Share error messages and screenshots | Just say "it's broken" |
+| Answer clarifying questions thoroughly | Skip questions |
+| Review TASKS.md before sending to Claude Code | Blindly trust the plan |
+
+### For Building (Claude Code)
+
+| Do | Don't |
+|----|-------|
+| Start a new session for each major feature | Continue sessions indefinitely |
+| Give it a clear TASKS.md | Give vague instructions |
+| Let it complete before interrupting | Constantly change requirements mid-task |
+| Review the PR before merging | Merge blindly |
+
+### For Debugging
+
+| Do | Don't |
+|----|-------|
+| Check browser console first | Panic |
+| Check Vercel logs for server errors | Assume the worst |
+| Share exact error messages | Paraphrase errors |
+| Test one thing at a time | Change everything at once |
+
+---
+
+## Tools & Access
+
+### Claude (Chat)
+- **URL:** claude.ai
+- **Subscription:** Claude Max (for extended usage)
+- **Project:** Use a dedicated project for GemKeeper context
+
+### Claude Code
+- **Access:** Through Claude.ai interface
+- **Usage:** Start new sessions for each major feature
+
+### Linear
+- **Workspace:** Kay's Personal Playground
+- **Project:** Gem Coach (now GemKeeper)
+- **URL:** linear.app
+
+### GitHub
+- **Repository:** kayrunnings/gemkeeper
+- **Branching:** Claude Code creates branches automatically
+
+### Vercel
+- **Project:** gemkeeper
+- **URL:** gemkeeper.vercel.app
+- **Auto-deploy:** On merge to main branch
+- **Environment Variables:** Managed in Vercel dashboard
+
+### Supabase
+- **Project:** GemKeeper
+- **Dashboard:** supabase.com/dashboard
+- **SQL Editor:** For running migrations
+- **Storage:** For file uploads
+
+### Google AI Studio
+- **URL:** aistudio.google.com
+- **API Keys:** For Gemini API access
+
+---
+
+## Common Scenarios
+
+### "I want to add a new feature"
+
+1. Describe it to Claude (Chat)
+2. Get a TASKS.md
+3. Run any SQL in Supabase
+4. Add any env vars to Vercel
+5. Give TASKS.md to Claude Code
+6. Merge PR and test
+
+### "Something is broken"
+
+1. Get the error from browser console or Vercel logs
+2. Share with Claude (Chat)
+3. Get diagnosis and fix
+4. Give fix to Claude Code
+5. Merge and verify
+
+### "I want to change the design"
+
+1. Describe what you want to Claude (Chat)
+2. Reference examples or inspiration
+3. Get a TASKS.md with design specifications
+4. Give to Claude Code
+5. Review and iterate
+
+### "I need to update the database"
+
+1. Describe the change to Claude (Chat)
+2. Get SQL migration code
+3. Run SQL in Supabase SQL Editor
+4. Verify tables were created
+5. Then proceed with code changes
+
+---
+
+## Environment Variables
+
+**Managed in Vercel Dashboard → Settings → Environment Variables**
+
+| Variable | Purpose |
+|----------|---------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key |
+| `GOOGLE_AI_API_KEY` | Gemini API key |
+
+**Note:** Never share API keys in chat. Regenerate if exposed.
+
+---
+
+## Session Management
+
+### When to Start a New Claude Code Session
+
+- Starting a new feature or epic
+- After merging a PR
+- When the current session seems confused
+- After significant planning changes
+
+### When to Continue a Session
+
+- Fixing bugs in code just written
+- Adding small tweaks to current work
+- Answering follow-up questions
+
+---
+
+## Troubleshooting
+
+### Claude Code seems stuck
+
+- Check if it's waiting for input
+- If unresponsive, start a new session
+- Re-send the TASKS.md
+
+### Build errors after merge
+
+- Check Vercel deployment logs
+- Ensure all environment variables are set
+- Check for missing dependencies
+
+### Database errors
+
+- Verify tables exist in Supabase
+- Check RLS policies allow the operation
+- Ensure user is authenticated
+
+### AI extraction not working
+
+- Check GOOGLE_AI_API_KEY is set in Vercel
+- Check rate limits (wait 1 minute and retry)
+- Verify model name is correct
+
+---
+
+## Document History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | Jan 22, 2026 | Initial workflow documentation |
