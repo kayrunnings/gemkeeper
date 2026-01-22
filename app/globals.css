@@ -1,0 +1,188 @@
+@import "tailwindcss";
+
+/* Design System: Warm paper-like aesthetic with rich accents */
+:root {
+  /* Core backgrounds */
+  --background: #faf8f5;
+  --foreground: #1c1917;
+  
+  /* Card surfaces */
+  --card: #ffffff;
+  --card-foreground: #1c1917;
+  
+  /* Popover/Modal surfaces */
+  --popover: #ffffff;
+  --popover-foreground: #1c1917;
+  
+  /* Primary action color - warm amber */
+  --primary: #b45309;
+  --primary-foreground: #fefce8;
+  
+  /* Secondary/muted elements */
+  --secondary: #f5f5f4;
+  --secondary-foreground: #44403c;
+  
+  /* Muted text and backgrounds */
+  --muted: #e7e5e4;
+  --muted-foreground: #78716c;
+  
+  /* Accents */
+  --accent: #fef3c7;
+  --accent-foreground: #78350f;
+  
+  /* Destructive actions */
+  --destructive: #dc2626;
+  --destructive-foreground: #fef2f2;
+  
+  /* Borders and inputs */
+  --border: #d6d3d1;
+  --input: #d6d3d1;
+  --ring: #b45309;
+  
+  /* Border radius */
+  --radius: 0.625rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #1c1917;
+    --foreground: #fafaf9;
+    
+    --card: #292524;
+    --card-foreground: #fafaf9;
+    
+    --popover: #292524;
+    --popover-foreground: #1c1917;
+    
+    --primary: #f59e0b;
+    --primary-foreground: #1c1917;
+    
+    --secondary: #44403c;
+    --secondary-foreground: #fafaf9;
+    
+    --muted: #44403c;
+    --muted-foreground: #a8a29e;
+    
+    --accent: #78350f;
+    --accent-foreground: #fef3c7;
+    
+    --destructive: #b91c1c;
+    --destructive-foreground: #fef2f2;
+    
+    --border: #44403c;
+    --input: #44403c;
+    --ring: #f59e0b;
+  }
+}
+
+/* Tailwind v4 theme configuration */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* Base styles */
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Animations for dialogs */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes zoomIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes zoomOut {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+}
+
+.animate-in {
+  animation: fadeIn 200ms ease-out;
+}
+
+.animate-out {
+  animation: fadeOut 200ms ease-in;
+}
+
+.fade-in-0 {
+  animation: fadeIn 200ms ease-out;
+}
+
+.fade-out-0 {
+  animation: fadeOut 200ms ease-in;
+}
+
+.zoom-in-95 {
+  animation: zoomIn 200ms ease-out;
+}
+
+.zoom-out-95 {
+  animation: zoomOut 200ms ease-in;
+}
+
+/* Prose styles for rich text notes */
+.prose-note {
+  line-height: 1.7;
+}
+
+.prose-note strong {
+  font-weight: 600;
+}
+
+.prose-note em {
+  font-style: italic;
+}
+
+.prose-note ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.prose-note ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.prose-note li {
+  margin: 0.25rem 0;
+}
