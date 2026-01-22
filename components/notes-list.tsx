@@ -16,6 +16,7 @@ interface NotesListProps {
   onDeleteNote: (noteId: string) => void
   onToggleFavorite: (noteId: string) => void
   onMoveToFolder?: (noteId: string, folderId: string | null) => void
+  onExtractGems?: (note: Note) => void
 }
 
 export function NotesList({
@@ -25,6 +26,7 @@ export function NotesList({
   onDeleteNote,
   onToggleFavorite,
   onMoveToFolder,
+  onExtractGems,
 }: NotesListProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
@@ -157,6 +159,7 @@ export function NotesList({
               onDelete={onDeleteNote}
               onToggleFavorite={onToggleFavorite}
               onMoveToFolder={onMoveToFolder}
+              onExtractGems={onExtractGems}
             />
           ))}
         </div>

@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Star, Trash2, Edit, FolderIcon, FileX, Check } from "lucide-react"
+import { Star, Trash2, Edit, FolderIcon, FileX, Check, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface NoteCardProps {
@@ -21,6 +21,7 @@ interface NoteCardProps {
   onDelete: (noteId: string) => void
   onToggleFavorite: (noteId: string) => void
   onMoveToFolder?: (noteId: string, folderId: string | null) => void
+  onExtractGems?: (note: Note) => void
 }
 
 export function NoteCard({
@@ -30,6 +31,7 @@ export function NoteCard({
   onDelete,
   onToggleFavorite,
   onMoveToFolder,
+  onExtractGems,
 }: NoteCardProps) {
   // Format date to readable string
   const formatDate = (dateString: string) => {
@@ -167,6 +169,21 @@ export function NoteCard({
           </DropdownMenu>
         )}
 
+        {onExtractGems && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-violet-600 hover:text-violet-700 hover:bg-violet-50"
+            onClick={(e) => {
+              e.stopPropagation()
+              onExtractGems(note)
+            }}
+            aria-label="Extract gems from note"
+            title="Extract gems with AI"
+          >
+            <Sparkles className="h-4 w-4" />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"

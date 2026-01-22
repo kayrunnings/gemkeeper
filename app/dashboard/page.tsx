@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Plus, LogOut, Gem, Loader2, Menu, X } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
+import { ExtractFromNoteModal } from "@/components/extract-from-note-modal"
 
 export default function DashboardPage() {
   const [notes, setNotes] = useState<Note[]>([])
@@ -20,6 +21,10 @@ export default function DashboardPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("all")
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isExtractModalOpen, setIsExtractModalOpen] = useState(false)
+  const [extractingNote, setExtractingNote] = useState<Note | null>(null)
+  const [hasAIConsent, setHasAIConsent] = useState(false)
+  const [activeGemCount, setActiveGemCount] = useState(0)
   const router = useRouter()
   const supabase = createClient()
 
@@ -34,8 +39,8 @@ export default function DashboardPage() {
       }
       setUserEmail(user.email ?? null)
 
-      // Fetch notes and folders in parallel
-      const [notesResult, foldersResult] = await Promise.all([
+      // Fetch notes, folders, profile, and gem count in parallel
+      const [notesResult, foldersResult, profileResult, gemsResult] = await Promise.all([
         supabase
           .from("notes")
           .select("*")
@@ -44,6 +49,15 @@ export default function DashboardPage() {
           .from("folders")
           .select("*")
           .order("name", { ascending: true }),
+        supabase
+          .from("profiles")
+          .select("ai_consent_given")
+          .eq("id", user.id)
+          .single(),
+        supabase
+          .from("gems")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "active"),
       ])
 
       if (notesResult.error) {
@@ -57,6 +71,9 @@ export default function DashboardPage() {
       } else {
         setFolders(foldersResult.data || [])
       }
+
+      setHasAIConsent(profileResult.data?.ai_consent_given ?? false)
+      setActiveGemCount(gemsResult.count ?? 0)
 
       setIsLoading(false)
     }
@@ -332,6 +349,23 @@ export default function DashboardPage() {
     setIsEditorOpen(true)
   }
 
+  // Open extract gems modal for a note
+  const handleExtractGems = (note: Note) => {
+    setExtractingNote(note)
+    setIsExtractModalOpen(true)
+  }
+
+  // Handle gems extracted from note
+  const handleGemsExtracted = async () => {
+    // Refresh gem count
+    const { count } = await supabase
+      .from("gems")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "active")
+
+    setActiveGemCount(count ?? 0)
+  }
+
   // Get current filter title for header
   const getFilterTitle = () => {
     switch (selectedFilter) {
@@ -464,6 +498,7 @@ export default function DashboardPage() {
               onDeleteNote={handleDeleteNote}
               onToggleFavorite={handleToggleFavorite}
               onMoveToFolder={handleMoveToFolder}
+              onExtractGems={handleExtractGems}
             />
           </div>
         </main>
@@ -479,6 +514,21 @@ export default function DashboardPage() {
         }}
         onSave={handleSaveNote}
       />
+
+      {/* Extract gems from note modal */}
+      {extractingNote && (
+        <ExtractFromNoteModal
+          isOpen={isExtractModalOpen}
+          onClose={() => {
+            setIsExtractModalOpen(false)
+            setExtractingNote(null)
+          }}
+          onGemsCreated={handleGemsExtracted}
+          note={extractingNote}
+          activeGemCount={activeGemCount}
+          hasAIConsent={hasAIConsent}
+        />
+      )}
     </div>
   )
 }
