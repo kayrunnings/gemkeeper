@@ -96,3 +96,57 @@ export async function setOnboardingCompleted(completed: boolean): Promise<{ erro
   revalidatePath("/settings")
   return { error: null }
 }
+
+export async function grantAIConsent(): Promise<{ data: Profile | null; error: string | null }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { data: null, error: "Not authenticated" }
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({
+      ai_consent_given: true,
+      ai_consent_date: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id)
+    .select()
+    .single()
+
+  if (error) {
+    return { data: null, error: error.message }
+  }
+
+  revalidatePath("/settings")
+  return { data, error: null }
+}
+
+export async function revokeAIConsent(): Promise<{ data: Profile | null; error: string | null }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { data: null, error: "Not authenticated" }
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({
+      ai_consent_given: false,
+      ai_consent_date: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id)
+    .select()
+    .single()
+
+  if (error) {
+    return { data: null, error: error.message }
+  }
+
+  revalidatePath("/settings")
+  return { data, error: null }
+}
