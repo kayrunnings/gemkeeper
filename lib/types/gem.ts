@@ -1,0 +1,69 @@
+// Context tag options for categorizing gems
+export type ContextTag =
+  | "meetings"
+  | "feedback"
+  | "conflict"
+  | "focus"
+  | "health"
+  | "relationships"
+  | "parenting"
+  | "other"
+
+// Status of a gem in the lifecycle
+export type GemStatus = "active" | "retired" | "graduated"
+
+// Gem type matching the database schema
+export interface Gem {
+  id: string
+  user_id: string
+  content: string
+  source: string | null
+  source_url: string | null
+  context_tag: ContextTag
+  custom_context: string | null
+  status: GemStatus
+  application_count: number
+  skip_count: number
+  last_surfaced_at: string | null
+  last_applied_at: string | null
+  retired_at: string | null
+  graduated_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+// Input for creating a new gem
+export interface CreateGemInput {
+  content: string
+  source?: string
+  source_url?: string
+  context_tag: ContextTag
+  custom_context?: string
+}
+
+// Display labels for context tags
+export const CONTEXT_TAG_LABELS: Record<ContextTag, string> = {
+  meetings: "Meetings",
+  feedback: "Feedback",
+  conflict: "Conflict",
+  focus: "Focus",
+  health: "Health",
+  relationships: "Relationships",
+  parenting: "Parenting",
+  other: "Other",
+}
+
+// Colors for context tag badges
+export const CONTEXT_TAG_COLORS: Record<ContextTag, string> = {
+  meetings: "bg-blue-100 text-blue-800 border-blue-200",
+  feedback: "bg-green-100 text-green-800 border-green-200",
+  conflict: "bg-red-100 text-red-800 border-red-200",
+  focus: "bg-purple-100 text-purple-800 border-purple-200",
+  health: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  relationships: "bg-pink-100 text-pink-800 border-pink-200",
+  parenting: "bg-amber-100 text-amber-800 border-amber-200",
+  other: "bg-gray-100 text-gray-800 border-gray-200",
+}
+
+// Maximum number of active gems allowed
+export const MAX_ACTIVE_GEMS = 10

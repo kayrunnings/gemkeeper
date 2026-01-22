@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { Folder } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,6 +23,7 @@ import {
   X,
   Check,
   Loader2,
+  Gem,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -368,6 +370,18 @@ export function Sidebar({
         <span className="flex-1">Unfiled</span>
         <span className="text-xs opacity-70">{unfiledCount}</span>
       </button>
+
+      {/* Divider */}
+      <div className="my-2 border-t" />
+
+      {/* Gems link */}
+      <Link
+        href="/gems"
+        className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-left hover:bg-muted text-foreground"
+      >
+        <Gem className="h-4 w-4" />
+        <span className="flex-1">Gems</span>
+      </Link>
     </aside>
   )
 }
