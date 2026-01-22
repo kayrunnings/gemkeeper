@@ -68,7 +68,20 @@ export default function LoginPage() {
             <Gem className="h-8 w-8 text-primary-foreground" />
           </div>
           <h1 className="text-2xl font-semibold">ThoughtFolio</h1>
-          <p className="text-muted-foreground mt-1">Thoughts that find you</p>
+          <p className="text-muted-foreground mt-1">Thoughts that find you... at the right moment</p>
+
+          {/* App description */}
+          <div className="mt-6 space-y-3 text-sm text-muted-foreground max-w-sm text-center">
+            <p>
+              Capture ideas, quotes, and insights from your life. ThoughtFolio resurfaces them when you need them most.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 text-xs">
+              <span className="px-2 py-1 rounded-full bg-muted">Quick capture</span>
+              <span className="px-2 py-1 rounded-full bg-muted">Smart tags</span>
+              <span className="px-2 py-1 rounded-full bg-muted">Favorites</span>
+              <span className="px-2 py-1 rounded-full bg-muted">Search</span>
+            </div>
+          </div>
         </div>
 
         {/* Auth card */}
