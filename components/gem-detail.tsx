@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Gem, CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS } from "@/lib/types/gem"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -12,12 +12,19 @@ import {
   Trophy,
   CheckCircle,
   XCircle,
-  Calendar
+  Calendar,
+  Clock,
+  Plus,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { GemEditForm } from "@/components/gem-edit-form"
 import { RetireGemDialog } from "@/components/retire-gem-dialog"
 import { GraduateGemDialog } from "@/components/graduate-gem-dialog"
+import { SchedulePicker } from "@/components/schedules/SchedulePicker"
+import { getGemSchedules, getNextTriggerForGem } from "@/lib/schedules"
+import type { GemSchedule } from "@/types/schedules"
 
 interface GemDetailProps {
   gem: Gem
@@ -30,6 +37,46 @@ export function GemDetail({ gem, onGemUpdated, onGemRetired, onGemGraduated }: G
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isRetireOpen, setIsRetireOpen] = useState(false)
   const [isGraduateOpen, setIsGraduateOpen] = useState(false)
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false)
+  const [isScheduleExpanded, setIsScheduleExpanded] = useState(true)
+  const [schedules, setSchedules] = useState<GemSchedule[]>([])
+  const [nextTrigger, setNextTrigger] = useState<Date | null>(null)
+
+  // Load schedules
+  useEffect(() => {
+    async function loadSchedules() {
+      const { schedules: gemSchedules } = await getGemSchedules(gem.id)
+      setSchedules(gemSchedules)
+
+      if (gemSchedules.filter(s => s.is_active).length > 0) {
+        const { nextTrigger: trigger } = await getNextTriggerForGem(gem.id)
+        setNextTrigger(trigger)
+      }
+    }
+    loadSchedules()
+  }, [gem.id])
+
+  const handleScheduleCreate = (schedule: GemSchedule) => {
+    setSchedules((prev) => [...prev, schedule])
+    if (schedule.is_active && schedule.next_trigger_at) {
+      const triggerDate = new Date(schedule.next_trigger_at)
+      if (!nextTrigger || triggerDate < nextTrigger) {
+        setNextTrigger(triggerDate)
+      }
+    }
+  }
+
+  const handleScheduleUpdate = (updatedSchedule: GemSchedule) => {
+    setSchedules((prev) =>
+      prev.map((s) => (s.id === updatedSchedule.id ? updatedSchedule : s))
+    )
+  }
+
+  const handleScheduleDelete = (scheduleId: string) => {
+    setSchedules((prev) => prev.filter((s) => s.id !== scheduleId))
+  }
+
+  const activeScheduleCount = schedules.filter((s) => s.is_active).length
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -148,6 +195,75 @@ export function GemDetail({ gem, onGemUpdated, onGemRetired, onGemGraduated }: G
               Apply this gem {5 - gem.application_count} more {5 - gem.application_count === 1 ? "time" : "times"} to unlock graduation.
             </p>
           )}
+
+          {/* Schedule Section */}
+          <div className="border-t pt-4">
+            <button
+              onClick={() => setIsScheduleExpanded(!isScheduleExpanded)}
+              className="flex items-center justify-between w-full text-left"
+            >
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">Schedules</span>
+                {activeScheduleCount > 0 && (
+                  <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+                    {activeScheduleCount}
+                  </Badge>
+                )}
+              </div>
+              {isScheduleExpanded ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+
+            {isScheduleExpanded && (
+              <div className="mt-3 space-y-3">
+                {/* Next check-in */}
+                {nextTrigger && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Next check-in:</span>
+                    <span className="font-medium text-foreground">
+                      {nextTrigger.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+
+                {/* Active schedules list */}
+                {schedules.filter(s => s.is_active).length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {schedules
+                      .filter((s) => s.is_active)
+                      .map((schedule) => (
+                        <Badge
+                          key={schedule.id}
+                          variant="outline"
+                          className="bg-blue-50 text-blue-700 border-blue-200"
+                        >
+                          {schedule.human_readable}
+                        </Badge>
+                      ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No schedules set. Add one to get reminders for this gem.
+                  </p>
+                )}
+
+                {/* Add schedule button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsScheduleOpen(true)}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  {schedules.length > 0 ? "Manage Schedules" : "Add Schedule"}
+                </Button>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -173,6 +289,17 @@ export function GemDetail({ gem, onGemUpdated, onGemRetired, onGemGraduated }: G
         isOpen={isGraduateOpen}
         onClose={() => setIsGraduateOpen(false)}
         onGraduated={onGemGraduated}
+      />
+
+      {/* Schedule picker */}
+      <SchedulePicker
+        gemId={gem.id}
+        existingSchedules={schedules}
+        onScheduleCreate={handleScheduleCreate}
+        onScheduleUpdate={handleScheduleUpdate}
+        onScheduleDelete={handleScheduleDelete}
+        isOpen={isScheduleOpen}
+        onClose={() => setIsScheduleOpen(false)}
       />
     </>
   )
