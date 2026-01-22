@@ -7,7 +7,7 @@ import { NotesList } from "@/components/notes-list"
 import { NoteEditor } from "@/components/note-editor"
 import { Sidebar, FilterType } from "@/components/sidebar"
 import { Button } from "@/components/ui/button"
-import { Plus, LogOut, StickyNote, Loader2, Menu, X } from "lucide-react"
+import { Plus, LogOut, Gem, Loader2, Menu, X } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
@@ -378,9 +378,9 @@ export default function DashboardPage() {
               {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
             <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-              <StickyNote className="h-5 w-5 text-primary-foreground" />
+              <Gem className="h-5 w-5 text-primary-foreground" />
             </div>
-            <h1 className="text-xl font-semibold">Notekeeper</h1>
+            <h1 className="text-xl font-semibold">GemKeeper</h1>
           </div>
 
           <div className="flex items-center gap-3">
