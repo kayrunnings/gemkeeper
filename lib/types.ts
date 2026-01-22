@@ -21,23 +21,23 @@ export interface NoteAttachment {
 // Note type definition
 export interface Note {
   id: string
-  title: string
-  content: string
-  tags: string[]
-  is_favorite: boolean
+  title: string | null
+  content: string | null
   folder_id: string | null
   attachments?: NoteAttachment[]
   created_at: string
   updated_at: string
   user_id: string
+  // Optional fields that may or may not exist in the database
+  tags?: string[]
+  is_favorite?: boolean
 }
 
 // For creating/updating notes (without server-generated fields)
 export interface NoteInput {
-  title: string
-  content: string
-  tags: string[]
-  is_favorite?: boolean
+  title?: string | null
+  content?: string | null
+  folder_id?: string | null
 }
 
 // For uploading attachments

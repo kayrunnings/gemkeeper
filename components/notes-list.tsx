@@ -5,16 +5,14 @@ import { Note, Folder } from "@/lib/types"
 import { NoteCard } from "./note-card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Search, Star, X, StickyNote } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Search, X, StickyNote } from "lucide-react"
 
 interface NotesListProps {
   notes: Note[]
   folders?: Folder[]
   onEditNote: (note: Note) => void
   onDeleteNote: (noteId: string) => void
-  onToggleFavorite: (noteId: string) => void
+  onToggleFavorite?: (noteId: string) => void
   onMoveToFolder?: (noteId: string, folderId: string | null) => void
   onExtractGems?: (note: Note) => void
 }
@@ -24,69 +22,42 @@ export function NotesList({
   folders = [],
   onEditNote,
   onDeleteNote,
-  onToggleFavorite,
   onMoveToFolder,
   onExtractGems,
 }: NotesListProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
-  const [selectedTag, setSelectedTag] = useState<string | null>(null)
 
-  // Get all unique tags from notes
-  const allTags = useMemo(() => {
-    const tagSet = new Set<string>()
-    notes.forEach((note) => note.tags.forEach((tag) => tagSet.add(tag)))
-    return Array.from(tagSet).sort()
-  }, [notes])
-
-  // Filter notes based on search, favorites, and tag
+  // Filter notes based on search
   const filteredNotes = useMemo(() => {
     return notes.filter((note) => {
-      // Filter by favorites
-      if (showFavoritesOnly && !note.is_favorite) {
-        return false
-      }
-
-      // Filter by tag
-      if (selectedTag && !note.tags.includes(selectedTag)) {
-        return false
-      }
-
       // Filter by search query
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase()
-        const matchesTitle = note.title.toLowerCase().includes(query)
-        const matchesContent = note.content.toLowerCase().includes(query)
-        const matchesTags = note.tags.some((tag) => tag.toLowerCase().includes(query))
-        return matchesTitle || matchesContent || matchesTags
+        const matchesTitle = (note.title || "").toLowerCase().includes(query)
+        const matchesContent = (note.content || "").toLowerCase().includes(query)
+        return matchesTitle || matchesContent
       }
 
       return true
     })
-  }, [notes, searchQuery, showFavoritesOnly, selectedTag])
+  }, [notes, searchQuery])
 
-  // Sort: favorites first, then by updated_at
+  // Sort by updated_at
   const sortedNotes = useMemo(() => {
     return [...filteredNotes].sort((a, b) => {
-      // Favorites first
-      if (a.is_favorite && !b.is_favorite) return -1
-      if (!a.is_favorite && b.is_favorite) return 1
-      // Then by date
       return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
     })
   }, [filteredNotes])
 
   const clearFilters = () => {
     setSearchQuery("")
-    setShowFavoritesOnly(false)
-    setSelectedTag(null)
   }
 
-  const hasActiveFilters = searchQuery || showFavoritesOnly || selectedTag
+  const hasActiveFilters = !!searchQuery
 
   return (
     <div className="space-y-6">
-      {/* Search and filters bar */}
+      {/* Search bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Search input */}
         <div className="relative flex-1">
@@ -99,47 +70,19 @@ export function NotesList({
           />
         </div>
 
-        {/* Filter buttons */}
-        <div className="flex gap-2">
+        {/* Clear button */}
+        {hasActiveFilters && (
           <Button
-            variant={showFavoritesOnly ? "default" : "outline"}
+            variant="ghost"
             size="sm"
-            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-            className="gap-2"
+            onClick={clearFilters}
+            className="gap-1"
           >
-            <Star className={cn("h-4 w-4", showFavoritesOnly && "fill-current")} />
-            Favorites
+            <X className="h-4 w-4" />
+            Clear
           </Button>
-          
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearFilters}
-              className="gap-1"
-            >
-              <X className="h-4 w-4" />
-              Clear
-            </Button>
-          )}
-        </div>
+        )}
       </div>
-
-      {/* Tags filter row */}
-      {allTags.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {allTags.map((tag) => (
-            <Badge
-              key={tag}
-              variant={selectedTag === tag ? "default" : "outline"}
-              className="cursor-pointer hover:bg-accent transition-colors"
-              onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-            >
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      )}
 
       {/* Results count */}
       <p className="text-sm text-muted-foreground">
@@ -157,7 +100,6 @@ export function NotesList({
               folders={folders}
               onEdit={onEditNote}
               onDelete={onDeleteNote}
-              onToggleFavorite={onToggleFavorite}
               onMoveToFolder={onMoveToFolder}
               onExtractGems={onExtractGems}
             />
@@ -171,12 +113,12 @@ export function NotesList({
           <h3 className="font-medium text-lg mb-1">No notes found</h3>
           <p className="text-muted-foreground text-sm max-w-xs">
             {hasActiveFilters
-              ? "Try adjusting your search or filters"
+              ? "Try adjusting your search"
               : "Create your first note to get started"}
           </p>
           {hasActiveFilters && (
             <Button variant="link" onClick={clearFilters} className="mt-2">
-              Clear all filters
+              Clear search
             </Button>
           )}
         </div>

@@ -13,9 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { X, Bold, Italic, List, ListOrdered, Star } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Bold, Italic, List, ListOrdered } from "lucide-react"
 
 interface NoteEditorProps {
   note: Note | null // null for new note, existing note for edit
@@ -27,9 +25,6 @@ interface NoteEditorProps {
 export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
-  const [tags, setTags] = useState<string[]>([])
-  const [tagInput, setTagInput] = useState("")
-  const [isFavorite, setIsFavorite] = useState(false)
 
   // Track the last initialized note to avoid re-initializing on re-renders
   const lastInitializedNoteRef = useRef<string | null>(null)
@@ -44,17 +39,12 @@ export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
 
     if (shouldInitialize || (isOpen && lastInitializedNoteRef.current !== noteId)) {
       if (note) {
-        setTitle(note.title)
-        setContent(note.content)
-        setTags(note.tags)
-        setIsFavorite(note.is_favorite)
+        setTitle(note.title || "")
+        setContent(note.content || "")
       } else {
         setTitle("")
         setContent("")
-        setTags([])
-        setIsFavorite(false)
       }
-      setTagInput("")
       lastInitializedNoteRef.current = noteId
     }
 
@@ -62,32 +52,11 @@ export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
   }, [note, isOpen])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const handleAddTag = () => {
-    const trimmedTag = tagInput.trim().toLowerCase()
-    if (trimmedTag && !tags.includes(trimmedTag) && tags.length < 10) {
-      setTags([...tags, trimmedTag])
-      setTagInput("")
-    }
-  }
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove))
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault()
-      handleAddTag()
-    }
-  }
-
   const handleSave = () => {
     onSave(
       {
         title: title.trim() || "Untitled",
         content,
-        tags,
-        is_favorite: isFavorite,
       },
       note?.id
     )
@@ -122,20 +91,8 @@ export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between pr-8">
-            <span>{note ? "Edit Note" : "New Note"}</span>
-            <button
-              onClick={() => setIsFavorite(!isFavorite)}
-              className={cn(
-                "p-1.5 rounded-full transition-colors",
-                isFavorite
-                  ? "text-amber-500 bg-amber-50 hover:bg-amber-100"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              )}
-              aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
-            >
-              <Star className={cn("h-5 w-5", isFavorite && "fill-current")} />
-            </button>
+          <DialogTitle>
+            {note ? "Edit Note" : "New Note"}
           </DialogTitle>
         </DialogHeader>
 
@@ -155,7 +112,7 @@ export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
           {/* Content with formatting toolbar */}
           <div className="space-y-2">
             <Label htmlFor="content">Content</Label>
-            
+
             {/* Formatting toolbar */}
             <div className="flex gap-1 p-1 border rounded-md bg-muted/50 w-fit">
               <Button
@@ -208,50 +165,6 @@ export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
               onChange={(e) => setContent(e.target.value)}
               className="min-h-[200px] resize-y"
             />
-          </div>
-
-          {/* Tags */}
-          <div className="space-y-2">
-            <Label htmlFor="tags">Tags</Label>
-            <div className="flex gap-2">
-              <Input
-                id="tags"
-                placeholder="Add a tag..."
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="flex-1"
-              />
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleAddTag}
-                disabled={!tagInput.trim() || tags.length >= 10}
-              >
-                Add
-              </Button>
-            </div>
-            
-            {/* Tags list */}
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="gap-1 pr-1">
-                    {tag}
-                    <button
-                      onClick={() => handleRemoveTag(tag)}
-                      className="ml-1 hover:bg-muted rounded-full p-0.5"
-                      aria-label={`Remove ${tag} tag`}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {tags.length}/10 tags • Press Enter to add
-            </p>
           </div>
         </div>
 

@@ -27,7 +27,7 @@ export async function getNotes() {
 
 export async function createNote(input: NoteInput) {
   const supabase = await createClient()
-  
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return { error: "Not authenticated", note: null }
@@ -37,15 +37,15 @@ export async function createNote(input: NoteInput) {
     .from("notes")
     .insert({
       user_id: user.id,
-      title: input.title,
-      content: input.content,
-      tags: input.tags,
-      is_favorite: input.is_favorite ?? false,
+      title: input.title || null,
+      content: input.content || null,
+      folder_id: input.folder_id || null,
     })
     .select()
     .single()
 
   if (error) {
+    console.error("Error creating note:", error)
     return { error: error.message, note: null }
   }
 
@@ -55,7 +55,7 @@ export async function createNote(input: NoteInput) {
 
 export async function updateNote(noteId: string, input: NoteInput) {
   const supabase = await createClient()
-  
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return { error: "Not authenticated", note: null }
@@ -64,10 +64,9 @@ export async function updateNote(noteId: string, input: NoteInput) {
   const { data, error } = await supabase
     .from("notes")
     .update({
-      title: input.title,
-      content: input.content,
-      tags: input.tags,
-      is_favorite: input.is_favorite,
+      title: input.title || null,
+      content: input.content || null,
+      folder_id: input.folder_id,
     })
     .eq("id", noteId)
     .eq("user_id", user.id) // Extra safety check
@@ -75,6 +74,7 @@ export async function updateNote(noteId: string, input: NoteInput) {
     .single()
 
   if (error) {
+    console.error("Error updating note:", error)
     return { error: error.message, note: null }
   }
 
@@ -104,9 +104,9 @@ export async function deleteNote(noteId: string) {
   return { error: null }
 }
 
-export async function toggleFavorite(noteId: string, isFavorite: boolean) {
+export async function moveNoteToFolder(noteId: string, folderId: string | null) {
   const supabase = await createClient()
-  
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return { error: "Not authenticated" }
@@ -114,11 +114,12 @@ export async function toggleFavorite(noteId: string, isFavorite: boolean) {
 
   const { error } = await supabase
     .from("notes")
-    .update({ is_favorite: isFavorite })
+    .update({ folder_id: folderId })
     .eq("id", noteId)
     .eq("user_id", user.id)
 
   if (error) {
+    console.error("Error moving note to folder:", error)
     return { error: error.message }
   }
 
