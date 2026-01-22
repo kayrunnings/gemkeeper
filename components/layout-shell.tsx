@@ -16,6 +16,7 @@ import {
   Sparkles,
   PanelRight,
   X,
+  Home,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -29,6 +30,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  { href: "/home", label: "Home", icon: Home },
   { href: "/gems", label: "Gems", icon: Gem },
   { href: "/daily", label: "Daily Prompt", icon: Sun },
   { href: "/checkin", label: "Check-in", icon: Moon },
@@ -91,7 +93,7 @@ export function LayoutShell({
             </Button>
 
             {/* Logo */}
-            <Link href="/gems" className="flex items-center gap-3 group">
+            <Link href="/home" className="flex items-center gap-3 group">
               <div className="w-9 h-9 rounded-xl ai-gradient flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                 <Sparkles className="h-5 w-5 text-white" />
               </div>

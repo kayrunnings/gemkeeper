@@ -7,7 +7,7 @@ export default async function Home() {
 
   // Redirect based on auth state
   if (user) {
-    redirect("/gems")
+    redirect("/home")
   } else {
     redirect("/login")
   }

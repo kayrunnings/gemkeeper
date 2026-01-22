@@ -23,7 +23,7 @@ import {
   disconnectCalendar,
   updateCalendarSettings,
   syncCalendarEvents,
-} from "@/lib/calendar"
+} from "@/lib/calendar-client"
 
 interface CalendarSettingsProps {
   className?: string

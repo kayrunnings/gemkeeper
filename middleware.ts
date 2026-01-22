@@ -37,7 +37,7 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Protected routes that require authentication
-  const protectedRoutes = ["/dashboard", "/gems", "/daily", "/checkin", "/trophy-case", "/settings", "/onboarding"]
+  const protectedRoutes = ["/home", "/dashboard", "/gems", "/daily", "/checkin", "/trophy-case", "/settings", "/onboarding", "/moments"]
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
 
   // Redirect to login if not authenticated on protected routes
@@ -50,7 +50,7 @@ export async function middleware(request: NextRequest) {
   // Redirect logged-in users away from login page
   if (user && pathname === "/login") {
     const url = request.nextUrl.clone()
-    url.pathname = "/gems"
+    url.pathname = "/home"
     return NextResponse.redirect(url)
   }
 
@@ -70,7 +70,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // If user has completed onboarding and is on onboarding page, redirect to gems
+  // If user has completed onboarding and is on onboarding page, redirect to home
   if (user && pathname === "/onboarding") {
     const { data: profile } = await supabase
       .from("profiles")
@@ -80,7 +80,7 @@ export async function middleware(request: NextRequest) {
 
     if (profile?.onboarding_completed) {
       const url = request.nextUrl.clone()
-      url.pathname = "/gems"
+      url.pathname = "/home"
       return NextResponse.redirect(url)
     }
   }

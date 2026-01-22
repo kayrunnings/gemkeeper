@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/client"
 import { grantAIConsent, revokeAIConsent } from "./actions"
 import { AIConsentModal } from "@/components/ai-consent-modal"
 import { LayoutShell } from "@/components/layout-shell"
+import { CalendarSettings } from "@/components/settings/CalendarSettings"
 import { useToast } from "@/components/error-toast"
 
 export default function SettingsPage() {
@@ -287,6 +288,9 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Calendar Integration */}
+          <CalendarSettings />
 
           {/* AI Features Card */}
           <Card className="overflow-hidden">
