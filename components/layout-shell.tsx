@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface NavItem {
   href: string
@@ -111,6 +112,9 @@ export function LayoutShell({
                 <PanelRight className={cn("h-5 w-5 transition-colors", showRightPanel && "text-primary")} />
               </Button>
             )}
+
+            {/* Theme toggle */}
+            <ThemeToggle />
 
             {/* User info and sign out */}
             <div className="flex items-center gap-2 pl-2 border-l">
