@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, Gem as GemIcon, Loader2, MoreHorizontal, Trash2, ExternalLink, LogOut, Menu, X, StickyNote, CheckCircle } from "lucide-react"
+import { Plus, Gem as GemIcon, Loader2, MoreHorizontal, Trash2, ExternalLink, LogOut, Menu, X, StickyNote, CheckCircle, Sun, Moon, Trophy, Settings } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -185,6 +185,39 @@ export default function GemsPage() {
           <aside className="fixed inset-y-0 left-0 z-40 w-64 bg-muted/30 border-r p-4 pt-20 md:hidden">
             <nav className="flex flex-col gap-1">
               <Link
+                href="/gems"
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <GemIcon className="h-4 w-4" />
+                Gems
+              </Link>
+              <Link
+                href="/daily"
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Sun className="h-4 w-4" />
+                Daily
+              </Link>
+              <Link
+                href="/checkin"
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Moon className="h-4 w-4" />
+                Check-in
+              </Link>
+              <Link
+                href="/trophy-case"
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Trophy className="h-4 w-4" />
+                Trophy Case
+              </Link>
+              <div className="my-2 border-t" />
+              <Link
                 href="/dashboard"
                 className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -193,12 +226,12 @@ export default function GemsPage() {
                 Notes
               </Link>
               <Link
-                href="/gems"
-                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground"
+                href="/settings"
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                <GemIcon className="h-4 w-4" />
-                Gems
+                <Settings className="h-4 w-4" />
+                Settings
               </Link>
             </nav>
           </aside>
@@ -211,6 +244,35 @@ export default function GemsPage() {
         <aside className="hidden md:block w-64 border-r bg-muted/30 p-4">
           <nav className="flex flex-col gap-1">
             <Link
+              href="/gems"
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground"
+            >
+              <GemIcon className="h-4 w-4" />
+              Gems
+            </Link>
+            <Link
+              href="/daily"
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
+            >
+              <Sun className="h-4 w-4" />
+              Daily
+            </Link>
+            <Link
+              href="/checkin"
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
+            >
+              <Moon className="h-4 w-4" />
+              Check-in
+            </Link>
+            <Link
+              href="/trophy-case"
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
+            >
+              <Trophy className="h-4 w-4" />
+              Trophy Case
+            </Link>
+            <div className="my-2 border-t" />
+            <Link
               href="/dashboard"
               className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
             >
@@ -218,11 +280,11 @@ export default function GemsPage() {
               Notes
             </Link>
             <Link
-              href="/gems"
-              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground"
+              href="/settings"
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
             >
-              <GemIcon className="h-4 w-4" />
-              Gems
+              <Settings className="h-4 w-4" />
+              Settings
             </Link>
           </nav>
         </aside>
