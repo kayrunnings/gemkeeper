@@ -38,16 +38,13 @@ export default function DashboardPage() {
       }
       setUserEmail(user.email ?? null)
 
-      // Fetch notes, folders, profile, and gem count in parallel
-      const [notesResult, foldersResult, profileResult, gemsResult] = await Promise.all([
+      // Fetch notes, profile, and gem count in parallel
+      // Note: folders table doesn't exist in GemKeeper, so we skip that fetch
+      const [notesResult, profileResult, gemsResult] = await Promise.all([
         supabase
           .from("notes")
           .select("*")
           .order("updated_at", { ascending: false }),
-        supabase
-          .from("folders")
-          .select("*")
-          .order("name", { ascending: true }),
         supabase
           .from("profiles")
           .select("ai_consent_given")
@@ -65,11 +62,8 @@ export default function DashboardPage() {
         setNotes(notesResult.data || [])
       }
 
-      if (foldersResult.error) {
-        console.error("Error fetching folders:", foldersResult.error)
-      } else {
-        setFolders(foldersResult.data || [])
-      }
+      // Folders not used in GemKeeper - keep empty array
+      setFolders([])
 
       setHasAIConsent(profileResult.data?.ai_consent_given ?? false)
       setActiveGemCount(gemsResult.count ?? 0)
@@ -222,111 +216,24 @@ export default function DashboardPage() {
     }
   }
 
-  // Handle moving a note to a folder
-  const handleMoveToFolder = async (noteId: string, folderId: string | null) => {
-    const note = notes.find((n) => n.id === noteId)
-    if (!note) return
-
-    const previousFolderId = note.folder_id
-
-    // Optimistic update
-    setNotes((prev) =>
-      prev.map((n) =>
-        n.id === noteId ? { ...n, folder_id: folderId } : n
-      )
-    )
-
-    const { error } = await supabase
-      .from("notes")
-      .update({ folder_id: folderId })
-      .eq("id", noteId)
-
-    if (error) {
-      console.error("Error moving note to folder:", error)
-      // Revert on error
-      setNotes((prev) =>
-        prev.map((n) =>
-          n.id === noteId ? { ...n, folder_id: previousFolderId } : n
-        )
-      )
-    }
+  // Handle moving a note to a folder - disabled in GemKeeper (no folders table)
+  const handleMoveToFolder = async (_noteId: string, _folderId: string | null) => {
+    console.log("Folders not supported in GemKeeper")
   }
 
-  // Handle creating a folder
-  const handleCreateFolder = async (name: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { data, error } = await supabase
-      .from("folders")
-      .insert({ user_id: user.id, name })
-      .select()
-      .single()
-
-    if (error) {
-      console.error("Error creating folder:", error)
-      return
-    }
-
-    setFolders((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+  // Handle creating a folder - disabled in GemKeeper (no folders table)
+  const handleCreateFolder = async (_name: string) => {
+    console.log("Folders not supported in GemKeeper")
   }
 
-  // Handle renaming a folder
-  const handleRenameFolder = async (folderId: string, name: string) => {
-    const { data, error } = await supabase
-      .from("folders")
-      .update({ name })
-      .eq("id", folderId)
-      .select()
-      .single()
-
-    if (error) {
-      console.error("Error renaming folder:", error)
-      return
-    }
-
-    setFolders((prev) =>
-      prev.map((folder) => (folder.id === folderId ? data : folder))
-        .sort((a, b) => a.name.localeCompare(b.name))
-    )
+  // Handle renaming a folder - disabled in GemKeeper (no folders table)
+  const handleRenameFolder = async (_folderId: string, _name: string) => {
+    console.log("Folders not supported in GemKeeper")
   }
 
-  // Handle deleting a folder
-  const handleDeleteFolder = async (folderId: string) => {
-    // Update notes to remove folder reference
-    const { error: notesError } = await supabase
-      .from("notes")
-      .update({ folder_id: null })
-      .eq("folder_id", folderId)
-
-    if (notesError) {
-      console.error("Error updating notes:", notesError)
-      return
-    }
-
-    // Delete the folder
-    const { error } = await supabase
-      .from("folders")
-      .delete()
-      .eq("id", folderId)
-
-    if (error) {
-      console.error("Error deleting folder:", error)
-      return
-    }
-
-    // Update local state
-    setFolders((prev) => prev.filter((folder) => folder.id !== folderId))
-    setNotes((prev) =>
-      prev.map((note) =>
-        note.folder_id === folderId ? { ...note, folder_id: null } : note
-      )
-    )
-
-    // If we were viewing the deleted folder, switch to all notes
-    if (typeof selectedFilter === "object" && selectedFilter.folderId === folderId) {
-      setSelectedFilter("all")
-    }
+  // Handle deleting a folder - disabled in GemKeeper (no folders table)
+  const handleDeleteFolder = async (_folderId: string) => {
+    console.log("Folders not supported in GemKeeper")
   }
 
   // Handle sign out
