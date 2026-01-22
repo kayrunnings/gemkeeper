@@ -1,391 +1,523 @@
-# GemKeeper Phase 1 Tasks
+# GemKeeper - Epic 6: AI-Powered Features
 
 ## Overview
 
-Complete Phase 1 of GemKeeper: Epics 1-4 (MVP features).
+Leverage AI to enhance gem capture by extracting insights from long-form content automatically.
 
-**Tech Stack:** Next.js + TypeScript + Tailwind + shadcn/ui + Supabase
+**Tech Stack:** Next.js + TypeScript + Tailwind + shadcn/ui + Supabase + Google Gemini
 
 **Repo:** github.com/kayrunnings/gemkeeper
 
+**Linear Issues:** KAY-41 (Epic), KAY-42 (US-6.1)
+
 ## Current State
 
-- ✅ Database tables exist: `profiles`, `gems`, `gem_checkins`
-- ✅ Basic gem capture working
-- ✅ Auth works
-- ⚠️ Some branding still says "Notekeeper"
+- ✅ Epics 1-4 complete (Auth, Gem Capture, Gem Management, Proactive Surfacing)
+- ✅ Database tables created: `ai_extractions`, `ai_usage`
+- ✅ Profile columns added: `ai_consent_given`, `ai_consent_date`
+- ✅ Gemini API key configured in Vercel
 
 ---
 
-## EPIC 1: User Onboarding & Authentication
+## Task 6.1: AI Privacy Consent Modal
 
-### Task 1.1: Fix Notekeeper Branding (KAY-40 cleanup)
-
-**Find and replace ALL instances:**
-- "Notekeeper" → "GemKeeper"
-- "notekeeper" → "gemkeeper"
-- "Your personal note-taking companion" → "Your wisdom accountability partner"
-- "notes" → "gems" (in user-facing copy, not code variables)
-- "note" → "gem" (in user-facing copy)
-
-**Files to check:**
-- `app/layout.tsx`
-- `app/(auth)/**` - login, signup pages
-- `components/**` - any UI components
-- `package.json`
-- `README.md`
-
-**Commit:** `chore: Replace all Notekeeper branding with GemKeeper`
-
----
-
-### Task 1.2: Onboarding Walkthrough (KAY-19)
-
-**Create:** `components/onboarding.tsx`
+**Create:** `components/ai-consent-modal.tsx`
 
 **Requirements:**
-- 4-screen carousel/stepper:
-  1. **Welcome:** "Welcome to GemKeeper" - Your wisdom accountability partner
-  2. **Capture:** "Capture gems" - Save insights from books, podcasts, and life (max 10 active)
-  3. **Surface:** "Right moment, right wisdom" - Daily prompts + calendar-aware notifications
-  4. **Apply:** "Actually apply it" - Accountability check-ins track your progress
-- "Skip" button on all screens
-- "Next" button advances screens
-- "Get Started" on final screen
-- Progress dots at bottom
+- Modal shown ONCE before first AI extraction
+- Clear disclosure text:
+  ```
+  AI-Powered Gem Extraction
 
-**Create:** `app/onboarding/page.tsx`
-- Protected route (requires auth)
-- Shows onboarding carousel
-- On complete: update `profiles.onboarding_completed = true`, redirect to `/gems`
+  When you use this feature, your pasted content will be sent to 
+  Google's Gemini AI to extract key insights.
 
-**Modify:** `app/(protected)/layout.tsx` or middleware
-- Check `profiles.onboarding_completed` on login
-- If false, redirect to `/onboarding`
+  • Your content is processed but not stored by Google
+  • Extracted gems are saved to your GemKeeper account
+  • You can review and edit all extracted gems before saving
+  
+  You can disable AI features anytime in Settings.
+  ```
+- Two buttons: "I Understand, Continue" / "Cancel"
+- On consent: update `profiles.ai_consent_given = true` and `profiles.ai_consent_date`
 
-**Add to settings:**
-- "Replay onboarding" link that sets `onboarding_completed = false` and redirects to `/onboarding`
+**Add to Settings page:**
+- Toggle: "Enable AI features" (shows consent status)
+- If enabled, show consent date
+- Can revoke consent (sets `ai_consent_given = false`)
 
-**Commit:** `feat(onboarding): Add first-time user walkthrough`
-
----
-
-### Task 1.3: Profile Settings Enhancement (KAY-18/KAY-30 cleanup)
-
-**Create/Update:** `app/settings/page.tsx`
-
-**Settings to include:**
-- Display name (editable)
-- Email (read-only)
-- Timezone selector (dropdown of common timezones)
-- Daily prompt time (time picker, default 8:00 AM)
-- Evening check-in time (time picker, default 8:00 PM)
-- "Replay onboarding" link
-- Sign out button
-
-**Commit:** `feat(settings): Add user preferences page`
+**Commit:** `feat(ai): Add AI privacy consent modal and settings`
 
 ---
 
-## EPIC 2: Gem Capture
+## Task 6.2: Gemini API Integration
 
-### Task 2.1: Enhance Context Tagging (KAY-32)
+**Create:** `lib/ai/gemini.ts`
 
-**Verify/Update:** `components/gem-form.tsx`
-
-**Requirements:**
-- Context tag is REQUIRED (form won't submit without it)
-- Dropdown options: Meetings, Feedback, Conflict, Focus, Health, Relationships, Parenting, Other
-- If "Other" selected, show text input for `custom_context`
-- Styled select component (use shadcn Select)
-
-**Update:** Gem card display
-- Show context tag as colored badge
-
-**Badge color mapping:**
-```typescript
-const CONTEXT_TAG_COLORS: Record<ContextTag, string> = {
-  meetings: 'bg-blue-100 text-blue-800',
-  feedback: 'bg-purple-100 text-purple-800',
-  conflict: 'bg-red-100 text-red-800',
-  focus: 'bg-orange-100 text-orange-800',
-  health: 'bg-green-100 text-green-800',
-  relationships: 'bg-pink-100 text-pink-800',
-  parenting: 'bg-yellow-100 text-yellow-800',
-  other: 'bg-gray-100 text-gray-800',
-};
+**Install dependency:**
+```bash
+npm install @google/generative-ai
 ```
 
-**Commit:** `feat(gems): Enhance context tagging with colored badges`
+**Requirements:**
+```typescript
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
+
+export interface ExtractedGem {
+  content: string;        // The extracted insight (max 200 chars)
+  context_tag: ContextTag;
+  source_quote?: string;  // Original text this was derived from
+}
+
+export interface ExtractionResult {
+  gems: ExtractedGem[];
+  tokens_used: number;
+}
+
+export async function extractGemsFromContent(
+  content: string,
+  source?: string
+): Promise<ExtractionResult>
+```
+
+**System prompt for extraction:**
+```typescript
+const EXTRACTION_SYSTEM_PROMPT = `You are a wisdom extractor for GemKeeper, an app that helps users capture and apply insights.
+
+Given text content, identify 3-7 key insights that would be valuable to remember and apply in daily life.
+
+For each insight:
+1. Extract a concise, memorable phrase (under 200 characters)
+2. Focus on actionable wisdom, not facts or summaries
+3. Prefer direct quotes when they're powerful, otherwise paraphrase
+4. Suggest the most appropriate context tag
+
+Context tags (pick the best fit):
+- meetings: Insights for professional meetings, 1:1s, standups
+- feedback: Giving or receiving feedback, performance conversations
+- conflict: Handling disagreements, difficult conversations
+- focus: Productivity, deep work, concentration
+- health: Physical/mental wellness, self-care
+- relationships: Personal relationships, communication
+- parenting: Child-rearing, family dynamics
+- other: Doesn't fit above categories
+
+Return valid JSON only, no markdown code blocks:
+{
+  "gems": [
+    {
+      "content": "The extracted insight text",
+      "context_tag": "feedback",
+      "source_quote": "Original text this came from (if applicable)"
+    }
+  ]
+}`;
+```
+
+**API call implementation:**
+```typescript
+export async function extractGemsFromContent(
+  content: string,
+  source?: string
+): Promise<ExtractionResult> {
+  const model = genAI.getGenerativeModel({ 
+    model: 'gemini-1.5-flash',
+    generationConfig: {
+      responseMimeType: 'application/json',
+      maxOutputTokens: 1024,
+    },
+  });
+
+  const userPrompt = source 
+    ? `Source: ${source}\n\nContent:\n${content}`
+    : content;
+
+  const result = await model.generateContent([
+    { text: EXTRACTION_SYSTEM_PROMPT },
+    { text: userPrompt },
+  ]);
+
+  const response = result.response;
+  const text = response.text();
+  const parsed = JSON.parse(text);
+
+  const usage = response.usageMetadata;
+  const tokensUsed = (usage?.promptTokenCount || 0) + (usage?.candidatesTokenCount || 0);
+
+  return {
+    gems: parsed.gems,
+    tokens_used: tokensUsed,
+  };
+}
+```
+
+**Commit:** `feat(ai): Add Gemini API integration for gem extraction`
 
 ---
 
-## EPIC 3: Gem Management
+## Task 6.3: Rate Limiting Service
 
-### Task 3.1: View Active Gems (KAY-23)
-
-**Update:** `app/gems/page.tsx`
+**Create:** `lib/ai/rate-limit.ts`
 
 **Requirements:**
-- Header: "Your Gems (X/10)" with count
-- Grid or list of gem cards
-- Each card shows:
-  - Content (truncated to ~100 chars with "...")
-  - Context tag badge (colored)
-  - Source (if present, muted text)
-  - Application count: "Applied X times"
-  - Created date (relative: "2 days ago")
-- Empty state: Illustration + "Capture your first gem" + CTA button
-- "Add Gem" FAB or button in header
-- Click card → opens detail view
+```typescript
+const DAILY_EXTRACTION_LIMIT = 10;
+const DAILY_TOKEN_LIMIT = 50000;
 
-**Commit:** `feat(gems): Enhance gems list with cards and metadata`
+export interface UsageStatus {
+  extractionsToday: number;
+  extractionsRemaining: number;
+  tokensToday: number;
+  canExtract: boolean;
+  resetTime: Date;
+}
+
+export async function checkUsageLimit(userId: string): Promise<UsageStatus>
+
+export async function recordUsage(
+  userId: string, 
+  tokensUsed: number
+): Promise<void>
+
+export async function getCachedExtraction(
+  userId: string, 
+  contentHash: string
+): Promise<ExtractionResult | null>
+
+export async function cacheExtraction(
+  userId: string,
+  contentHash: string,
+  content: string,
+  source: string | null,
+  result: ExtractionResult
+): Promise<void>
+```
+
+**Hash function for caching:**
+```typescript
+import { createHash } from 'crypto';
+
+export function hashContent(content: string): string {
+  return createHash('sha256').update(content).digest('hex');
+}
+```
+
+**Commit:** `feat(ai): Add rate limiting and caching for AI extractions`
 
 ---
 
-### Task 3.2: Gem Detail View (KAY-33)
+## Task 6.4: Extract Gems API Route
 
-**Create:** `app/gems/[id]/page.tsx`
+**Create:** `app/api/ai/extract/route.ts`
 
 **Requirements:**
-- Full gem content (no truncation)
-- Context tag badge
-- Source + source_url (clickable link if URL present)
-- Stats: Application count, Skip count, Created date
-- Actions:
-  - "Edit" button → opens edit modal/form
-  - "Retire" button → triggers retire flow
-  - "Graduate" button (enabled only if application_count >= 5)
-- Back button to gems list
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { extractGemsFromContent } from '@/lib/ai/gemini';
+import { checkUsageLimit, recordUsage, getCachedExtraction, cacheExtraction, hashContent } from '@/lib/ai/rate-limit';
 
-**Create:** `components/gem-detail.tsx`
+export async function POST(request: NextRequest) {
+  // 1. Authenticate user
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-**Commit:** `feat(gems): Add gem detail view`
+  // 2. Check AI consent
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('ai_consent_given')
+    .eq('id', user.id)
+    .single();
+  
+  if (!profile?.ai_consent_given) {
+    return NextResponse.json({ error: 'AI consent required' }, { status: 403 });
+  }
+
+  // 3. Parse request
+  const { content, source } = await request.json();
+  
+  if (!content || typeof content !== 'string') {
+    return NextResponse.json({ error: 'Content is required' }, { status: 400 });
+  }
+  
+  if (content.length > 10000) {
+    return NextResponse.json({ error: 'Content exceeds 10,000 character limit' }, { status: 400 });
+  }
+
+  // 4. Check rate limit
+  const usage = await checkUsageLimit(user.id);
+  if (!usage.canExtract) {
+    return NextResponse.json({ 
+      error: 'Daily limit reached',
+      usage,
+    }, { status: 429 });
+  }
+
+  // 5. Check cache
+  const contentHash = hashContent(content);
+  const cached = await getCachedExtraction(user.id, contentHash);
+  if (cached) {
+    return NextResponse.json({ 
+      gems: cached.gems,
+      cached: true,
+      usage,
+    });
+  }
+
+  // 6. Call Gemini API
+  try {
+    const result = await extractGemsFromContent(content, source);
+    
+    // 7. Record usage and cache result
+    await recordUsage(user.id, result.tokens_used);
+    await cacheExtraction(user.id, contentHash, content, source ?? null, result);
+
+    // 8. Return extracted gems
+    const updatedUsage = await checkUsageLimit(user.id);
+    return NextResponse.json({
+      gems: result.gems,
+      cached: false,
+      usage: updatedUsage,
+    });
+  } catch (error) {
+    console.error('AI extraction error:', error);
+    return NextResponse.json({ 
+      error: 'Failed to extract gems. Please try again.' 
+    }, { status: 500 });
+  }
+}
+```
+
+**Commit:** `feat(ai): Add gem extraction API endpoint`
 
 ---
 
-### Task 3.3: Edit Gem (part of KAY-33)
+## Task 6.5: Extract Gems UI - Entry Point
 
-**Create:** `components/gem-edit-form.tsx`
+**Update:** Gem capture UI (add tab or button)
 
 **Requirements:**
-- Pre-populated form with current gem data
-- Can edit: content, source, source_url, context_tag
-- Cannot edit: status, application_count, skip_count
-- Save button updates gem
-- Cancel button closes without saving
+- Add "Extract from Content" option to gem capture flow
+- Can be a tab toggle: "Manual" | "Extract from Content"
+- Or an "Extract Gems" button in the gems page header that opens a modal
+
+**Commit:** `feat(ai): Add extract gems entry point to capture UI`
+
+---
+
+## Task 6.6: Extract Gems UI - Extraction Modal
+
+**Create:** `components/extract-gems-modal.tsx`
+
+**Requirements:**
+
+**Step 1 - Input:**
+- Large textarea: "Paste article, book notes, or transcript..."
+- Character count: "X / 10,000 characters"
+- Optional source field: "Source (e.g., book title, article name)"
+- "Extract Gems" button (disabled if empty or over limit)
+- Usage indicator: "X extractions remaining today"
+
+**Step 2 - Loading:**
+- Spinner with message: "Analyzing content..."
+- Estimated time: "This usually takes 5-10 seconds"
+
+**Step 3 - Review & Select:**
+- Header: "Found X potential gems"
+- List of extracted gems, each with:
+  - Checkbox (default checked)
+  - Gem content (editable inline or via edit icon)
+  - Context tag badge (editable via dropdown)
+  - Source quote preview (collapsed, expandable)
+- Active gem count warning: "You have Y/10 active gems. You can save up to Z more."
+- If selection would exceed 10: disable save, show message
+- Buttons: "Save Selected (N)" / "Try Again" / "Cancel"
+
+**Step 4 - Confirmation:**
+- Success message: "Added N gems to your collection!"
+- "View Gems" button → navigate to `/gems`
+
+**Commit:** `feat(ai): Add extract gems modal with review flow`
+
+---
+
+## Task 6.7: Extracted Gem Preview Card
+
+**Create:** `components/extracted-gem-card.tsx`
+
+**Requirements:**
+- Checkbox for selection
+- Gem content (truncated to 2 lines with "..." if longer)
+- Editable: click to expand/edit full content
+- Context tag dropdown (pre-selected with AI suggestion)
+- Optional: "Source quote" accordion/collapsible
+
+```typescript
+interface ExtractedGemCardProps {
+  gem: ExtractedGem;
+  selected: boolean;
+  onSelect: (selected: boolean) => void;
+  onUpdate: (gem: ExtractedGem) => void;
+}
+```
+
+**Commit:** `feat(ai): Add extracted gem preview card component`
+
+---
+
+## Task 6.8: Save Extracted Gems
 
 **Add to:** `lib/gems.ts`
+
 ```typescript
-export async function updateGem(id: string, input: Partial<CreateGemInput>): Promise<Gem>
+export async function createMultipleGems(
+  gems: Array<{
+    content: string;
+    context_tag: ContextTag;
+    source?: string;
+    source_url?: string;
+  }>
+): Promise<Gem[]>
 ```
 
-**Commit:** `feat(gems): Add gem editing functionality`
-
----
-
-### Task 3.4: Retire a Gem (KAY-34)
-
-**Create:** `components/retire-gem-dialog.tsx`
-
 **Requirements:**
-- Confirmation dialog with two options:
-  - "Release" - permanently deletes the gem
-  - "Archive" - sets status = 'retired', keeps data
-- Shows gem preview in dialog
-- On retire: redirect to gems list, show success toast
+- Validate total active gems won't exceed 10
+- Insert all gems in a single transaction if possible
+- Return created gems with IDs
+- Handle partial failures gracefully
 
-**Add to:** `lib/gems.ts`
-```typescript
-export async function retireGem(id: string, mode: 'release' | 'archive'): Promise<void>
-```
+**Create or update:** `app/api/gems/bulk/route.ts`
+- POST endpoint that accepts array of gems
+- Returns created gems
 
-**Commit:** `feat(gems): Add retire gem functionality`
+**Commit:** `feat(ai): Add bulk gem creation for extracted gems`
 
 ---
 
-### Task 3.5: Graduate a Gem (KAY-24)
+## Task 6.9: Usage Display in Settings
 
-**Create:** `components/graduate-gem-dialog.tsx`
+**Update:** `app/settings/page.tsx`
 
-**Requirements:**
-- Only enabled when `application_count >= 5`
-- Confirmation dialog: "Congratulations! You've applied this gem 5+ times."
-- On confirm: set status = 'graduated', set graduated_at = now()
-- Celebratory animation/confetti (optional but nice)
-- Redirect to trophy case
+**Add AI section:**
+- "AI Features" heading
+- Consent status: "Enabled on [date]" or "Not enabled"
+- If enabled:
+  - Toggle to disable AI features
+  - Today's usage: "X/10 extractions used"
+  - Token usage: "~X tokens used today"
+  - Reset time: "Resets at midnight"
+- If not enabled:
+  - "Enable AI Features" button → shows consent modal
 
-**Add to:** `lib/gems.ts`
-```typescript
-export async function graduateGem(id: string): Promise<Gem>
-```
-
-**Commit:** `feat(gems): Add graduate gem functionality`
-
----
-
-### Task 3.6: Trophy Case (KAY-35)
-
-**Create:** `app/trophy-case/page.tsx`
-
-**Requirements:**
-- Header: "Trophy Case 🏆"
-- Stats summary: "X gems graduated, Y total applications"
-- List of graduated gems (status = 'graduated')
-- Each shows: content preview, source, graduation date, total applications
-- Empty state: "Graduate your first gem to see it here!"
-- Navigation link in sidebar/nav
-
-**Commit:** `feat(gems): Add trophy case for graduated gems`
+**Commit:** `feat(ai): Add AI usage display to settings`
 
 ---
 
-## EPIC 4: Proactive Surfacing
+## Task 6.10: Error Handling & Edge Cases
 
-### Task 4.1: Daily Morning Prompt (KAY-26)
+**Update:** All AI components
 
-**Note:** Full push notifications require mobile app. For web MVP, build the UI and logging.
+**Handle these cases:**
+1. **AI returns invalid JSON:** Show error, offer "Try Again"
+2. **AI returns 0 gems:** "No actionable insights found. Try pasting different content."
+3. **Rate limit hit:** Show usage stats, time until reset
+4. **Network error:** "Connection failed. Check your internet and try again."
+5. **Content too short:** "Please paste at least 100 characters for extraction."
+6. **All gems already at limit:** "You have 10 active gems. Retire some before extracting more."
 
-**Create:** `app/daily/page.tsx`
+**Create:** `components/extraction-error.tsx`
+- Reusable error display component
+- Shows appropriate message based on error type
+- "Try Again" or "Go to Gems" actions
 
-**Requirements:**
-- Shows one gem for today (selected based on: least recently surfaced + active status)
-- Large, prominent display of gem content
-- Context tag badge
-- Question: "Will you apply this today?"
-- Three buttons: "Yes" / "Maybe" / "No"
-- On response:
-  - Log to `gem_checkins` table (checkin_type: 'morning_prompt')
-  - Update `gems.last_surfaced_at`
-  - Show confirmation and next steps
-
-**Add to:** `lib/gems.ts`
-```typescript
-export async function getDailyGem(): Promise<Gem | null>
-export async function logCheckin(gemId: string, type: 'morning_prompt' | 'evening_checkin', response: 'yes' | 'no' | 'maybe'): Promise<void>
-```
-
-**Commit:** `feat(daily): Add daily morning prompt page`
-
----
-
-### Task 4.2: Accountability Check-in (KAY-27)
-
-**Create:** `app/checkin/page.tsx`
-
-**Requirements:**
-- Shows the gem from this morning's prompt (or most recent active gem)
-- Question: "Did you apply this gem today?"
-- Two buttons: "Yes" / "No"
-- On "Yes":
-  - Log to `gem_checkins` (type: 'evening_checkin', response: 'yes')
-  - Increment `gems.application_count`
-  - Update `gems.last_applied_at`
-  - Celebratory feedback: "Great job! That's X times you've applied this."
-- On "No":
-  - Log to `gem_checkins` (type: 'evening_checkin', response: 'no')
-  - Increment `gems.skip_count`
-  - Encouraging message: "Tomorrow is another chance!"
-- Optional: text field for reflection note
-
-**Commit:** `feat(checkin): Add evening accountability check-in`
-
----
-
-### Task 4.3: Stale Gem Prompt (KAY-36)
-
-**Update:** Check-in flow
-
-**Requirements:**
-- When showing a gem with `skip_count >= 21`:
-  - Show special prompt: "It's been 3 weeks since you've applied this gem. Is it still useful?"
-  - Two options: "Keep" / "Release"
-  - "Keep": reset skip_count to 0
-  - "Release": trigger retire flow
-
-**Commit:** `feat(checkin): Add stale gem prompt after 3 weeks`
-
----
-
-## EPIC 4 Bonus: Navigation Updates
-
-### Task 4.4: Update Navigation
-
-**Update:** Sidebar/navigation component
-
-**Add links:**
-- "Gems" → `/gems` (home)
-- "Daily" → `/daily`
-- "Check-in" → `/checkin`
-- "Trophy Case" → `/trophy-case`
-- "Settings" → `/settings`
-
-**Consider:** Highlighting "Daily" or "Check-in" if action needed
-
-**Commit:** `feat(nav): Update navigation for gem features`
+**Commit:** `feat(ai): Add comprehensive error handling for extraction`
 
 ---
 
 ## Database Reference
 
-### profiles table
+### Existing Tables
+
+**profiles** - added columns:
 ```sql
-id, email, name, daily_prompt_time, checkin_time, timezone, 
-calendar_connected, onboarding_completed, created_at, updated_at
+ai_consent_given BOOLEAN DEFAULT false
+ai_consent_date TIMESTAMPTZ
 ```
 
-### gems table
+**gems:**
 ```sql
 id, user_id, content, source, source_url, context_tag, custom_context,
 status ('active'|'retired'|'graduated'), application_count, skip_count,
 last_surfaced_at, last_applied_at, retired_at, graduated_at, created_at, updated_at
 ```
 
-### gem_checkins table
+### New Tables
+
+**ai_extractions:**
 ```sql
-id, gem_id, user_id, checkin_type ('morning_prompt'|'evening_checkin'),
-response ('yes'|'no'|'maybe'), note, created_at
+id, user_id, input_content, input_hash, source, extracted_gems (JSONB),
+tokens_used, created_at
+```
+
+**ai_usage:**
+```sql
+id, user_id, usage_date, extraction_count, tokens_used, created_at, updated_at
 ```
 
 ---
 
-## Commit Order Suggestion
+## Commit Order
 
-1. `chore: Replace all Notekeeper branding with GemKeeper`
-2. `feat(settings): Add user preferences page`
-3. `feat(gems): Enhance context tagging with colored badges`
-4. `feat(gems): Enhance gems list with cards and metadata`
-5. `feat(gems): Add gem detail view`
-6. `feat(gems): Add gem editing functionality`
-7. `feat(gems): Add retire gem functionality`
-8. `feat(gems): Add graduate gem functionality`
-9. `feat(gems): Add trophy case for graduated gems`
-10. `feat(daily): Add daily morning prompt page`
-11. `feat(checkin): Add evening accountability check-in`
-12. `feat(checkin): Add stale gem prompt after 3 weeks`
-13. `feat(nav): Update navigation for gem features`
-14. `feat(onboarding): Add first-time user walkthrough`
+1. `feat(ai): Add AI privacy consent modal and settings`
+2. `feat(ai): Add Gemini API integration for gem extraction`
+3. `feat(ai): Add rate limiting and caching for AI extractions`
+4. `feat(ai): Add gem extraction API endpoint`
+5. `feat(ai): Add extract gems entry point to capture UI`
+6. `feat(ai): Add extract gems modal with review flow`
+7. `feat(ai): Add extracted gem preview card component`
+8. `feat(ai): Add bulk gem creation for extracted gems`
+9. `feat(ai): Add AI usage display to settings`
+10. `feat(ai): Add comprehensive error handling for extraction`
 
 ---
 
 ## Testing Checklist
 
-After completing all tasks, verify:
+- [ ] AI consent modal appears on first extraction attempt
+- [ ] Can accept or decline AI consent
+- [ ] AI consent status shown in settings
+- [ ] Can revoke AI consent in settings
+- [ ] "Extract Gems" option visible in gem capture UI
+- [ ] Can paste content up to 10,000 characters
+- [ ] Character count updates in real-time
+- [ ] Loading state shows during extraction
+- [ ] Extracted gems display with checkboxes
+- [ ] Can edit extracted gem content before saving
+- [ ] Can change suggested context tags
+- [ ] Cannot save more gems than remaining slots (10 - active)
+- [ ] Bulk save creates all selected gems
+- [ ] Rate limit warning shows when approaching limit
+- [ ] Rate limit block shows when limit reached
+- [ ] Cached extractions return immediately (same content)
+- [ ] Error messages display appropriately for each error type
+- [ ] Usage stats accurate in settings page
+- [ ] "Try Again" re-runs extraction with same content
 
-- [ ] App shows "GemKeeper" everywhere (no "Notekeeper")
-- [ ] Can create account and see onboarding
-- [ ] Can skip or complete onboarding
-- [ ] Can create gems with all context tags
-- [ ] Gem count shows "X/10"
-- [ ] Cannot create 11th gem (error message)
-- [ ] Can view gem details
-- [ ] Can edit gem content/source/context
-- [ ] Can retire gem (release or archive)
-- [ ] Can graduate gem (after 5 applications)
-- [ ] Trophy case shows graduated gems
-- [ ] Daily prompt shows a gem
-- [ ] Can respond Yes/Maybe/No to daily prompt
-- [ ] Check-in updates application_count or skip_count
-- [ ] Stale gem prompt appears after 21 skips
-- [ ] All navigation links work
-- [ ] Settings page works (timezone, times)
+---
+
+## Environment Variables
+
+```
+GOOGLE_AI_API_KEY=your_gemini_api_key
+```
+
+## Dependencies
+
+```bash
+npm install @google/generative-ai
+```
