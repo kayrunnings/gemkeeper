@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import {
   StickyNote,
-  Star,
   Folder as FolderIcon,
   FolderPlus,
   MoreHorizontal,
@@ -37,7 +36,7 @@ interface SidebarProps {
   onRenameFolder: (folderId: string, name: string) => Promise<void>
   onDeleteFolder: (folderId: string) => Promise<void>
   noteCounts?: { [key: string]: number }
-  favoritesCount?: number
+  favoritesCount?: number // Kept for backwards compatibility but not used
   allNotesCount?: number
   unfiledCount?: number
 }
@@ -50,7 +49,6 @@ export function Sidebar({
   onRenameFolder,
   onDeleteFolder,
   noteCounts = {},
-  favoritesCount = 0,
   allNotesCount = 0,
   unfiledCount = 0,
 }: SidebarProps) {
@@ -152,21 +150,6 @@ export function Sidebar({
         <StickyNote className="h-4 w-4" />
         <span className="flex-1">All Notes</span>
         <span className="text-xs opacity-70">{allNotesCount}</span>
-      </button>
-
-      {/* Favorites */}
-      <button
-        onClick={() => onFilterSelect("favorites")}
-        className={cn(
-          "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-left",
-          isSelected("favorites")
-            ? "bg-primary text-primary-foreground"
-            : "hover:bg-muted text-foreground"
-        )}
-      >
-        <Star className="h-4 w-4" />
-        <span className="flex-1">Favorites</span>
-        <span className="text-xs opacity-70">{favoritesCount}</span>
       </button>
 
       {/* Divider */}

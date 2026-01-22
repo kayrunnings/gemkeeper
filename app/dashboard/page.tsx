@@ -10,6 +10,12 @@ import { Button } from "@/components/ui/button"
 import { Plus, LogOut, Gem, Loader2, Menu, X } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { ExtractFromNoteModal } from "@/components/extract-from-note-modal"
+import {
+  createFolder as createFolderAction,
+  updateFolder as updateFolderAction,
+  deleteFolder as deleteFolderAction,
+} from "@/app/folders/actions"
+import { moveNoteToFolder as moveNoteToFolderAction } from "@/app/notes/actions"
 
 export default function DashboardPage() {
   const [notes, setNotes] = useState<Note[]>([])
@@ -38,13 +44,16 @@ export default function DashboardPage() {
       }
       setUserEmail(user.email ?? null)
 
-      // Fetch notes, profile, and gem count in parallel
-      // Note: folders table doesn't exist in GemKeeper, so we skip that fetch
-      const [notesResult, profileResult, gemsResult] = await Promise.all([
+      // Fetch notes, folders, profile, and gem count in parallel
+      const [notesResult, foldersResult, profileResult, gemsResult] = await Promise.all([
         supabase
           .from("notes")
           .select("*")
           .order("updated_at", { ascending: false }),
+        supabase
+          .from("folders")
+          .select("*")
+          .order("name", { ascending: true }),
         supabase
           .from("profiles")
           .select("ai_consent_given")
@@ -62,8 +71,11 @@ export default function DashboardPage() {
         setNotes(notesResult.data || [])
       }
 
-      // Folders not used in GemKeeper - keep empty array
-      setFolders([])
+      if (foldersResult.error) {
+        console.error("Error fetching folders:", foldersResult.error)
+      } else {
+        setFolders(foldersResult.data || [])
+      }
 
       setHasAIConsent(profileResult.data?.ai_consent_given ?? false)
       setActiveGemCount(gemsResult.count ?? 0)
@@ -85,9 +97,7 @@ export default function DashboardPage() {
     return counts
   }, [notes])
 
-  const favoritesCount = useMemo(() => {
-    return notes.filter((note) => note.is_favorite).length
-  }, [notes])
+  const favoritesCount = 0 // Favorites feature not available in current schema
 
   const unfiledCount = useMemo(() => {
     return notes.filter((note) => !note.folder_id).length
@@ -99,7 +109,7 @@ export default function DashboardPage() {
       case "all":
         return notes
       case "favorites":
-        return notes.filter((note) => note.is_favorite)
+        return notes // Favorites not supported in current schema
       case "unfiled":
         return notes.filter((note) => !note.folder_id)
       default:
@@ -117,10 +127,8 @@ export default function DashboardPage() {
       const { data, error } = await supabase
         .from("notes")
         .update({
-          title: noteInput.title,
-          content: noteInput.content,
-          tags: noteInput.tags,
-          is_favorite: noteInput.is_favorite,
+          title: noteInput.title || null,
+          content: noteInput.content || null,
         })
         .eq("id", existingId)
         .select()
@@ -149,10 +157,8 @@ export default function DashboardPage() {
         .from("notes")
         .insert({
           user_id: user.id,
-          title: noteInput.title,
-          content: noteInput.content,
-          tags: noteInput.tags,
-          is_favorite: noteInput.is_favorite ?? false,
+          title: noteInput.title || null,
+          content: noteInput.content || null,
           folder_id: folderId,
         })
         .select()
@@ -186,54 +192,72 @@ export default function DashboardPage() {
     setNotes((prev) => prev.filter((note) => note.id !== noteId))
   }
 
-  // Handle toggling favorite
-  const handleToggleFavorite = async (noteId: string) => {
-    const note = notes.find((n) => n.id === noteId)
-    if (!note) return
+  // Handle moving a note to a folder
+  const handleMoveToFolder = async (noteId: string, folderId: string | null) => {
+    const result = await moveNoteToFolderAction(noteId, folderId)
+    if (result.error) {
+      console.error("Error moving note to folder:", result.error)
+      return
+    }
 
-    const newFavoriteStatus = !note.is_favorite
-
-    // Optimistic update
+    // Update local state
     setNotes((prev) =>
-      prev.map((n) =>
-        n.id === noteId ? { ...n, is_favorite: newFavoriteStatus } : n
+      prev.map((note) =>
+        note.id === noteId ? { ...note, folder_id: folderId } : note
       )
     )
+  }
 
-    const { error } = await supabase
-      .from("notes")
-      .update({ is_favorite: newFavoriteStatus })
-      .eq("id", noteId)
+  // Handle creating a folder
+  const handleCreateFolder = async (name: string) => {
+    const result = await createFolderAction(name)
+    if (result.error) {
+      console.error("Error creating folder:", result.error)
+      return
+    }
 
-    if (error) {
-      console.error("Error toggling favorite:", error)
-      // Revert on error
-      setNotes((prev) =>
-        prev.map((n) =>
-          n.id === noteId ? { ...n, is_favorite: !newFavoriteStatus } : n
-        )
+    if (result.folder) {
+      setFolders((prev) => [...prev, result.folder!].sort((a, b) => a.name.localeCompare(b.name)))
+    }
+  }
+
+  // Handle renaming a folder
+  const handleRenameFolder = async (folderId: string, name: string) => {
+    const result = await updateFolderAction(folderId, name)
+    if (result.error) {
+      console.error("Error renaming folder:", result.error)
+      return
+    }
+
+    if (result.folder) {
+      setFolders((prev) =>
+        prev.map((f) => (f.id === folderId ? result.folder! : f)).sort((a, b) => a.name.localeCompare(b.name))
       )
     }
   }
 
-  // Handle moving a note to a folder - disabled in GemKeeper (no folders table)
-  const handleMoveToFolder = async (_noteId: string, _folderId: string | null) => {
-    console.log("Folders not supported in GemKeeper")
-  }
+  // Handle deleting a folder
+  const handleDeleteFolder = async (folderId: string) => {
+    const result = await deleteFolderAction(folderId)
+    if (result.error) {
+      console.error("Error deleting folder:", result.error)
+      return
+    }
 
-  // Handle creating a folder - disabled in GemKeeper (no folders table)
-  const handleCreateFolder = async (_name: string) => {
-    console.log("Folders not supported in GemKeeper")
-  }
+    // Remove folder from state
+    setFolders((prev) => prev.filter((f) => f.id !== folderId))
 
-  // Handle renaming a folder - disabled in GemKeeper (no folders table)
-  const handleRenameFolder = async (_folderId: string, _name: string) => {
-    console.log("Folders not supported in GemKeeper")
-  }
+    // Update notes that were in this folder to be unfiled
+    setNotes((prev) =>
+      prev.map((note) =>
+        note.folder_id === folderId ? { ...note, folder_id: null } : note
+      )
+    )
 
-  // Handle deleting a folder - disabled in GemKeeper (no folders table)
-  const handleDeleteFolder = async (_folderId: string) => {
-    console.log("Folders not supported in GemKeeper")
+    // If we were filtering by this folder, switch to all notes
+    if (typeof selectedFilter === "object" && selectedFilter.folderId === folderId) {
+      setSelectedFilter("all")
+    }
   }
 
   // Handle sign out
@@ -402,7 +426,6 @@ export default function DashboardPage() {
               folders={folders}
               onEditNote={handleEditNote}
               onDeleteNote={handleDeleteNote}
-              onToggleFavorite={handleToggleFavorite}
               onMoveToFolder={handleMoveToFolder}
               onExtractGems={handleExtractGems}
             />
