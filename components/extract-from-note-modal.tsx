@@ -298,7 +298,7 @@ export function ExtractFromNoteModal({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-violet-500" />
-              {step === "success" ? "Gems Added!" : "Extract Gems from Note"}
+              {step === "success" ? "Thoughts Added!" : "Extract Thoughts from Note"}
             </DialogTitle>
             {step === "input" && (
               <DialogDescription>
@@ -392,7 +392,7 @@ export function ExtractFromNoteModal({
                     className="flex-1 gap-2 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600"
                   >
                     <Sparkles className="h-4 w-4" />
-                    Extract Gems
+                    Extract Thoughts
                   </Button>
                 </div>
               </div>
@@ -433,7 +433,7 @@ export function ExtractFromNoteModal({
                   <div className="flex items-start gap-2 p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800">
                     <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
                     <p className="text-sm">
-                      You have {activeGemCount}/{MAX_ACTIVE_GEMS} active gems. You
+                      You have {activeGemCount}/{MAX_ACTIVE_GEMS} active thoughts. You
                       can save up to {availableSlots} more.
                     </p>
                   </div>

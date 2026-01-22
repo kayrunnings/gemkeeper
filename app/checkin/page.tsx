@@ -210,20 +210,20 @@ export default function CheckinPage() {
           </div>
 
           {!gem ? (
-            // No gems available
+            // No thoughts available
             <Card className="border-dashed border-2">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mb-4">
                   <GemIcon className="h-7 w-7 text-muted-foreground" />
                 </div>
-                <h3 className="font-semibold mb-2">No active gems</h3>
+                <h3 className="font-semibold mb-2">No active thoughts</h3>
                 <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-                  Add some gems to track your progress!
+                  Add some thoughts to track your progress!
                 </p>
-                <Link href="/gems">
+                <Link href="/thoughts">
                   <Button className="gap-2">
                     <GemIcon className="h-4 w-4" />
-                    Add a Gem
+                    Add a Thought
                   </Button>
                 </Link>
               </CardContent>

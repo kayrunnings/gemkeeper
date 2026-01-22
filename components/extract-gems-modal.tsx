@@ -304,7 +304,7 @@ export function ExtractGemsModal({
               <div className="w-8 h-8 rounded-lg ai-gradient flex items-center justify-center">
                 <Sparkles className="h-4 w-4 text-white" />
               </div>
-              {step === "success" ? "Gems Added!" : "Extract Gems with AI"}
+              {step === "success" ? "Thoughts Added!" : "Extract Thoughts with AI"}
             </DialogTitle>
             {step === "input" && (
               <DialogDescription>
@@ -420,7 +420,7 @@ export function ExtractGemsModal({
                   className="w-full gap-2 h-12"
                 >
                   <Sparkles className="h-4 w-4" />
-                  Extract Gems
+                  Extract Thoughts
                 </Button>
               </div>
             )}
@@ -467,7 +467,7 @@ export function ExtractGemsModal({
                   <div className="flex items-start gap-2 p-3 rounded-xl bg-warning/10 border border-warning/20 text-warning">
                     <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
                     <p className="text-sm">
-                      You have {activeGemCount}/{MAX_ACTIVE_GEMS} active gems. You
+                      You have {activeGemCount}/{MAX_ACTIVE_GEMS} active thoughts. You
                       can save up to {availableSlots} more.
                     </p>
                   </div>
