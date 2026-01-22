@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Note, NoteInput } from "@/lib/types"
 import {
   Dialog,
@@ -31,9 +31,18 @@ export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
   const [tagInput, setTagInput] = useState("")
   const [isFavorite, setIsFavorite] = useState(false)
 
-  // Reset form when note changes or dialog opens
+  // Track the last initialized note to avoid re-initializing on re-renders
+  const lastInitializedNoteRef = useRef<string | null>(null)
+  const wasOpenRef = useRef(false)
+
+  // Initialize form when dialog opens (only once per open)
+  // This is a standard pattern for controlled forms that need to sync with props
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (isOpen) {
+    const noteId = note?.id ?? null
+    const shouldInitialize = isOpen && !wasOpenRef.current
+
+    if (shouldInitialize || (isOpen && lastInitializedNoteRef.current !== noteId)) {
       if (note) {
         setTitle(note.title)
         setContent(note.content)
@@ -46,8 +55,12 @@ export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
         setIsFavorite(false)
       }
       setTagInput("")
+      lastInitializedNoteRef.current = noteId
     }
+
+    wasOpenRef.current = isOpen
   }, [note, isOpen])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleAddTag = () => {
     const trimmedTag = tagInput.trim().toLowerCase()

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -22,12 +22,10 @@ export function AIConsentModal({ isOpen, onClose, onConsent }: AIConsentModalPro
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Reset error state when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setError(null)
-    }
-  }, [isOpen])
+  const handleClose = () => {
+    setError(null)
+    onClose()
+  }
 
   const handleConsent = async () => {
     setIsSubmitting(true)
@@ -42,11 +40,11 @@ export function AIConsentModal({ isOpen, onClose, onConsent }: AIConsentModalPro
     }
 
     setIsSubmitting(false)
-    onClose()
+    handleClose()
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -97,7 +95,7 @@ export function AIConsentModal({ isOpen, onClose, onConsent }: AIConsentModalPro
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="ghost" onClick={onClose} disabled={isSubmitting}>
+          <Button variant="ghost" onClick={handleClose} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button

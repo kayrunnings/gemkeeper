@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { Gem, CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS } from "@/lib/types/gem"
+import { Gem } from "@/lib/types/gem"
 import { GemDetail } from "@/components/gem-detail"
 import { Button } from "@/components/ui/button"
 import { Gem as GemIcon, Loader2, LogOut, ArrowLeft } from "lucide-react"
