@@ -1,31 +1,25 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState, useCallback, useSyncExternalStore } from "react"
-
-type Theme = "dark" | "light"
+import { Theme, THEMES, DEFAULT_THEME, STORAGE_KEY, isValidTheme, getNextTheme, THEME_INFO } from "@/lib/themes"
 
 interface ThemeContextType {
   theme: Theme
   setTheme: (theme: Theme) => void
-  toggleTheme: () => void
+  cycleTheme: () => void
+  themeName: string
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
-const STORAGE_KEY = "gemkeeper-theme"
-
 function getStoredTheme(): Theme {
-  if (typeof window === "undefined") return "dark"
+  if (typeof window === "undefined") return DEFAULT_THEME
 
   const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored === "dark" || stored === "light") {
+  if (isValidTheme(stored)) {
     return stored
   }
-  // Fall back to system preference, default to dark
-  if (window.matchMedia("(prefers-color-scheme: light)").matches) {
-    return "light"
-  }
-  return "dark"
+  return DEFAULT_THEME
 }
 
 function subscribeToStorage(callback: () => void) {
@@ -34,7 +28,7 @@ function subscribeToStorage(callback: () => void) {
 }
 
 function getServerSnapshot(): Theme {
-  return "dark" // Default for SSR
+  return DEFAULT_THEME
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -53,28 +47,28 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [storedTheme])
 
   useEffect(() => {
-    // Apply theme to document
+    // Apply theme to document using data-theme attribute
     const root = document.documentElement
-    if (theme === "light") {
-      root.classList.add("light")
-    } else {
-      root.classList.remove("light")
-    }
+    root.setAttribute("data-theme", theme)
 
     // Persist to localStorage
     localStorage.setItem(STORAGE_KEY, theme)
   }, [theme])
 
   const setTheme = useCallback((newTheme: Theme) => {
-    setThemeState(newTheme)
+    if (THEMES.includes(newTheme)) {
+      setThemeState(newTheme)
+    }
   }, [])
 
-  const toggleTheme = useCallback(() => {
-    setThemeState((prev) => (prev === "dark" ? "light" : "dark"))
+  const cycleTheme = useCallback(() => {
+    setThemeState((prev) => getNextTheme(prev))
   }, [])
+
+  const themeName = THEME_INFO[theme].name
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, cycleTheme, themeName }}>
       {children}
     </ThemeContext.Provider>
   )
@@ -87,3 +81,7 @@ export function useTheme() {
   }
   return context
 }
+
+// Re-export theme types and constants for convenience
+export type { Theme } from "@/lib/themes"
+export { THEMES, THEME_INFO } from "@/lib/themes"
