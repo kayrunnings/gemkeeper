@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Notekeeper | Your Personal Notes",
-  description: "A simple, elegant note-taking app",
+  title: "gemkeeper | Your Personal Notes",
+  description: "Your wisdom accountability partner",
 };
 
 export default function RootLayout({
