@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -11,9 +11,12 @@ import {
   Calendar,
   ChevronRight,
   Filter,
-  ArrowLeft,
+  Plus,
 } from "lucide-react"
 import type { Moment, MomentSource } from "@/types/moments"
+import { LayoutShell } from "@/components/layout-shell"
+import { MomentFAB } from "@/components/moments/MomentFAB"
+import { createClient } from "@/lib/supabase/client"
 
 interface MomentsHistoryClientProps {
   initialMoments: Moment[]
@@ -21,7 +24,17 @@ interface MomentsHistoryClientProps {
 
 export function MomentsHistoryClient({ initialMoments }: MomentsHistoryClientProps) {
   const [filter, setFilter] = useState<MomentSource | 'all'>('all')
+  const [userEmail, setUserEmail] = useState<string | null>(null)
   const router = useRouter()
+  const supabase = createClient()
+
+  useEffect(() => {
+    async function getUser() {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUserEmail(user?.email ?? null)
+    }
+    getUser()
+  }, [supabase])
 
   const filteredMoments = filter === 'all'
     ? initialMoments
@@ -41,20 +54,17 @@ export function MomentsHistoryClient({ initialMoments }: MomentsHistoryClientPro
   }
 
   return (
-    <div className="container py-8 px-4 max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.back()}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </Button>
-        <h1 className="text-xl font-semibold flex-1">Moments History</h1>
-      </div>
+    <LayoutShell userEmail={userEmail}>
+      <div className="p-4 md:p-8 max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Moments</h1>
+            <p className="text-muted-foreground mt-1">
+              Prepare for situations with your gems
+            </p>
+          </div>
+        </div>
 
       {/* Filter */}
       <div className="flex items-center gap-2 mb-6">
@@ -134,6 +144,10 @@ export function MomentsHistoryClient({ initialMoments }: MomentsHistoryClientPro
           ))}
         </div>
       )}
-    </div>
+      </div>
+
+      {/* Moment FAB */}
+      <MomentFAB />
+    </LayoutShell>
   )
 }

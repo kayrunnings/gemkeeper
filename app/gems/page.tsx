@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { LayoutShell } from "@/components/layout-shell"
 import { useToast } from "@/components/error-toast"
+import { MomentFAB } from "@/components/moments/MomentFAB"
 
 // Map context tags to badge variants
 const contextTagVariant: Record<ContextTag, string> = {
@@ -324,6 +325,9 @@ export default function GemsPage() {
         activeGemCount={gemCount}
         hasAIConsent={hasAIConsent}
       />
+
+      {/* Moment FAB */}
+      <MomentFAB />
     </LayoutShell>
   )
 }

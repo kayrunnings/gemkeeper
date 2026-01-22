@@ -9,6 +9,7 @@ import {
   Trophy,
   StickyNote,
   Settings,
+  Sparkles,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -20,6 +21,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: "/gems", label: "Gems", icon: Gem },
+  { href: "/moments", label: "Moments", icon: Sparkles },
   { href: "/daily", label: "Daily", icon: Sun },
   { href: "/checkin", label: "Check-in", icon: Moon },
   { href: "/trophy-case", label: "Trophy Case", icon: Trophy },
