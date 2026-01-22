@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Gem, Loader2, LogOut, ArrowLeft, RefreshCw, Settings as SettingsIcon } from "lucide-react"
+import { Gem, Loader2, LogOut, ArrowLeft, RefreshCw, Settings as SettingsIcon, Sparkles, AlertCircle } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { grantAIConsent, revokeAIConsent } from "./actions"
+import { AIConsentModal } from "@/components/ai-consent-modal"
 import Link from "next/link"
 
 export default function SettingsPage() {
@@ -18,6 +20,9 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [showAIConsentModal, setShowAIConsentModal] = useState(false)
+  const [isRevokingAI, setIsRevokingAI] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
 
   // Form state
   const [name, setName] = useState("")
@@ -128,6 +133,43 @@ export default function SettingsPage() {
     await supabase.auth.signOut()
     router.push("/login")
     router.refresh()
+  }
+
+  const handleGrantAIConsent = async (): Promise<{ error: string | null }> => {
+    const result = await grantAIConsent()
+    if (result.error) {
+      return { error: result.error }
+    }
+    if (result.data) {
+      setProfile(result.data)
+    }
+    setSuccessMessage("AI features enabled!")
+    setTimeout(() => setSuccessMessage(null), 3000)
+    return { error: null }
+  }
+
+  const handleRevokeAIConsent = async () => {
+    setIsRevokingAI(true)
+    setAiError(null)
+    const result = await revokeAIConsent()
+    if (result.error) {
+      setAiError(result.error)
+    } else if (result.data) {
+      setProfile(result.data)
+      setSuccessMessage("AI features disabled")
+      setTimeout(() => setSuccessMessage(null), 3000)
+    }
+    setIsRevokingAI(false)
+  }
+
+  const formatConsentDate = (dateString: string | null) => {
+    if (!dateString) return null
+    const date = new Date(dateString)
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
   }
 
   if (isLoading) {
@@ -278,6 +320,71 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
+          {/* AI Features Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-violet-500" />
+                AI Features
+              </CardTitle>
+              <CardDescription>
+                Use AI to extract gems from articles, books, and transcripts
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {aiError && (
+                <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive">
+                  <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                  <p className="text-sm">{aiError}</p>
+                </div>
+              )}
+
+              {profile?.ai_consent_given ? (
+                <>
+                  <div className="p-4 bg-violet-50 border border-violet-200 rounded-lg space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-violet-900">AI Features Enabled</span>
+                      <span className="text-xs px-2 py-1 bg-violet-100 text-violet-700 rounded-full">Active</span>
+                    </div>
+                    {profile.ai_consent_date && (
+                      <p className="text-xs text-violet-700">
+                        Enabled on {formatConsentDate(profile.ai_consent_date)}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-center"
+                    onClick={handleRevokeAIConsent}
+                    disabled={isRevokingAI}
+                  >
+                    {isRevokingAI ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Disabling...
+                      </>
+                    ) : (
+                      "Disable AI Features"
+                    )}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Enable AI-powered gem extraction to automatically find insights from your content.
+                  </p>
+                  <Button
+                    className="w-full gap-2 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600"
+                    onClick={() => setShowAIConsentModal(true)}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Enable AI Features
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Actions Card */}
           <Card>
             <CardHeader>
@@ -317,6 +424,13 @@ export default function SettingsPage() {
           </Button>
         </div>
       </main>
+
+      {/* AI Consent Modal */}
+      <AIConsentModal
+        isOpen={showAIConsentModal}
+        onClose={() => setShowAIConsentModal(false)}
+        onConsent={handleGrantAIConsent}
+      />
     </div>
   )
 }

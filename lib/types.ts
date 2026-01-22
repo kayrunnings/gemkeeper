@@ -45,6 +45,8 @@ export interface Profile {
   timezone: string | null
   calendar_connected: boolean
   onboarding_completed: boolean
+  ai_consent_given: boolean
+  ai_consent_date: string | null
   created_at: string
   updated_at: string
 }
