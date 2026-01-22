@@ -243,7 +243,7 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Preferences</CardTitle>
-              <CardDescription>Customize your GemKeeper experience</CardDescription>
+              <CardDescription>Customize your ThoughtFolio experience</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">

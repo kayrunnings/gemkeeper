@@ -99,7 +99,7 @@ export default function GemDetailPage() {
               <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
                 <GemIcon className="h-5 w-5 text-primary-foreground" />
               </div>
-              <h1 className="text-xl font-semibold">GemKeeper</h1>
+              <h1 className="text-xl font-semibold">ThoughtFolio</h1>
             </Link>
           </div>
 
