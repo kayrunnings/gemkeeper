@@ -99,7 +99,7 @@ export async function getCachedExtraction(
     .eq("input_hash", contentHash)
     .single()
 
-  if (!data) {
+  if (!data || !data.extracted_gems) {
     return null
   }
 

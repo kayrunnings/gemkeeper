@@ -199,10 +199,11 @@ export function ExtractThoughtsModal({
         throw new Error(data.error || "Failed to extract thoughts")
       }
 
-      setExtractedThoughts(data.thoughts)
+      const thoughts = data.thoughts || []
+      setExtractedThoughts(thoughts)
       setUsage(data.usage)
       // Select all thoughts by default
-      setSelectedThoughts(new Set(data.thoughts.map((_: ExtractedThought, i: number) => i)))
+      setSelectedThoughts(new Set(thoughts.map((_: ExtractedThought, i: number) => i)))
       setStep("review")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to extract thoughts")

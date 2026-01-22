@@ -194,9 +194,10 @@ export function ExtractFromNoteModal({
         throw new Error(data.error || "Failed to extract gems")
       }
 
-      setExtractedGems(data.gems)
+      const thoughts = data.thoughts || []
+      setExtractedGems(thoughts)
       setUsage(data.usage)
-      setSelectedGems(new Set(data.gems.map((_: ExtractedGem, i: number) => i)))
+      setSelectedGems(new Set(thoughts.map((_: ExtractedGem, i: number) => i)))
       setStep("review")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to extract gems")
