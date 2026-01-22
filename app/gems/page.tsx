@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, Gem as GemIcon, Loader2, MoreHorizontal, Trash2, ExternalLink, LogOut, Menu, X, StickyNote } from "lucide-react"
+import { Plus, Gem as GemIcon, Loader2, MoreHorizontal, Trash2, ExternalLink, LogOut, Menu, X, StickyNote, CheckCircle, Sun, Moon, Trophy, Settings } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -84,15 +84,22 @@ export default function GemsPage() {
     router.refresh()
   }
 
-  const formatDate = (dateString: string) => {
+  const formatRelativeDate = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
-    const isThisYear = date.getFullYear() === now.getFullYear()
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      ...(isThisYear ? {} : { year: "numeric" }),
-    })
+    const diffMs = now.getTime() - date.getTime()
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+    const diffMinutes = Math.floor(diffMs / (1000 * 60))
+
+    if (diffMinutes < 1) return "Just now"
+    if (diffMinutes < 60) return `${diffMinutes}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays === 1) return "Yesterday"
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`
+    return `${Math.floor(diffDays / 365)} years ago`
   }
 
   const truncateContent = (content: string, maxLength: number = 150) => {
@@ -178,6 +185,39 @@ export default function GemsPage() {
           <aside className="fixed inset-y-0 left-0 z-40 w-64 bg-muted/30 border-r p-4 pt-20 md:hidden">
             <nav className="flex flex-col gap-1">
               <Link
+                href="/gems"
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <GemIcon className="h-4 w-4" />
+                Gems
+              </Link>
+              <Link
+                href="/daily"
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Sun className="h-4 w-4" />
+                Daily
+              </Link>
+              <Link
+                href="/checkin"
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Moon className="h-4 w-4" />
+                Check-in
+              </Link>
+              <Link
+                href="/trophy-case"
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Trophy className="h-4 w-4" />
+                Trophy Case
+              </Link>
+              <div className="my-2 border-t" />
+              <Link
                 href="/dashboard"
                 className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -186,12 +226,12 @@ export default function GemsPage() {
                 Notes
               </Link>
               <Link
-                href="/gems"
-                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground"
+                href="/settings"
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                <GemIcon className="h-4 w-4" />
-                Gems
+                <Settings className="h-4 w-4" />
+                Settings
               </Link>
             </nav>
           </aside>
@@ -204,6 +244,35 @@ export default function GemsPage() {
         <aside className="hidden md:block w-64 border-r bg-muted/30 p-4">
           <nav className="flex flex-col gap-1">
             <Link
+              href="/gems"
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground"
+            >
+              <GemIcon className="h-4 w-4" />
+              Gems
+            </Link>
+            <Link
+              href="/daily"
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
+            >
+              <Sun className="h-4 w-4" />
+              Daily
+            </Link>
+            <Link
+              href="/checkin"
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
+            >
+              <Moon className="h-4 w-4" />
+              Check-in
+            </Link>
+            <Link
+              href="/trophy-case"
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
+            >
+              <Trophy className="h-4 w-4" />
+              Trophy Case
+            </Link>
+            <div className="my-2 border-t" />
+            <Link
               href="/dashboard"
               className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
             >
@@ -211,11 +280,11 @@ export default function GemsPage() {
               Notes
             </Link>
             <Link
-              href="/gems"
-              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground"
+              href="/settings"
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-muted"
             >
-              <GemIcon className="h-4 w-4" />
-              Gems
+              <Settings className="h-4 w-4" />
+              Settings
             </Link>
           </nav>
         </aside>
@@ -226,14 +295,12 @@ export default function GemsPage() {
             {/* Header with count */}
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-semibold">Your Gems</h2>
-                <p className={cn(
-                  "text-sm mt-1",
-                  isAtLimit ? "text-amber-600 font-medium" : "text-muted-foreground"
-                )}>
-                  {gemCount}/{MAX_ACTIVE_GEMS} active gems
-                  {isAtLimit && " — Retire or graduate a gem to add more"}
-                </p>
+                <h2 className="text-2xl font-semibold">Your Gems ({gemCount}/{MAX_ACTIVE_GEMS})</h2>
+                {isAtLimit && (
+                  <p className="text-sm mt-1 text-amber-600 font-medium">
+                    Retire or graduate a gem to add more
+                  </p>
+                )}
               </div>
             </div>
 
@@ -257,70 +324,71 @@ export default function GemsPage() {
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
                 {gems.map((gem) => (
-                  <Card key={gem.id} className="group relative">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "text-xs",
-                            CONTEXT_TAG_COLORS[gem.context_tag]
-                          )}
-                        >
-                          {gem.context_tag === "other" && gem.custom_context
-                            ? gem.custom_context
-                            : CONTEXT_TAG_LABELS[gem.context_tag]}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(gem.created_at)}
-                        </span>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pb-4">
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {truncateContent(gem.content)}
-                      </p>
-
-                      {gem.source && (
-                        <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
-                          <span>Source:</span>
-                          {gem.source_url ? (
-                            <a
-                              href={gem.source_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:underline inline-flex items-center gap-1"
-                            >
-                              {gem.source}
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
-                          ) : (
-                            <span className="text-foreground">{gem.source}</span>
-                          )}
+                  <Link key={gem.id} href={`/gems/${gem.id}`}>
+                    <Card className="group relative cursor-pointer hover:shadow-md transition-shadow h-full">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-xs",
+                              CONTEXT_TAG_COLORS[gem.context_tag]
+                            )}
+                          >
+                            {gem.context_tag === "other" && gem.custom_context
+                              ? gem.custom_context
+                              : CONTEXT_TAG_LABELS[gem.context_tag]}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {formatRelativeDate(gem.created_at)}
+                          </span>
                         </div>
-                      )}
+                      </CardHeader>
+                      <CardContent className="pb-4">
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                          {truncateContent(gem.content, 100)}
+                        </p>
 
-                      {/* Actions dropdown */}
-                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => handleDeleteGem(gem.id)}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+                          {gem.source && (
+                            <span className="truncate">
+                              {gem.source}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1">
+                            <CheckCircle className="h-3 w-3" />
+                            Applied {gem.application_count} {gem.application_count === 1 ? "time" : "times"}
+                          </span>
+                        </div>
+
+                        {/* Actions dropdown */}
+                        <div
+                          className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => e.preventDefault()}
+                        >
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  handleDeleteGem(gem.id)
+                                }}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 ))}
               </div>
             )}

@@ -53,15 +53,15 @@ export const CONTEXT_TAG_LABELS: Record<ContextTag, string> = {
   other: "Other",
 }
 
-// Colors for context tag badges
+// Colors for context tag badges (per KAY-32 requirements)
 export const CONTEXT_TAG_COLORS: Record<ContextTag, string> = {
   meetings: "bg-blue-100 text-blue-800 border-blue-200",
-  feedback: "bg-green-100 text-green-800 border-green-200",
+  feedback: "bg-purple-100 text-purple-800 border-purple-200",
   conflict: "bg-red-100 text-red-800 border-red-200",
-  focus: "bg-purple-100 text-purple-800 border-purple-200",
-  health: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  focus: "bg-orange-100 text-orange-800 border-orange-200",
+  health: "bg-green-100 text-green-800 border-green-200",
   relationships: "bg-pink-100 text-pink-800 border-pink-200",
-  parenting: "bg-amber-100 text-amber-800 border-amber-200",
+  parenting: "bg-yellow-100 text-yellow-800 border-yellow-200",
   other: "bg-gray-100 text-gray-800 border-gray-200",
 }
 
