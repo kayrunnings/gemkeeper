@@ -1,0 +1,290 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+import {
+  ArrowLeft,
+  Clock,
+  Check,
+  ThumbsDown,
+  Sparkles,
+  Plus,
+  ExternalLink,
+} from "lucide-react"
+import type { MomentWithGems, MomentGem } from "@/types/moments"
+import type { Gem } from "@/lib/types/gem"
+import { CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS } from "@/lib/types/gem"
+import { recordMomentGemFeedback, markGemReviewed, updateMomentStatus } from "@/lib/moments"
+
+interface PrepCardProps {
+  moment: MomentWithGems
+  onComplete?: () => void
+  readOnly?: boolean
+}
+
+interface GemCardProps {
+  momentGem: MomentGem & { gem?: Gem }
+  onReviewed: () => void
+  onFeedback: (wasHelpful: boolean) => void
+  readOnly?: boolean
+}
+
+function MatchedGemCard({ momentGem, onReviewed, onFeedback, readOnly }: GemCardProps) {
+  const [isReviewed, setIsReviewed] = useState(momentGem.was_reviewed)
+  const [feedback, setFeedback] = useState<boolean | null>(momentGem.was_helpful)
+
+  const gem = momentGem.gem
+  if (!gem) return null
+
+  const handleGotIt = async () => {
+    if (readOnly || isReviewed) return
+    setIsReviewed(true)
+    await markGemReviewed(momentGem.id)
+    onReviewed()
+  }
+
+  const handleNotHelpful = async () => {
+    if (readOnly) return
+    setFeedback(false)
+    setIsReviewed(true)
+    await recordMomentGemFeedback(momentGem.id, false)
+    onFeedback(false)
+  }
+
+  // Relevance indicator color
+  const getRelevanceColor = (score: number) => {
+    if (score >= 0.8) return "bg-green-500"
+    if (score >= 0.6) return "bg-yellow-500"
+    return "bg-orange-500"
+  }
+
+  return (
+    <Card
+      data-testid="gem-card"
+      className={cn(
+        "transition-all",
+        isReviewed && "opacity-60"
+      )}
+    >
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between gap-2">
+          <Badge
+            variant="outline"
+            className={cn(
+              "text-xs",
+              CONTEXT_TAG_COLORS[gem.context_tag]
+            )}
+          >
+            {gem.context_tag === "other" && gem.custom_context
+              ? gem.custom_context
+              : CONTEXT_TAG_LABELS[gem.context_tag]}
+          </Badge>
+          {/* Relevance indicator */}
+          <div className="flex items-center gap-1.5" title={`${Math.round(momentGem.relevance_score * 100)}% relevant`}>
+            <div
+              className={cn(
+                "w-2 h-2 rounded-full",
+                getRelevanceColor(momentGem.relevance_score)
+              )}
+            />
+            <span className="text-xs text-muted-foreground">
+              {Math.round(momentGem.relevance_score * 100)}%
+            </span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* Gem content */}
+        <p className="text-sm leading-relaxed">{gem.content}</p>
+
+        {/* Source */}
+        {gem.source && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <span>Source:</span>
+            {gem.source_url ? (
+              <a
+                href={gem.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline inline-flex items-center gap-1"
+              >
+                {gem.source}
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            ) : (
+              <span>{gem.source}</span>
+            )}
+          </div>
+        )}
+
+        {/* AI relevance reason */}
+        {momentGem.relevance_reason && (
+          <div className="p-2 rounded-md bg-muted/50">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium">Why this applies:</span>{" "}
+              {momentGem.relevance_reason}
+            </p>
+          </div>
+        )}
+
+        {/* Actions */}
+        {!readOnly && (
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant={isReviewed && feedback === null ? "default" : "outline"}
+              size="sm"
+              onClick={handleGotIt}
+              disabled={isReviewed}
+              className="flex-1 gap-1"
+            >
+              <Check className="h-4 w-4" />
+              Got it
+            </Button>
+            <Button
+              variant={feedback === false ? "destructive" : "outline"}
+              size="sm"
+              onClick={handleNotHelpful}
+              disabled={feedback !== null}
+              className="gap-1"
+            >
+              <ThumbsDown className="h-4 w-4" />
+              Not helpful
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+export function PrepCard({ moment, onComplete, readOnly = false }: PrepCardProps) {
+  const router = useRouter()
+  const [isCompleting, setIsCompleting] = useState(false)
+
+  // Calculate time until event (for calendar moments)
+  const getTimeUntil = (startTime: string): string => {
+    const start = new Date(startTime)
+    const now = new Date()
+    const diffMs = start.getTime() - now.getTime()
+
+    if (diffMs <= 0) return "now"
+
+    const diffMins = Math.floor(diffMs / (1000 * 60))
+    if (diffMins < 60) return `in ${diffMins} min`
+
+    const diffHours = Math.floor(diffMins / 60)
+    if (diffHours < 24) return `in ${diffHours}h`
+
+    const diffDays = Math.floor(diffHours / 24)
+    return `in ${diffDays}d`
+  }
+
+  const handleComplete = async () => {
+    setIsCompleting(true)
+    await updateMomentStatus(moment.id, 'completed')
+    setIsCompleting(false)
+    onComplete?.()
+    router.push('/gems')
+  }
+
+  const handleBack = () => {
+    router.back()
+  }
+
+  const sortedGems = [...moment.matched_gems].sort(
+    (a, b) => b.relevance_score - a.relevance_score
+  )
+
+  const isEmpty = sortedGems.length === 0
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="space-y-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleBack}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Sparkles className="h-4 w-4 text-amber-500" />
+            <span>Preparing for</span>
+          </div>
+          <h1 className="text-xl font-semibold">
+            {moment.calendar_event_title || moment.description}
+          </h1>
+          {moment.calendar_event_start && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              <span>Starting {getTimeUntil(moment.calendar_event_start)}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Matched Gems */}
+      {isEmpty ? (
+        <Card className="text-center py-12">
+          <CardContent className="space-y-4">
+            <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+              <Sparkles className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-lg font-medium">No gems matched this moment</p>
+              <p className="text-sm text-muted-foreground">
+                But you&apos;ve got this!
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => router.push('/gems')}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Add a gem for next time
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            {sortedGems.length} gem{sortedGems.length !== 1 ? 's' : ''} to prepare with
+          </p>
+          {sortedGems.map((momentGem) => (
+            <MatchedGemCard
+              key={momentGem.id}
+              momentGem={momentGem}
+              onReviewed={() => {}}
+              onFeedback={() => {}}
+              readOnly={readOnly}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Footer */}
+      {!readOnly && !isEmpty && (
+        <div className="sticky bottom-6 pt-4">
+          <Button
+            onClick={handleComplete}
+            disabled={isCompleting}
+            className="w-full"
+            size="lg"
+          >
+            {isCompleting ? "Completing..." : "Done Preparing"}
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
