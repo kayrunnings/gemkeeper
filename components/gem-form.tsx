@@ -128,9 +128,9 @@ export function GemForm({ isOpen, onClose, onGemCreated, currentGemCount }: GemF
             <div className="flex items-start gap-2 p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800">
               <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium">Maximum gems reached</p>
+                <p className="font-medium">Maximum thoughts reached</p>
                 <p className="mt-1">
-                  You have {MAX_ACTIVE_GEMS} active gems. Please retire or graduate a gem
+                  You have {MAX_ACTIVE_GEMS} active thoughts. Please retire or graduate a thought
                   before adding a new one.
                 </p>
               </div>

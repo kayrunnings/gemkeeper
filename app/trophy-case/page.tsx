@@ -122,14 +122,14 @@ export default function TrophyCasePage() {
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-100 to-amber-100 flex items-center justify-center mb-6">
                 <Trophy className="h-10 w-10 text-amber-400" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">No graduated gems yet</h3>
+              <h3 className="text-lg font-semibold mb-2">No graduated thoughts yet</h3>
               <p className="text-muted-foreground mb-6 max-w-sm">
-                Apply a gem 5 or more times to graduate it to your trophy case!
+                Apply a thought 5 or more times to graduate it to your ThoughtBank!
               </p>
-              <Link href="/gems">
+              <Link href="/thoughts">
                 <Button className="gap-2">
                   <GemIcon className="h-4 w-4" />
-                  View Your Gems
+                  View Your Thoughts
                 </Button>
               </Link>
             </CardContent>

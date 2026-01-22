@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Gem } from "@/lib/types/gem"
+import { Thought } from "@/lib/types/thought"
 import { createClient } from "@/lib/supabase/client"
-import { getDailyGem } from "@/lib/gems"
+import { getDailyThought } from "@/lib/thoughts"
 import { getRecentMoments } from "@/lib/moments"
 import { LayoutShell } from "@/components/layout-shell"
-import { DailyGemCard } from "@/components/home/DailyGemCard"
+import { DailyThoughtCard } from "@/components/home/DailyThoughtCard"
 import { ActivityStatsCard } from "@/components/home/ActivityStatsCard"
 import { QuickActionsCard } from "@/components/home/QuickActionsCard"
 import { UpcomingMomentsCard } from "@/components/home/UpcomingMomentsCard"
@@ -29,7 +29,7 @@ function getGreeting(): string {
 }
 
 export default function HomePage() {
-  const [dailyGem, setDailyGem] = useState<Gem | null>(null)
+  const [dailyThought, setDailyThought] = useState<Thought | null>(null)
   const [moments, setMoments] = useState<Moment[]>([])
   const [stats, setStats] = useState<Stats>({ activeGems: 0, graduatedGems: 0, totalApplications: 0 })
   const [isLoading, setIsLoading] = useState(true)
@@ -61,8 +61,8 @@ export default function HomePage() {
         }
 
         // Fetch all data in parallel
-        const [gemResult, momentsResult, activeGemsResult, graduatedGemsResult] = await Promise.all([
-          getDailyGem(),
+        const [thoughtResult, momentsResult, activeGemsResult, graduatedGemsResult] = await Promise.all([
+          getDailyThought(),
           getRecentMoments(10),
           supabase
             .from("gems")
@@ -76,8 +76,8 @@ export default function HomePage() {
             .eq("status", "graduated"),
         ])
 
-        if (gemResult.gem) {
-          setDailyGem(gemResult.gem)
+        if (thoughtResult.thought) {
+          setDailyThought(thoughtResult.thought)
         }
 
         if (momentsResult.moments) {
@@ -137,8 +137,8 @@ export default function HomePage() {
 
         {/* Main grid */}
         <div className="grid gap-6 md:grid-cols-2">
-          {/* Today's Gem - Full width */}
-          <DailyGemCard gem={dailyGem} className="md:col-span-2" />
+          {/* Today's Thought - Full width */}
+          <DailyThoughtCard thought={dailyThought} className="md:col-span-2" />
 
           {/* Quick Actions */}
           <QuickActionsCard />

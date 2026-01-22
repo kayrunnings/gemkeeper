@@ -18,7 +18,7 @@ interface ActivityStatsCardProps {
 export function ActivityStatsCard({ stats, className }: ActivityStatsCardProps) {
   const statItems = [
     {
-      label: "Active Gems",
+      label: "Active Thoughts",
       value: stats.activeGems,
       icon: Gem,
       color: "text-primary",

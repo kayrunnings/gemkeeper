@@ -357,13 +357,13 @@ export function Sidebar({
       {/* Divider */}
       <div className="my-2 border-t" />
 
-      {/* Gems link */}
+      {/* Thoughts link */}
       <Link
-        href="/gems"
+        href="/thoughts"
         className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-left hover:bg-muted text-foreground"
       >
         <Gem className="h-4 w-4" />
-        <span className="flex-1">Gems</span>
+        <span className="flex-1">Thoughts</span>
       </Link>
     </aside>
   )

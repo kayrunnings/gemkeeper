@@ -34,7 +34,7 @@ export function DailyGemCard({ gem, className }: DailyGemCardProps) {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
               <Sun className="h-5 w-5 text-white" />
             </div>
-            <CardTitle className="text-lg">Today&apos;s Gem</CardTitle>
+            <CardTitle className="text-lg">Today&apos;s Thought</CardTitle>
           </div>
           <Link href="/daily">
             <Button variant="ghost" size="sm" className="gap-1">
@@ -64,9 +64,9 @@ export function DailyGemCard({ gem, className }: DailyGemCardProps) {
             <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center mb-3">
               <GemIcon className="h-6 w-6 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground mb-4">No active gems yet</p>
-            <Link href="/gems">
-              <Button size="sm">Add Your First Gem</Button>
+            <p className="text-muted-foreground mb-4">No active thoughts yet</p>
+            <Link href="/thoughts">
+              <Button size="sm">Add Your First Thought</Button>
             </Link>
           </div>
         )}

@@ -12,8 +12,8 @@ interface QuickActionsCardProps {
 export function QuickActionsCard({ className }: QuickActionsCardProps) {
   const actions = [
     {
-      label: "Add Gem",
-      href: "/gems",
+      label: "Add Thought",
+      href: "/thoughts",
       icon: Gem,
       variant: "default" as const,
     },

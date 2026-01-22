@@ -89,7 +89,7 @@ export default function GemsPage() {
   const handleGemCreated = (gem: Gem) => {
     setGems((prev) => [gem, ...prev])
     setIsFormOpen(false)
-    showSuccess("Gem added!", "Your wisdom has been captured.")
+    showSuccess("Thought added!", "Your wisdom has been captured.")
   }
 
   const handleGemsExtracted = async () => {
@@ -104,11 +104,11 @@ export default function GemsPage() {
       setGems(data)
     }
     setIsExtractModalOpen(false)
-    showSuccess("Gems extracted!", "AI has found wisdom in your content.")
+    showSuccess("Thoughts extracted!", "AI has found wisdom in your content.")
   }
 
   const handleDeleteGem = async (gemId: string) => {
-    if (!window.confirm("Are you sure you want to delete this gem?")) {
+    if (!window.confirm("Are you sure you want to delete this thought?")) {
       return
     }
 
@@ -124,7 +124,7 @@ export default function GemsPage() {
       }
 
       setGems((prev) => prev.filter((gem) => gem.id !== gemId))
-      showSuccess("Gem deleted")
+      showSuccess("Thought deleted")
     } catch (err) {
       showError(err, "Failed to delete gem")
     }
@@ -165,7 +165,7 @@ export default function GemsPage() {
               <Sparkles className="h-8 w-8 text-white" />
             </div>
           </div>
-          <p className="text-muted-foreground">Loading your gems...</p>
+          <p className="text-muted-foreground">Loading your thoughts...</p>
         </div>
       </div>
     )
@@ -177,9 +177,9 @@ export default function GemsPage() {
         {/* Page header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Your Gems</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Your Thoughts</h1>
             <p className="text-muted-foreground mt-1">
-              {gemCount} of {MAX_ACTIVE_GEMS} active gems
+              {gemCount} of {MAX_ACTIVE_GEMS} active thoughts
             </p>
           </div>
 
@@ -189,7 +189,7 @@ export default function GemsPage() {
               variant="ai"
               className="gap-2"
               disabled={isAtLimit}
-              title={isAtLimit ? `Maximum ${MAX_ACTIVE_GEMS} active gems reached` : "Extract gems from content using AI"}
+              title={isAtLimit ? `Maximum ${MAX_ACTIVE_GEMS} active thoughts reached` : "Extract thoughts from content using AI"}
             >
               <Sparkles className="h-4 w-4 ai-sparkle" />
               Extract with AI
@@ -198,10 +198,10 @@ export default function GemsPage() {
               onClick={() => setIsFormOpen(true)}
               className="gap-2"
               disabled={isAtLimit}
-              title={isAtLimit ? `Maximum ${MAX_ACTIVE_GEMS} active gems reached` : undefined}
+              title={isAtLimit ? `Maximum ${MAX_ACTIVE_GEMS} active thoughts reached` : undefined}
             >
               <Plus className="h-4 w-4" />
-              Add Gem
+              Add Thought
             </Button>
           </div>
         </div>
@@ -211,9 +211,9 @@ export default function GemsPage() {
           <div className="flex items-start gap-3 p-4 rounded-xl bg-warning/10 border border-warning/20 text-warning mb-6">
             <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium">You&apos;ve reached the maximum of {MAX_ACTIVE_GEMS} active gems</p>
+              <p className="font-medium">You&apos;ve reached the maximum of {MAX_ACTIVE_GEMS} active thoughts</p>
               <p className="text-sm opacity-80 mt-0.5">
-                Retire or graduate some gems to add more wisdom to your collection.
+                Retire or graduate some thoughts to add more wisdom to your collection.
               </p>
             </div>
           </div>
@@ -226,7 +226,7 @@ export default function GemsPage() {
               <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mb-6">
                 <GemIcon className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">No gems yet</h3>
+              <h3 className="text-lg font-semibold mb-2">No thoughts yet</h3>
               <p className="text-muted-foreground mb-6 max-w-sm">
                 Capture wisdom, insights, and advice that you want to remember and apply in your life.
               </p>
