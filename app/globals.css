@@ -1,142 +1,174 @@
 @import "tailwindcss";
 
-/* Design System: NotebookLM-inspired clean, AI-forward aesthetic */
-:root {
-  /* Core backgrounds - Clean whites and light grays */
-  --background: #F8F9FA;
-  --foreground: #1F2937;
+/* Design System: GemKeeper - Gem-inspired dark-first aesthetic */
+/* Dark theme is DEFAULT - uses .light class for light mode */
 
-  /* Card surfaces */
-  --card: #FFFFFF;
-  --card-foreground: #1F2937;
+:root {
+  /* Core backgrounds - Dark grays (NOT true black) */
+  --background: #121212;
+  --foreground: #f5f5f5;
+
+  /* Card surfaces - Slightly lighter */
+  --card: #1a1a1a;
+  --card-foreground: #f5f5f5;
 
   /* Popover/Modal surfaces */
-  --popover: #FFFFFF;
-  --popover-foreground: #1F2937;
+  --popover: #1f1f1f;
+  --popover-foreground: #f5f5f5;
 
-  /* Primary action color - Deep purple for "wisdom" feel */
-  --primary: #6366F1;
-  --primary-foreground: #FFFFFF;
+  /* Primary action color - Emerald green for gems */
+  --primary: #50C878;
+  --primary-foreground: #0a0a0a;
 
   /* Secondary/muted elements */
-  --secondary: #F1F5F9;
-  --secondary-foreground: #475569;
+  --secondary: #262626;
+  --secondary-foreground: #d4d4d4;
 
   /* Muted text and backgrounds */
-  --muted: #E2E8F0;
-  --muted-foreground: #64748B;
+  --muted: #2d2d2d;
+  --muted-foreground: #a1a1a1;
 
-  /* Accents - Teal for gems */
-  --accent: #0D9488;
-  --accent-foreground: #FFFFFF;
+  /* Accents - Sapphire blue for links/info */
+  --accent: #3b82f6;
+  --accent-foreground: #f5f5f5;
 
-  /* Gem accent - softer teal for tags */
-  --gem: #CCFBF1;
-  --gem-foreground: #115E59;
+  /* Gem accent - Emerald tint for tags */
+  --gem: #134e4a;
+  --gem-foreground: #6ee7b7;
 
-  /* Destructive actions */
-  --destructive: #EF4444;
-  --destructive-foreground: #FFFFFF;
+  /* Destructive actions - Ruby red */
+  --destructive: #E0115F;
+  --destructive-foreground: #f5f5f5;
 
-  /* Success states */
-  --success: #10B981;
-  --success-foreground: #FFFFFF;
+  /* Success states - Emerald */
+  --success: #50C878;
+  --success-foreground: #0a0a0a;
 
-  /* Warning states */
-  --warning: #F59E0B;
-  --warning-foreground: #FFFFFF;
+  /* Warning states - Amber/Topaz */
+  --warning: #FFBF00;
+  --warning-foreground: #0a0a0a;
+
+  /* Info states - Sapphire blue */
+  --info: #0F52BA;
+  --info-foreground: #f5f5f5;
+
+  /* Highlight - Amethyst purple */
+  --highlight: #9966CC;
+  --highlight-foreground: #f5f5f5;
 
   /* Borders and inputs */
-  --border: #E2E8F0;
-  --input: #E2E8F0;
-  --ring: #6366F1;
+  --border: #2d2d2d;
+  --input: #262626;
+  --ring: #50C878;
 
   /* Border radius - More rounded for modern feel */
   --radius: 0.75rem;
 
-  /* AI gradient colors */
-  --ai-gradient-start: #6366F1;
-  --ai-gradient-end: #3B82F6;
-  --ai-glow: rgba(99, 102, 241, 0.3);
+  /* AI gradient colors - Emerald to Sapphire */
+  --ai-gradient-start: #50C878;
+  --ai-gradient-end: #3b82f6;
+  --ai-glow: rgba(80, 200, 120, 0.3);
 
-  /* Context tag colors - Soft pastels */
-  --tag-meetings: #DBEAFE;
-  --tag-meetings-foreground: #1E40AF;
-  --tag-feedback: #FCE7F3;
-  --tag-feedback-foreground: #9D174D;
-  --tag-conflict: #FEE2E2;
-  --tag-conflict-foreground: #991B1B;
-  --tag-focus: #E0E7FF;
-  --tag-focus-foreground: #3730A3;
-  --tag-health: #D1FAE5;
-  --tag-health-foreground: #065F46;
-  --tag-relationships: #FEF3C7;
-  --tag-relationships-foreground: #92400E;
-  --tag-parenting: #F3E8FF;
-  --tag-parenting-foreground: #6B21A8;
-  --tag-other: #F1F5F9;
-  --tag-other-foreground: #475569;
+  /* Context tag colors - Dark mode jewel tones */
+  --tag-meetings: #1e3a5f;
+  --tag-meetings-foreground: #93c5fd;
+  --tag-feedback: #4c1d3d;
+  --tag-feedback-foreground: #f9a8d4;
+  --tag-conflict: #450a0a;
+  --tag-conflict-foreground: #fca5a5;
+  --tag-focus: #312e81;
+  --tag-focus-foreground: #a5b4fc;
+  --tag-health: #064e3b;
+  --tag-health-foreground: #6ee7b7;
+  --tag-relationships: #451a03;
+  --tag-relationships-foreground: #fcd34d;
+  --tag-parenting: #3b0764;
+  --tag-parenting-foreground: #d8b4fe;
+  --tag-other: #262626;
+  --tag-other-foreground: #d4d4d4;
 }
 
-/* Dark mode */
-.dark {
-  --background: #0F172A;
-  --foreground: #F8FAFC;
+/* Light mode */
+.light {
+  /* Core backgrounds - Off-white, not pure white */
+  --background: #fafafa;
+  --foreground: #171717;
 
-  --card: #1E293B;
-  --card-foreground: #F8FAFC;
+  /* Card surfaces */
+  --card: #ffffff;
+  --card-foreground: #171717;
 
-  --popover: #1E293B;
-  --popover-foreground: #F8FAFC;
+  /* Popover/Modal surfaces */
+  --popover: #ffffff;
+  --popover-foreground: #171717;
 
-  --primary: #818CF8;
-  --primary-foreground: #0F172A;
+  /* Primary action color - Emerald green */
+  --primary: #059669;
+  --primary-foreground: #ffffff;
 
-  --secondary: #334155;
-  --secondary-foreground: #CBD5E1;
+  /* Secondary/muted elements */
+  --secondary: #f5f5f5;
+  --secondary-foreground: #525252;
 
-  --muted: #334155;
-  --muted-foreground: #94A3B8;
+  /* Muted text and backgrounds */
+  --muted: #e5e5e5;
+  --muted-foreground: #737373;
 
-  --accent: #2DD4BF;
-  --accent-foreground: #0F172A;
+  /* Accents - Sapphire blue */
+  --accent: #0F52BA;
+  --accent-foreground: #ffffff;
 
-  --gem: #134E4A;
-  --gem-foreground: #5EEAD4;
+  /* Gem accent - Emerald tint for tags */
+  --gem: #d1fae5;
+  --gem-foreground: #065f46;
 
-  --destructive: #F87171;
-  --destructive-foreground: #0F172A;
+  /* Destructive actions - Ruby red */
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
 
-  --success: #34D399;
-  --success-foreground: #0F172A;
+  /* Success states - Emerald */
+  --success: #059669;
+  --success-foreground: #ffffff;
 
-  --warning: #FBBF24;
-  --warning-foreground: #0F172A;
+  /* Warning states - Amber/Topaz */
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
 
-  --border: #334155;
-  --input: #334155;
-  --ring: #818CF8;
+  /* Info states - Sapphire blue */
+  --info: #0F52BA;
+  --info-foreground: #ffffff;
 
-  --ai-gradient-start: #818CF8;
-  --ai-gradient-end: #60A5FA;
-  --ai-glow: rgba(129, 140, 248, 0.4);
+  /* Highlight - Amethyst purple */
+  --highlight: #7c3aed;
+  --highlight-foreground: #ffffff;
 
-  --tag-meetings: #1E3A5F;
-  --tag-meetings-foreground: #93C5FD;
-  --tag-feedback: #4C1D3D;
-  --tag-feedback-foreground: #F9A8D4;
-  --tag-conflict: #450A0A;
-  --tag-conflict-foreground: #FCA5A5;
-  --tag-focus: #312E81;
-  --tag-focus-foreground: #A5B4FC;
-  --tag-health: #064E3B;
-  --tag-health-foreground: #6EE7B7;
-  --tag-relationships: #451A03;
-  --tag-relationships-foreground: #FCD34D;
-  --tag-parenting: #3B0764;
-  --tag-parenting-foreground: #D8B4FE;
-  --tag-other: #334155;
-  --tag-other-foreground: #CBD5E1;
+  /* Borders and inputs */
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #059669;
+
+  /* AI gradient colors */
+  --ai-gradient-start: #059669;
+  --ai-gradient-end: #0F52BA;
+  --ai-glow: rgba(5, 150, 105, 0.2);
+
+  /* Context tag colors - Light mode pastels */
+  --tag-meetings: #dbeafe;
+  --tag-meetings-foreground: #1e40af;
+  --tag-feedback: #fce7f3;
+  --tag-feedback-foreground: #9d174d;
+  --tag-conflict: #fee2e2;
+  --tag-conflict-foreground: #991b1b;
+  --tag-focus: #e0e7ff;
+  --tag-focus-foreground: #3730a3;
+  --tag-health: #d1fae5;
+  --tag-health-foreground: #065f46;
+  --tag-relationships: #fef3c7;
+  --tag-relationships-foreground: #92400e;
+  --tag-parenting: #f3e8ff;
+  --tag-parenting-foreground: #6b21a8;
+  --tag-other: #f5f5f5;
+  --tag-other-foreground: #525252;
 }
 
 /* Tailwind v4 theme configuration */
@@ -163,6 +195,10 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -200,12 +236,28 @@
   border-color: var(--border);
 }
 
+html {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Theme transition for all elements */
+*,
+*::before,
+*::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease;
 }
 
 /* Animations for dialogs */

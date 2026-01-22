@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Gem, Sparkles, Bell, CheckCircle, ChevronRight, ChevronLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface OnboardingProps {
   onComplete: () => void
@@ -67,7 +68,11 @@ export function Onboarding({ onComplete, onSkip }: OnboardingProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
+      {/* Theme toggle in top-right corner */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <Card className="w-full max-w-lg">
         <CardContent className="pt-8 pb-6">
           {/* Icon */}
