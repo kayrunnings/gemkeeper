@@ -167,7 +167,10 @@ export function ExtractedGemCard({
                 {truncateContent(gem.content)}
               </p>
               <button
-                onClick={() => setIsEditing(true)}
+                onClick={() => {
+                  setEditedContent(gem.content)
+                  setIsEditing(true)
+                }}
                 className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <Pencil className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600" />

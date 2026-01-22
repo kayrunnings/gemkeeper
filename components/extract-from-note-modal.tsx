@@ -76,7 +76,7 @@ export function ExtractFromNoteModal({
   const selectedCount = selectedGems.size
   const canSave = selectedCount > 0 && selectedCount <= availableSlots
 
-  // Reset state when modal opens
+  // Reset state when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       setStep("input")
@@ -86,8 +86,15 @@ export function ExtractFromNoteModal({
       setError(null)
       setSavedCount(0)
       setConsentGranted(hasAIConsent)
+    } else {
+      // Clean up object URLs when modal closes
+      mediaFiles.forEach((mf) => {
+        if (mf.preview) {
+          URL.revokeObjectURL(mf.preview)
+        }
+      })
     }
-  }, [isOpen, hasAIConsent])
+  }, [isOpen, hasAIConsent]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
