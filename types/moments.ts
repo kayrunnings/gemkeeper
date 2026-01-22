@@ -1,5 +1,5 @@
-// Moment types for situational gem surfacing
-import type { Gem } from "@/lib/types/gem"
+// Moment types for situational thought surfacing
+import type { Thought } from "@/lib/types/thought"
 
 export type MomentSource = 'manual' | 'calendar'
 export type MomentStatus = 'active' | 'completed' | 'dismissed'
@@ -12,7 +12,7 @@ export interface Moment {
   calendar_event_id: string | null
   calendar_event_title: string | null
   calendar_event_start: string | null
-  gems_matched_count: number
+  gems_matched_count: number  // Database column name (unchanged)
   ai_processing_time_ms: number | null
   status: MomentStatus
   completed_at: string | null
@@ -20,22 +20,28 @@ export interface Moment {
   updated_at: string
 }
 
-export interface MomentGem {
+export interface MomentThought {
   id: string
   moment_id: string
-  gem_id: string
+  gem_id: string  // Database column name (unchanged)
   user_id: string
   relevance_score: number
   relevance_reason: string | null
   was_helpful: boolean | null
   was_reviewed: boolean
   created_at: string
-  gem?: Gem  // Joined gem data
+  thought?: Thought  // Joined thought data
 }
 
-export interface MomentWithGems extends Moment {
-  matched_gems: MomentGem[]
+// Legacy alias for backward compatibility
+export type MomentGem = MomentThought
+
+export interface MomentWithThoughts extends Moment {
+  matched_thoughts: MomentThought[]
 }
+
+// Legacy alias for backward compatibility
+export type MomentWithGems = MomentWithThoughts
 
 export interface CalendarEventData {
   event_id: string

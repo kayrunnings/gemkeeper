@@ -71,7 +71,7 @@ describe('MomentEntryModal', () => {
         onMomentCreated={mockOnMomentCreated}
       />
     )
-    const button = screen.getByRole('button', { name: /find my gems/i })
+    const button = screen.getByRole('button', { name: /find my thoughts/i })
     expect(button).toBeDisabled()
   })
 
@@ -86,7 +86,7 @@ describe('MomentEntryModal', () => {
     )
     const input = screen.getByRole('textbox')
     await user.type(input, 'Test moment')
-    const button = screen.getByRole('button', { name: /find my gems/i })
+    const button = screen.getByRole('button', { name: /find my thoughts/i })
     expect(button).not.toBeDisabled()
   })
 
@@ -106,7 +106,7 @@ describe('MomentEntryModal', () => {
     )
     const input = screen.getByRole('textbox')
     await user.type(input, 'Test moment')
-    await user.click(screen.getByRole('button', { name: /find my gems/i }))
+    await user.click(screen.getByRole('button', { name: /find my thoughts/i }))
 
     await waitFor(() => {
       expect(screen.getByText(/finding your wisdom/i)).toBeInTheDocument()
@@ -124,7 +124,7 @@ describe('MomentEntryModal', () => {
     )
     const input = screen.getByRole('textbox')
     await user.type(input, 'Test moment')
-    await user.click(screen.getByRole('button', { name: /find my gems/i }))
+    await user.click(screen.getByRole('button', { name: /find my thoughts/i }))
 
     await waitFor(() => {
       expect(mockOnMomentCreated).toHaveBeenCalledWith(
@@ -136,7 +136,7 @@ describe('MomentEntryModal', () => {
     })
   })
 
-  it('shows empty state when no gems matched', async () => {
+  it('shows empty state when no thoughts matched', async () => {
     const user = userEvent.setup()
     ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
@@ -159,10 +159,10 @@ describe('MomentEntryModal', () => {
     )
     const input = screen.getByRole('textbox')
     await user.type(input, 'Test moment')
-    await user.click(screen.getByRole('button', { name: /find my gems/i }))
+    await user.click(screen.getByRole('button', { name: /find my thoughts/i }))
 
     await waitFor(() => {
-      expect(screen.getByText(/no gems matched/i)).toBeInTheDocument()
+      expect(screen.getByText(/no thoughts matched/i)).toBeInTheDocument()
     })
   })
 
@@ -182,7 +182,7 @@ describe('MomentEntryModal', () => {
     )
     const input = screen.getByRole('textbox')
     await user.type(input, 'Test moment')
-    await user.click(screen.getByRole('button', { name: /find my gems/i }))
+    await user.click(screen.getByRole('button', { name: /find my thoughts/i }))
 
     await waitFor(() => {
       expect(screen.getByText(/test error/i)).toBeInTheDocument()

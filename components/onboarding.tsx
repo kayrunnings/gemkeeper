@@ -21,26 +21,26 @@ interface OnboardingStep {
 
 const STEPS: OnboardingStep[] = [
   {
-    title: "Welcome to GemKeeper",
+    title: "Welcome to ThoughtFolio",
     description: "Your wisdom accountability partner. Capture insights, surface them at the right moments, and stay accountable for applying what you learn.",
     icon: <Gem className="h-12 w-12" />,
     color: "from-primary to-primary/80",
   },
   {
-    title: "Capture Gems",
-    description: "Save insights from books, podcasts, and life. Keep up to 10 active gems at a time to stay focused on what matters most.",
+    title: "Capture Thoughts",
+    description: "Save insights from books, podcasts, and life. Keep up to 10 active thoughts at a time to stay focused on what matters most.",
     icon: <Sparkles className="h-12 w-12" />,
     color: "from-amber-500 to-orange-500",
   },
   {
     title: "AI-Powered Extraction",
-    description: "Paste articles, book highlights, or transcripts and let AI extract wisdom gems automatically. No more manual copying!",
+    description: "Paste articles, book highlights, or transcripts and let AI extract wisdom thoughts automatically. No more manual copying!",
     icon: <Wand2 className="h-12 w-12" />,
     color: "from-violet-500 to-purple-500",
   },
   {
     title: "Prepare for Your Moments",
-    description: "Create moments for upcoming situations—meetings, conversations, or challenges. We'll surface the perfect gems to help you prepare.",
+    description: "Create moments for upcoming situations—meetings, conversations, or challenges. We'll surface the perfect thoughts to help you prepare.",
     icon: <Target className="h-12 w-12" />,
     color: "from-teal-500 to-cyan-500",
   },
@@ -52,25 +52,25 @@ const STEPS: OnboardingStep[] = [
   },
   {
     title: "Right Moment, Right Wisdom",
-    description: "Daily prompts surface your gems when you need them. Each morning, you'll get a gem to focus on for the day.",
+    description: "Daily prompts surface your thoughts when you need them. Each morning, you'll get a thought to focus on for the day.",
     icon: <Bell className="h-12 w-12" />,
     color: "from-orange-500 to-amber-500",
   },
   {
     title: "Organize with Notes",
-    description: "Keep notes from books, podcasts, and articles. Extract gems from your notes anytime. Organize with folders to stay tidy.",
+    description: "Keep notes from books, podcasts, and articles. Extract thoughts from your notes anytime. Organize with folders to stay tidy.",
     icon: <FolderOpen className="h-12 w-12" />,
     color: "from-emerald-500 to-green-500",
   },
   {
     title: "Tag for Context",
-    description: "Categorize gems by context—meetings, feedback, conflict, focus, health, relationships, and more. We'll match gems to moments based on these tags.",
+    description: "Categorize thoughts by context—meetings, feedback, conflict, focus, health, relationships, and more. We'll match thoughts to moments based on these tags.",
     icon: <Tags className="h-12 w-12" />,
     color: "from-rose-500 to-pink-500",
   },
   {
     title: "Actually Apply It",
-    description: "Accountability check-ins track your progress. Apply a gem 5 times to graduate it to your trophy case.",
+    description: "Accountability check-ins track your progress. Apply a thought 5 times to graduate it to your ThoughtBank.",
     icon: <CheckCircle className="h-12 w-12" />,
     color: "from-green-500 to-emerald-500",
   },

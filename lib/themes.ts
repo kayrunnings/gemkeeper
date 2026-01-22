@@ -1,4 +1,4 @@
-// Theme definitions for GemKeeper multi-theme system
+// Theme definitions for ThoughtFolio multi-theme system
 
 export const THEMES = [
   "midnight",
@@ -40,7 +40,7 @@ export const THEME_INFO: Record<Theme, { name: string; description: string }> = 
 
 export const DEFAULT_THEME: Theme = "midnight"
 
-export const STORAGE_KEY = "gemkeeper-theme"
+export const STORAGE_KEY = "thoughtfolio-theme"
 
 export function isValidTheme(value: string | null): value is Theme {
   return value !== null && THEMES.includes(value as Theme)

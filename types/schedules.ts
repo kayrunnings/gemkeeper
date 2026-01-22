@@ -1,10 +1,10 @@
-// Schedule types for individual gem check-in schedules
+// Schedule types for individual thought check-in schedules
 
 export type ScheduleType = 'daily' | 'weekly' | 'monthly' | 'custom'
 
-export interface GemSchedule {
+export interface ThoughtSchedule {
   id: string
-  gem_id: string
+  gem_id: string  // Database column name (unchanged)
   user_id: string
   cron_expression: string
   human_readable: string
@@ -41,3 +41,6 @@ export interface NLPScheduleResult {
 // Day names for UI display
 export const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
 export const DAY_FULL_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const
+
+// Legacy alias for backward compatibility
+export type GemSchedule = ThoughtSchedule

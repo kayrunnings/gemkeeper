@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/client"
 import type {
   Moment,
-  MomentWithGems,
-  MomentGem,
+  MomentWithThoughts,
+  MomentThought,
   MomentSource,
   MomentStatus,
   CalendarEventData
@@ -51,11 +51,11 @@ export async function createMoment(
 }
 
 /**
- * Get a moment with its matched gems
+ * Get a moment with its matched thoughts
  */
 export async function getMoment(
   momentId: string
-): Promise<{ moment: MomentWithGems | null; error: string | null }> {
+): Promise<{ moment: MomentWithThoughts | null; error: string | null }> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -78,25 +78,25 @@ export async function getMoment(
     return { moment: null, error: momentError.message }
   }
 
-  // Get matched gems with gem data
-  const { data: momentGems, error: gemsError } = await supabase
+  // Get matched thoughts with thought data
+  const { data: momentThoughts, error: thoughtsError } = await supabase
     .from("moment_gems")
     .select(`
       *,
-      gem:gems(*)
+      thought:gems(*)
     `)
     .eq("moment_id", momentId)
     .eq("user_id", user.id)
     .order("relevance_score", { ascending: false })
 
-  if (gemsError) {
-    return { moment: null, error: gemsError.message }
+  if (thoughtsError) {
+    return { moment: null, error: thoughtsError.message }
   }
 
   return {
     moment: {
       ...moment,
-      matched_gems: momentGems || [],
+      matched_thoughts: momentThoughts || [],
     },
     error: null,
   }
@@ -198,11 +198,11 @@ export async function updateMomentStatus(
 }
 
 /**
- * Update moment with matched gems count and processing time
+ * Update moment with matched thoughts count and processing time
  */
 export async function updateMomentMatchResults(
   momentId: string,
-  gemsMatchedCount: number,
+  thoughtsMatchedCount: number,
   processingTimeMs: number
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
@@ -215,7 +215,7 @@ export async function updateMomentMatchResults(
   const { error } = await supabase
     .from("moments")
     .update({
-      gems_matched_count: gemsMatchedCount,
+      gems_matched_count: thoughtsMatchedCount,  // Database column name (unchanged)
       ai_processing_time_ms: processingTimeMs,
       updated_at: new Date().toISOString(),
     })
@@ -230,9 +230,9 @@ export async function updateMomentMatchResults(
 }
 
 /**
- * Record feedback on a matched gem
+ * Record feedback on a matched thought
  */
-export async function recordMomentGemFeedback(
+export async function recordMomentThoughtFeedback(
   momentGemId: string,
   wasHelpful: boolean
 ): Promise<{ error: string | null }> {
@@ -260,9 +260,9 @@ export async function recordMomentGemFeedback(
 }
 
 /**
- * Mark a gem as reviewed in a moment
+ * Mark a thought as reviewed in a moment
  */
-export async function markGemReviewed(
+export async function markThoughtReviewed(
   momentGemId: string
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
@@ -286,12 +286,12 @@ export async function markGemReviewed(
 }
 
 /**
- * Add matched gems to a moment
+ * Add matched thoughts to a moment
  */
-export async function addMomentGems(
+export async function addMomentThoughts(
   momentId: string,
   matches: Array<{
-    gem_id: string
+    gem_id: string  // Database column name (unchanged)
     relevance_score: number
     relevance_reason: string | null
   }>
@@ -307,7 +307,7 @@ export async function addMomentGems(
     return { error: null }
   }
 
-  const momentGems = matches.map((match) => ({
+  const momentThoughts = matches.map((match) => ({
     moment_id: momentId,
     gem_id: match.gem_id,
     user_id: user.id,
@@ -319,7 +319,7 @@ export async function addMomentGems(
 
   const { error } = await supabase
     .from("moment_gems")
-    .insert(momentGems)
+    .insert(momentThoughts)
 
   if (error) {
     return { error: error.message }
@@ -327,3 +327,8 @@ export async function addMomentGems(
 
   return { error: null }
 }
+
+// Legacy aliases for backward compatibility during migration
+export const recordMomentGemFeedback = recordMomentThoughtFeedback
+export const markGemReviewed = markThoughtReviewed
+export const addMomentGems = addMomentThoughts

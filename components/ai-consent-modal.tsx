@@ -81,11 +81,11 @@ export function AIConsentModal({ isOpen, onClose, onConsent }: AIConsentModalPro
             </li>
             <li className="flex items-start gap-2">
               <span className="text-violet-500 mt-0.5">•</span>
-              <span>Extracted gems are saved to your GemKeeper account</span>
+              <span>Extracted thoughts are saved to your ThoughtFolio account</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-violet-500 mt-0.5">•</span>
-              <span>You can review and edit all extracted gems before saving</span>
+              <span>You can review and edit all extracted thoughts before saving</span>
             </li>
           </ul>
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { extractGemsFromContent, extractGemsFromMultimedia } from "@/lib/ai/gemini"
+import { extractThoughtsFromContent, extractThoughtsFromMultimedia } from "@/lib/ai/gemini"
 import {
   checkUsageLimit,
   recordUsage,
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     const cached = await getCachedExtraction(user.id, contentHash)
     if (cached) {
       return NextResponse.json({
-        gems: cached.gems,
+        thoughts: cached.thoughts,
         cached: true,
         usage,
       })
@@ -95,14 +95,14 @@ export async function POST(request: NextRequest) {
 
     if (hasMedia) {
       // Multimedia extraction
-      result = await extractGemsFromMultimedia(content || "", media!, source)
+      result = await extractThoughtsFromMultimedia(content || "", media!, source)
     } else {
       // Text-only extraction
-      result = await extractGemsFromContent(content!, source)
+      result = await extractThoughtsFromContent(content!, source)
     }
 
-    // Check if no gems were extracted
-    if (result.gems.length === 0) {
+    // Check if no thoughts were extracted
+    if (result.thoughts.length === 0) {
       return NextResponse.json(
         {
           error: "No actionable insights found. Try pasting different content.",
@@ -126,10 +126,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 8. Return extracted gems
+    // 8. Return extracted thoughts
     const updatedUsage = await checkUsageLimit(user.id)
     return NextResponse.json({
-      gems: result.gems,
+      thoughts: result.thoughts,
       cached: false,
       usage: updatedUsage,
     })
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: "Failed to extract gems. Please try again." },
+      { error: "Failed to extract thoughts. Please try again." },
       { status: 500 }
     )
   }

@@ -104,7 +104,7 @@ export async function getCachedExtraction(
   }
 
   return {
-    gems: data.extracted_gems as ExtractionResult["gems"],
+    thoughts: data.extracted_gems as ExtractionResult["thoughts"],
     tokens_used: data.tokens_used,
   }
 }
@@ -123,7 +123,7 @@ export async function cacheExtraction(
     input_content: content.slice(0, 10000), // Limit stored content
     input_hash: contentHash,
     source: source,
-    extracted_gems: result.gems,
+    extracted_gems: result.thoughts,
     tokens_used: result.tokens_used,
   })
 }

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
-import type { GemSchedule, ScheduleInput, ScheduleType } from "@/types/schedules"
+import type { ThoughtSchedule, ScheduleInput, ScheduleType } from "@/types/schedules"
 import { CronExpressionParser } from "cron-parser"
 
 // Day name mappings
@@ -140,12 +140,12 @@ function getOrdinal(n: number): string {
 // ===========================================
 
 /**
- * Create a new schedule for a gem
+ * Create a new schedule for a thought
  */
-export async function createGemSchedule(
-  gemId: string,
+export async function createThoughtSchedule(
+  thoughtId: string,
   input: ScheduleInput
-): Promise<{ schedule: GemSchedule | null; error: string | null }> {
+): Promise<{ schedule: ThoughtSchedule | null; error: string | null }> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -161,7 +161,7 @@ export async function createGemSchedule(
   const { data, error } = await supabase
     .from("gem_schedules")
     .insert({
-      gem_id: gemId,
+      gem_id: thoughtId,  // Database column name (unchanged)
       user_id: user.id,
       cron_expression: cronExpression,
       human_readable: humanReadable,
@@ -184,11 +184,11 @@ export async function createGemSchedule(
 }
 
 /**
- * Get all schedules for a gem
+ * Get all schedules for a thought
  */
-export async function getGemSchedules(
-  gemId: string
-): Promise<{ schedules: GemSchedule[]; error: string | null }> {
+export async function getThoughtSchedules(
+  thoughtId: string
+): Promise<{ schedules: ThoughtSchedule[]; error: string | null }> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -199,7 +199,7 @@ export async function getGemSchedules(
   const { data, error } = await supabase
     .from("gem_schedules")
     .select("*")
-    .eq("gem_id", gemId)
+    .eq("gem_id", thoughtId)
     .eq("user_id", user.id)
     .order("created_at", { ascending: true })
 
@@ -213,7 +213,7 @@ export async function getGemSchedules(
 /**
  * Get all active schedules for a user
  */
-export async function getAllActiveSchedules(): Promise<{ schedules: GemSchedule[]; error: string | null }> {
+export async function getAllActiveSchedules(): Promise<{ schedules: ThoughtSchedule[]; error: string | null }> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -238,10 +238,10 @@ export async function getAllActiveSchedules(): Promise<{ schedules: GemSchedule[
 /**
  * Update an existing schedule
  */
-export async function updateGemSchedule(
+export async function updateThoughtSchedule(
   scheduleId: string,
   updates: Partial<ScheduleInput>
-): Promise<{ schedule: GemSchedule | null; error: string | null }> {
+): Promise<{ schedule: ThoughtSchedule | null; error: string | null }> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -301,7 +301,7 @@ export async function updateGemSchedule(
 /**
  * Delete a schedule
  */
-export async function deleteGemSchedule(
+export async function deleteThoughtSchedule(
   scheduleId: string
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
@@ -374,10 +374,10 @@ export async function toggleScheduleActive(
 }
 
 /**
- * Get the next scheduled trigger across all active schedules for a gem
+ * Get the next scheduled trigger across all active schedules for a thought
  */
-export async function getNextTriggerForGem(
-  gemId: string
+export async function getNextTriggerForThought(
+  thoughtId: string
 ): Promise<{ nextTrigger: Date | null; error: string | null }> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -389,7 +389,7 @@ export async function getNextTriggerForGem(
   const { data, error } = await supabase
     .from("gem_schedules")
     .select("next_trigger_at")
-    .eq("gem_id", gemId)
+    .eq("gem_id", thoughtId)
     .eq("user_id", user.id)
     .eq("is_active", true)
     .order("next_trigger_at", { ascending: true })
@@ -411,10 +411,10 @@ export async function getNextTriggerForGem(
 }
 
 /**
- * Count active schedules for a gem
+ * Count active schedules for a thought
  */
-export async function getScheduleCountForGem(
-  gemId: string
+export async function getScheduleCountForThought(
+  thoughtId: string
 ): Promise<{ count: number; error: string | null }> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -426,7 +426,7 @@ export async function getScheduleCountForGem(
   const { count, error } = await supabase
     .from("gem_schedules")
     .select("*", { count: 'exact', head: true })
-    .eq("gem_id", gemId)
+    .eq("gem_id", thoughtId)
     .eq("user_id", user.id)
     .eq("is_active", true)
 
@@ -436,3 +436,11 @@ export async function getScheduleCountForGem(
 
   return { count: count || 0, error: null }
 }
+
+// Legacy aliases for backward compatibility during migration
+export const createGemSchedule = createThoughtSchedule
+export const getGemSchedules = getThoughtSchedules
+export const updateGemSchedule = updateThoughtSchedule
+export const deleteGemSchedule = deleteThoughtSchedule
+export const getNextTriggerForGem = getNextTriggerForThought
+export const getScheduleCountForGem = getScheduleCountForThought

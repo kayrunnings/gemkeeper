@@ -67,7 +67,7 @@ export default function LoginPage() {
           <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center mb-4 shadow-lg">
             <Gem className="h-8 w-8 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-semibold">GemKeeper</h1>
+          <h1 className="text-2xl font-semibold">ThoughtFolio</h1>
           <p className="text-muted-foreground mt-1">Your wisdom accountability partner</p>
         </div>
 
