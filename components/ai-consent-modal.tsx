@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,13 @@ interface AIConsentModalProps {
 export function AIConsentModal({ isOpen, onClose, onConsent }: AIConsentModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Reset error state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setError(null)
+    }
+  }, [isOpen])
 
   const handleConsent = async () => {
     setIsSubmitting(true)
