@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/client"
 import type { GemSchedule, ScheduleInput, ScheduleType } from "@/types/schedules"
-import cronParser from "cron-parser"
+import { CronExpressionParser } from "cron-parser"
 
 // Day name mappings
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -103,7 +103,7 @@ export function generateHumanReadable(input: ScheduleInput): string {
  */
 export function calculateNextTrigger(cronExpression: string, timezone: string): Date {
   try {
-    const interval = cronParser.parseExpression(cronExpression, {
+    const interval = CronExpressionParser.parse(cronExpression, {
       currentDate: new Date(),
       tz: timezone,
     })
