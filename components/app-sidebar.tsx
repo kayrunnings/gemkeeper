@@ -20,11 +20,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: "/gems", label: "Gems", icon: Gem },
+  { href: "/thoughts", label: "Thoughts", icon: Gem },
   { href: "/moments", label: "Moments", icon: Sparkles },
   { href: "/daily", label: "Daily", icon: Sun },
   { href: "/checkin", label: "Check-in", icon: Moon },
-  { href: "/trophy-case", label: "Trophy Case", icon: Trophy },
+  { href: "/thought-bank", label: "ThoughtBank", icon: Trophy },
 ]
 
 const secondaryNavItems: NavItem[] = [
@@ -36,8 +36,8 @@ export function AppSidebar() {
   const pathname = usePathname()
 
   const isActive = (href: string) => {
-    if (href === "/gems") {
-      return pathname === "/gems" || pathname.startsWith("/gems/")
+    if (href === "/thoughts") {
+      return pathname === "/thoughts" || pathname.startsWith("/thoughts/")
     }
     return pathname === href || pathname.startsWith(`${href}/`)
   }
@@ -96,8 +96,8 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
   const pathname = usePathname()
 
   const isActive = (href: string) => {
-    if (href === "/gems") {
-      return pathname === "/gems" || pathname.startsWith("/gems/")
+    if (href === "/thoughts") {
+      return pathname === "/thoughts" || pathname.startsWith("/thoughts/")
     }
     return pathname === href || pathname.startsWith(`${href}/`)
   }

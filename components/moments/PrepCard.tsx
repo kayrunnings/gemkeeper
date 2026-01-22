@@ -15,35 +15,35 @@ import {
   Plus,
   ExternalLink,
 } from "lucide-react"
-import type { MomentWithGems, MomentGem } from "@/types/moments"
-import type { Gem } from "@/lib/types/gem"
-import { CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS } from "@/lib/types/gem"
-import { recordMomentGemFeedback, markGemReviewed, updateMomentStatus } from "@/lib/moments"
+import type { MomentWithThoughts, MomentThought } from "@/types/moments"
+import type { Thought } from "@/lib/types/thought"
+import { CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS } from "@/lib/types/thought"
+import { recordMomentThoughtFeedback, markThoughtReviewed, updateMomentStatus } from "@/lib/moments"
 
 interface PrepCardProps {
-  moment: MomentWithGems
+  moment: MomentWithThoughts
   onComplete?: () => void
   readOnly?: boolean
 }
 
-interface GemCardProps {
-  momentGem: MomentGem & { gem?: Gem }
+interface ThoughtCardProps {
+  momentThought: MomentThought & { thought?: Thought }
   onReviewed: () => void
   onFeedback: (wasHelpful: boolean) => void
   readOnly?: boolean
 }
 
-function MatchedGemCard({ momentGem, onReviewed, onFeedback, readOnly }: GemCardProps) {
-  const [isReviewed, setIsReviewed] = useState(momentGem.was_reviewed)
-  const [feedback, setFeedback] = useState<boolean | null>(momentGem.was_helpful)
+function MatchedThoughtCard({ momentThought, onReviewed, onFeedback, readOnly }: ThoughtCardProps) {
+  const [isReviewed, setIsReviewed] = useState(momentThought.was_reviewed)
+  const [feedback, setFeedback] = useState<boolean | null>(momentThought.was_helpful)
 
-  const gem = momentGem.gem
-  if (!gem) return null
+  const thought = momentThought.thought
+  if (!thought) return null
 
   const handleGotIt = async () => {
     if (readOnly || isReviewed) return
     setIsReviewed(true)
-    await markGemReviewed(momentGem.id)
+    await markThoughtReviewed(momentThought.id)
     onReviewed()
   }
 
@@ -51,7 +51,7 @@ function MatchedGemCard({ momentGem, onReviewed, onFeedback, readOnly }: GemCard
     if (readOnly) return
     setFeedback(false)
     setIsReviewed(true)
-    await recordMomentGemFeedback(momentGem.id, false)
+    await recordMomentThoughtFeedback(momentThought.id, false)
     onFeedback(false)
   }
 
@@ -64,7 +64,7 @@ function MatchedGemCard({ momentGem, onReviewed, onFeedback, readOnly }: GemCard
 
   return (
     <Card
-      data-testid="gem-card"
+      data-testid="thought-card"
       className={cn(
         "transition-all",
         isReviewed && "opacity-60"
@@ -76,57 +76,57 @@ function MatchedGemCard({ momentGem, onReviewed, onFeedback, readOnly }: GemCard
             variant="outline"
             className={cn(
               "text-xs",
-              CONTEXT_TAG_COLORS[gem.context_tag]
+              CONTEXT_TAG_COLORS[thought.context_tag]
             )}
           >
-            {gem.context_tag === "other" && gem.custom_context
-              ? gem.custom_context
-              : CONTEXT_TAG_LABELS[gem.context_tag]}
+            {thought.context_tag === "other" && thought.custom_context
+              ? thought.custom_context
+              : CONTEXT_TAG_LABELS[thought.context_tag]}
           </Badge>
           {/* Relevance indicator */}
-          <div className="flex items-center gap-1.5" title={`${Math.round(momentGem.relevance_score * 100)}% relevant`}>
+          <div className="flex items-center gap-1.5" title={`${Math.round(momentThought.relevance_score * 100)}% relevant`}>
             <div
               className={cn(
                 "w-2 h-2 rounded-full",
-                getRelevanceColor(momentGem.relevance_score)
+                getRelevanceColor(momentThought.relevance_score)
               )}
             />
             <span className="text-xs text-muted-foreground">
-              {Math.round(momentGem.relevance_score * 100)}%
+              {Math.round(momentThought.relevance_score * 100)}%
             </span>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Gem content */}
-        <p className="text-sm leading-relaxed">{gem.content}</p>
+        {/* Thought content */}
+        <p className="text-sm leading-relaxed">{thought.content}</p>
 
         {/* Source */}
-        {gem.source && (
+        {thought.source && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <span>Source:</span>
-            {gem.source_url ? (
+            {thought.source_url ? (
               <a
-                href={gem.source_url}
+                href={thought.source_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline inline-flex items-center gap-1"
               >
-                {gem.source}
+                {thought.source}
                 <ExternalLink className="h-3 w-3" />
               </a>
             ) : (
-              <span>{gem.source}</span>
+              <span>{thought.source}</span>
             )}
           </div>
         )}
 
         {/* AI relevance reason */}
-        {momentGem.relevance_reason && (
+        {momentThought.relevance_reason && (
           <div className="p-2 rounded-md bg-muted/50">
             <p className="text-xs text-muted-foreground">
               <span className="font-medium">Why this applies:</span>{" "}
-              {momentGem.relevance_reason}
+              {momentThought.relevance_reason}
             </p>
           </div>
         )}
@@ -188,18 +188,18 @@ export function PrepCard({ moment, onComplete, readOnly = false }: PrepCardProps
     await updateMomentStatus(moment.id, 'completed')
     setIsCompleting(false)
     onComplete?.()
-    router.push('/gems')
+    router.push('/thoughts')
   }
 
   const handleBack = () => {
     router.back()
   }
 
-  const sortedGems = [...moment.matched_gems].sort(
+  const sortedThoughts = [...moment.matched_thoughts].sort(
     (a, b) => b.relevance_score - a.relevance_score
   )
 
-  const isEmpty = sortedGems.length === 0
+  const isEmpty = sortedThoughts.length === 0
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -232,7 +232,7 @@ export function PrepCard({ moment, onComplete, readOnly = false }: PrepCardProps
         </div>
       </div>
 
-      {/* Matched Gems */}
+      {/* Matched Thoughts */}
       {isEmpty ? (
         <Card className="text-center py-12">
           <CardContent className="space-y-4">
@@ -240,30 +240,30 @@ export function PrepCard({ moment, onComplete, readOnly = false }: PrepCardProps
               <Sparkles className="h-8 w-8 text-muted-foreground" />
             </div>
             <div className="space-y-2">
-              <p className="text-lg font-medium">No gems matched this moment</p>
+              <p className="text-lg font-medium">No thoughts matched this moment</p>
               <p className="text-sm text-muted-foreground">
                 But you&apos;ve got this!
               </p>
             </div>
             <Button
               variant="outline"
-              onClick={() => router.push('/gems')}
+              onClick={() => router.push('/thoughts')}
               className="gap-2"
             >
               <Plus className="h-4 w-4" />
-              Add a gem for next time
+              Add a thought for next time
             </Button>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            {sortedGems.length} gem{sortedGems.length !== 1 ? 's' : ''} to prepare with
+            {sortedThoughts.length} thought{sortedThoughts.length !== 1 ? 's' : ''} to prepare with
           </p>
-          {sortedGems.map((momentGem) => (
-            <MatchedGemCard
-              key={momentGem.id}
-              momentGem={momentGem}
+          {sortedThoughts.map((momentThought) => (
+            <MatchedThoughtCard
+              key={momentThought.id}
+              momentThought={momentThought}
               onReviewed={() => {}}
               onFeedback={() => {}}
               readOnly={readOnly}

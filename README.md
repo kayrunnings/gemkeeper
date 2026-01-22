@@ -1,4 +1,4 @@
-  # GemKeeper
+  # ThoughtFolio
    
    Your wisdom accountability partner. Capture insights, surface them at the right moments, and stay accountable for applying what you learn.
    

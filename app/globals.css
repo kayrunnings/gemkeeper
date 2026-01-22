@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Design System: GemKeeper - Multi-theme gem-inspired aesthetic */
+/* Design System: ThoughtFolio - Multi-theme thought-inspired aesthetic */
 /* Default theme: Midnight - Uses data-theme attribute on html element */
 
 /* ===== THEME 1: MIDNIGHT (DEFAULT) ===== */
@@ -36,8 +36,8 @@
   --accent-foreground: #0a0a0a;
 
   /* Gem accent - Orange tint for tags */
-  --gem: #7c2d12;
-  --gem-foreground: #fdba74;
+  --thought: #7c2d12;
+  --thought-foreground: #fdba74;
 
   /* Destructive actions - Ruby red (consistent across themes) */
   --destructive: #ef4444;
@@ -123,8 +123,8 @@
   --accent-foreground: #0a0a0a;
 
   /* Gem accent */
-  --gem: #064e3b;
-  --gem-foreground: #6ee7b7;
+  --thought: #064e3b;
+  --thought-foreground: #6ee7b7;
 
   /* Destructive actions */
   --destructive: #ef4444;
@@ -207,8 +207,8 @@
   --accent-foreground: #0a0a0a;
 
   /* Gem accent */
-  --gem: #4c1d95;
-  --gem-foreground: #c4b5fd;
+  --thought: #4c1d95;
+  --thought-foreground: #c4b5fd;
 
   /* Destructive actions */
   --destructive: #ef4444;
@@ -291,8 +291,8 @@
   --accent-foreground: #f0fdfa;
 
   /* Gem accent */
-  --gem: #164e63;
-  --gem-foreground: #67e8f9;
+  --thought: #164e63;
+  --thought-foreground: #67e8f9;
 
   /* Destructive actions */
   --destructive: #ef4444;
@@ -375,8 +375,8 @@
   --accent-foreground: #fef2f2;
 
   /* Gem accent */
-  --gem: #881337;
-  --gem-foreground: #fda4af;
+  --thought: #881337;
+  --thought-foreground: #fda4af;
 
   /* Destructive actions */
   --destructive: #ef4444;
@@ -459,8 +459,8 @@
   --accent-foreground: #1c1917;
 
   /* Gem accent */
-  --gem: #fef3c7;
-  --gem-foreground: #92400e;
+  --thought: #fef3c7;
+  --thought-foreground: #92400e;
 
   /* Destructive actions */
   --destructive: #dc2626;
@@ -527,8 +527,8 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-gem: var(--gem);
-  --color-gem-foreground: var(--gem-foreground);
+  --color-thought: var(--thought);
+  --color-thought-foreground: var(--thought-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);

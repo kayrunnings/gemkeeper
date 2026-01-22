@@ -1,20 +1,20 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
-import { ContextTag } from "@/lib/types/gem"
+import { ContextTag } from "@/lib/types/thought"
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
 
-export interface ExtractedGem {
+export interface ExtractedThought {
   content: string
   context_tag: ContextTag
   source_quote?: string
 }
 
 export interface ExtractionResult {
-  gems: ExtractedGem[]
+  thoughts: ExtractedThought[]
   tokens_used: number
 }
 
-const EXTRACTION_SYSTEM_PROMPT = `You are a wisdom extractor for GemKeeper, an app that helps users capture and apply insights.
+const EXTRACTION_SYSTEM_PROMPT = `You are a wisdom extractor for ThoughtFolio, an app that helps users capture and apply insights.
 
 Given text content, identify 3-7 key insights that would be valuable to remember and apply in daily life.
 
@@ -36,7 +36,7 @@ Context tags (pick the best fit):
 
 Return valid JSON only, no markdown code blocks:
 {
-  "gems": [
+  "thoughts": [
     {
       "content": "The extracted insight text",
       "context_tag": "feedback",
@@ -45,7 +45,7 @@ Return valid JSON only, no markdown code blocks:
   ]
 }`
 
-const MULTIMEDIA_EXTRACTION_PROMPT = `You are a wisdom extractor for GemKeeper, an app that helps users capture and apply insights.
+const MULTIMEDIA_EXTRACTION_PROMPT = `You are a wisdom extractor for ThoughtFolio, an app that helps users capture and apply insights.
 
 Analyze the provided content (which may include images, audio transcripts, or video content) and identify 3-7 key insights that would be valuable to remember and apply in daily life.
 
@@ -67,7 +67,7 @@ Context tags (pick the best fit):
 
 Return valid JSON only, no markdown code blocks:
 {
-  "gems": [
+  "thoughts": [
     {
       "content": "The extracted insight text",
       "context_tag": "feedback",
@@ -76,7 +76,7 @@ Return valid JSON only, no markdown code blocks:
   ]
 }`
 
-export async function extractGemsFromContent(
+export async function extractThoughtsFromContent(
   content: string,
   source?: string
 ): Promise<ExtractionResult> {
@@ -104,20 +104,20 @@ export async function extractGemsFromContent(
   const usage = response.usageMetadata
   const tokensUsed = (usage?.promptTokenCount || 0) + (usage?.candidatesTokenCount || 0)
 
-  // Validate and sanitize the extracted gems
-  const validatedGems: ExtractedGem[] = (parsed.gems || []).map((gem: Record<string, unknown>) => ({
-    content: String(gem.content || "").slice(0, 200),
-    context_tag: isValidContextTag(gem.context_tag) ? gem.context_tag : "other",
-    source_quote: gem.source_quote ? String(gem.source_quote) : undefined,
+  // Validate and sanitize the extracted thoughts
+  const validatedThoughts: ExtractedThought[] = (parsed.thoughts || []).map((thought: Record<string, unknown>) => ({
+    content: String(thought.content || "").slice(0, 200),
+    context_tag: isValidContextTag(thought.context_tag) ? thought.context_tag : "other",
+    source_quote: thought.source_quote ? String(thought.source_quote) : undefined,
   }))
 
   return {
-    gems: validatedGems,
+    thoughts: validatedThoughts,
     tokens_used: tokensUsed,
   }
 }
 
-export async function extractGemsFromMultimedia(
+export async function extractThoughtsFromMultimedia(
   textContent: string,
   mediaData: Array<{ mimeType: string; data: string }>,
   source?: string
@@ -160,15 +160,15 @@ export async function extractGemsFromMultimedia(
   const usage = response.usageMetadata
   const tokensUsed = (usage?.promptTokenCount || 0) + (usage?.candidatesTokenCount || 0)
 
-  // Validate and sanitize the extracted gems
-  const validatedGems: ExtractedGem[] = (parsed.gems || []).map((gem: Record<string, unknown>) => ({
-    content: String(gem.content || "").slice(0, 200),
-    context_tag: isValidContextTag(gem.context_tag) ? gem.context_tag : "other",
-    source_quote: gem.source_quote ? String(gem.source_quote) : undefined,
+  // Validate and sanitize the extracted thoughts
+  const validatedThoughts: ExtractedThought[] = (parsed.thoughts || []).map((thought: Record<string, unknown>) => ({
+    content: String(thought.content || "").slice(0, 200),
+    context_tag: isValidContextTag(thought.context_tag) ? thought.context_tag : "other",
+    source_quote: thought.source_quote ? String(thought.source_quote) : undefined,
   }))
 
   return {
-    gems: validatedGems,
+    thoughts: validatedThoughts,
     tokens_used: tokensUsed,
   }
 }

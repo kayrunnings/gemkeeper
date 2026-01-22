@@ -31,10 +31,10 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: "/home", label: "Home", icon: Home },
-  { href: "/gems", label: "Gems", icon: Gem },
+  { href: "/thoughts", label: "Thoughts", icon: Gem },
   { href: "/daily", label: "Daily Prompt", icon: Sun },
   { href: "/checkin", label: "Check-in", icon: Moon },
-  { href: "/trophy-case", label: "Trophy Case", icon: Trophy },
+  { href: "/thought-bank", label: "ThoughtBank", icon: Trophy },
 ]
 
 const secondaryNavItems: NavItem[] = [
@@ -64,8 +64,8 @@ export function LayoutShell({
   const supabase = createClient()
 
   const isActive = (href: string) => {
-    if (href === "/gems") {
-      return pathname === "/gems" || pathname.startsWith("/gems/")
+    if (href === "/thoughts") {
+      return pathname === "/thoughts" || pathname.startsWith("/thoughts/")
     }
     return pathname === href || pathname.startsWith(`${href}/`)
   }
@@ -97,7 +97,7 @@ export function LayoutShell({
               <div className="w-9 h-9 rounded-xl ai-gradient flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-semibold hidden sm:inline">GemKeeper</span>
+              <span className="text-xl font-semibold hidden sm:inline">ThoughtFolio</span>
             </Link>
           </div>
 

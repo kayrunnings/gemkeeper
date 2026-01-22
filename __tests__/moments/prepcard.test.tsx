@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { PrepCard } from '@/components/moments/PrepCard'
-import type { MomentWithGems } from '@/types/moments'
+import type { MomentWithThoughts } from '@/types/moments'
 
 // Mock next/navigation
 const mockPush = jest.fn()
@@ -15,13 +15,13 @@ jest.mock('next/navigation', () => ({
 
 // Mock the moments lib
 jest.mock('@/lib/moments', () => ({
-  recordMomentGemFeedback: jest.fn().mockResolvedValue({ error: null }),
-  markGemReviewed: jest.fn().mockResolvedValue({ error: null }),
+  recordMomentThoughtFeedback: jest.fn().mockResolvedValue({ error: null }),
+  markThoughtReviewed: jest.fn().mockResolvedValue({ error: null }),
   updateMomentStatus: jest.fn().mockResolvedValue({ error: null }),
 }))
 
 describe('PrepCard', () => {
-  const mockMoment: MomentWithGems = {
+  const mockMoment: MomentWithThoughts = {
     id: '1',
     user_id: 'user-1',
     description: '1:1 with manager',
@@ -35,19 +35,19 @@ describe('PrepCard', () => {
     completed_at: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    matched_gems: [
+    matched_thoughts: [
       {
-        id: 'mg-1',
+        id: 'mt-1',
         moment_id: '1',
-        gem_id: 'gem-1',
+        gem_id: 'thought-1',
         user_id: 'user-1',
         relevance_score: 0.9,
         relevance_reason: 'Listening applies to 1:1s',
         was_helpful: null,
         was_reviewed: false,
         created_at: new Date().toISOString(),
-        gem: {
-          id: 'gem-1',
+        thought: {
+          id: 'thought-1',
           user_id: 'user-1',
           content: 'Listen more than you speak',
           source: 'Book',
@@ -66,17 +66,17 @@ describe('PrepCard', () => {
         },
       },
       {
-        id: 'mg-2',
+        id: 'mt-2',
         moment_id: '1',
-        gem_id: 'gem-2',
+        gem_id: 'thought-2',
         user_id: 'user-1',
         relevance_score: 0.7,
         relevance_reason: 'Feedback context matches',
         was_helpful: null,
         was_reviewed: false,
         created_at: new Date().toISOString(),
-        gem: {
-          id: 'gem-2',
+        thought: {
+          id: 'thought-2',
           user_id: 'user-1',
           content: 'Give feedback with empathy',
           source: null,
@@ -107,10 +107,10 @@ describe('PrepCard', () => {
     expect(screen.getByText('1:1 with manager')).toBeInTheDocument()
   })
 
-  it('shows gems sorted by relevance', () => {
+  it('shows thoughts sorted by relevance', () => {
     render(<PrepCard moment={mockMoment} />)
-    const gems = screen.getAllByTestId('gem-card')
-    expect(gems.length).toBe(2)
+    const thoughts = screen.getAllByTestId('thought-card')
+    expect(thoughts.length).toBe(2)
   })
 
   it('shows relevance reasons', () => {
@@ -137,24 +137,24 @@ describe('PrepCard', () => {
     expect(mockBack).toHaveBeenCalled()
   })
 
-  it('shows empty state when no gems matched', () => {
-    const emptyMoment: MomentWithGems = {
+  it('shows empty state when no thoughts matched', () => {
+    const emptyMoment: MomentWithThoughts = {
       ...mockMoment,
       gems_matched_count: 0,
-      matched_gems: [],
+      matched_thoughts: [],
     }
     render(<PrepCard moment={emptyMoment} />)
-    expect(screen.getByText(/no gems matched/i)).toBeInTheDocument()
-    expect(screen.getByText(/add a gem/i)).toBeInTheDocument()
+    expect(screen.getByText(/no thoughts matched/i)).toBeInTheDocument()
+    expect(screen.getByText(/add a thought/i)).toBeInTheDocument()
   })
 
-  it('shows gem count', () => {
+  it('shows thought count', () => {
     render(<PrepCard moment={mockMoment} />)
-    expect(screen.getByText(/2 gems to prepare with/i)).toBeInTheDocument()
+    expect(screen.getByText(/2 thoughts to prepare with/i)).toBeInTheDocument()
   })
 
   it('shows calendar event title when present', () => {
-    const calendarMoment: MomentWithGems = {
+    const calendarMoment: MomentWithThoughts = {
       ...mockMoment,
       source: 'calendar',
       calendar_event_title: 'Team Standup',

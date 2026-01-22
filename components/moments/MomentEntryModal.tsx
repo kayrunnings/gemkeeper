@@ -17,13 +17,13 @@ import {
   AlertCircle,
   Sprout,
 } from "lucide-react"
-import type { MomentWithGems } from "@/types/moments"
+import type { MomentWithThoughts } from "@/types/moments"
 import { MAX_MOMENT_DESCRIPTION_LENGTH } from "@/types/moments"
 
 interface MomentEntryModalProps {
   isOpen: boolean
   onClose: () => void
-  onMomentCreated: (moment: MomentWithGems) => void
+  onMomentCreated: (moment: MomentWithThoughts) => void
 }
 
 type ModalState = 'idle' | 'loading' | 'success' | 'empty' | 'error'
@@ -63,7 +63,7 @@ export function MomentEntryModal({
       }
 
       const data = await response.json()
-      const moment: MomentWithGems = data.moment
+      const moment: MomentWithThoughts = data.moment
 
       if (moment.gems_matched_count === 0) {
         setState('empty')
@@ -94,7 +94,7 @@ export function MomentEntryModal({
             New Moment
           </DialogTitle>
           <DialogDescription>
-            Describe what&apos;s coming up and we&apos;ll find your relevant gems.
+            Describe what&apos;s coming up and we&apos;ll find your relevant thoughts.
           </DialogDescription>
         </DialogHeader>
 
@@ -128,7 +128,7 @@ export function MomentEntryModal({
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" />
-                  Find My Gems
+                  Find My Thoughts
                 </>
               )}
             </Button>
@@ -152,7 +152,7 @@ export function MomentEntryModal({
             </div>
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
-                No gems matched this moment, but you&apos;ve got this!
+                No thoughts matched this moment, but you&apos;ve got this!
               </p>
               <p className="text-xs text-muted-foreground">
                 Your wisdom is still growing.
