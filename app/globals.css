@@ -1,75 +1,78 @@
 @import "tailwindcss";
 
-/* Design System: GemKeeper - Gem-inspired dark-first aesthetic */
-/* Dark theme is DEFAULT - uses .light class for light mode */
+/* Design System: GemKeeper - Multi-theme gem-inspired aesthetic */
+/* Default theme: Midnight - Uses data-theme attribute on html element */
 
-:root {
-  /* Core backgrounds - Dark grays (NOT true black) */
-  --background: #121212;
-  --foreground: #f5f5f5;
+/* ===== THEME 1: MIDNIGHT (DEFAULT) ===== */
+/* Deep navy blue with warm orange accents - Professional, focused, warm contrast */
+:root,
+[data-theme="midnight"] {
+  /* Core backgrounds - Deep navy blues */
+  --background: #0a1628;
+  --foreground: #f8fafc;
 
-  /* Card surfaces - Slightly lighter */
-  --card: #1a1a1a;
-  --card-foreground: #f5f5f5;
+  /* Card surfaces - Slightly lighter navy */
+  --card: #111d35;
+  --card-foreground: #f8fafc;
 
   /* Popover/Modal surfaces */
-  --popover: #1f1f1f;
-  --popover-foreground: #f5f5f5;
+  --popover: #1a2844;
+  --popover-foreground: #f8fafc;
 
-  /* Primary action color - Emerald green for gems */
-  --primary: #50C878;
+  /* Primary action color - Warm orange */
+  --primary: #f97316;
   --primary-foreground: #0a0a0a;
 
   /* Secondary/muted elements */
-  --secondary: #262626;
-  --secondary-foreground: #d4d4d4;
+  --secondary: #1a2844;
+  --secondary-foreground: #cbd5e1;
 
   /* Muted text and backgrounds */
-  --muted: #2d2d2d;
-  --muted-foreground: #a1a1a1;
+  --muted: #1e3a5f;
+  --muted-foreground: #94a3b8;
 
-  /* Accents - Sapphire blue for links/info */
-  --accent: #3b82f6;
-  --accent-foreground: #f5f5f5;
+  /* Accents - Same warm orange */
+  --accent: #f97316;
+  --accent-foreground: #0a0a0a;
 
-  /* Gem accent - Emerald tint for tags */
-  --gem: #134e4a;
-  --gem-foreground: #6ee7b7;
+  /* Gem accent - Orange tint for tags */
+  --gem: #7c2d12;
+  --gem-foreground: #fdba74;
 
-  /* Destructive actions - Ruby red */
-  --destructive: #E0115F;
-  --destructive-foreground: #f5f5f5;
+  /* Destructive actions - Ruby red (consistent across themes) */
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
 
-  /* Success states - Emerald */
-  --success: #50C878;
+  /* Success states - Emerald (consistent across themes) */
+  --success: #10b981;
   --success-foreground: #0a0a0a;
 
-  /* Warning states - Amber/Topaz */
-  --warning: #FFBF00;
+  /* Warning states - Amber (consistent across themes) */
+  --warning: #f59e0b;
   --warning-foreground: #0a0a0a;
 
-  /* Info states - Sapphire blue */
-  --info: #0F52BA;
-  --info-foreground: #f5f5f5;
+  /* Info states - Blue */
+  --info: #3b82f6;
+  --info-foreground: #f8fafc;
 
-  /* Highlight - Amethyst purple */
-  --highlight: #9966CC;
-  --highlight-foreground: #f5f5f5;
+  /* Highlight - Purple */
+  --highlight: #a78bfa;
+  --highlight-foreground: #f8fafc;
 
   /* Borders and inputs */
-  --border: #2d2d2d;
-  --input: #262626;
-  --ring: #50C878;
+  --border: #1e3a5f;
+  --input: #1a2844;
+  --ring: #f97316;
 
-  /* Border radius - More rounded for modern feel */
+  /* Border radius */
   --radius: 0.75rem;
 
-  /* AI gradient colors - Emerald to Sapphire */
-  --ai-gradient-start: #50C878;
+  /* AI gradient colors */
+  --ai-gradient-start: #f97316;
   --ai-gradient-end: #3b82f6;
-  --ai-glow: rgba(80, 200, 120, 0.3);
+  --ai-glow: rgba(249, 115, 22, 0.3);
 
-  /* Context tag colors - Dark mode jewel tones */
+  /* Context tag colors - Midnight theme jewel tones */
   --tag-meetings: #1e3a5f;
   --tag-meetings-foreground: #93c5fd;
   --tag-feedback: #4c1d3d;
@@ -84,73 +87,410 @@
   --tag-relationships-foreground: #fcd34d;
   --tag-parenting: #3b0764;
   --tag-parenting-foreground: #d8b4fe;
-  --tag-other: #262626;
-  --tag-other-foreground: #d4d4d4;
+  --tag-other: #1a2844;
+  --tag-other-foreground: #cbd5e1;
 }
 
-/* Light mode */
-.light {
-  /* Core backgrounds - Off-white, not pure white */
-  --background: #fafafa;
-  --foreground: #171717;
+/* ===== THEME 2: OBSIDIAN ===== */
+/* True dark gray with emerald green accents - Minimal, dev-focused, clean */
+[data-theme="obsidian"] {
+  /* Core backgrounds - True dark grays */
+  --background: #09090b;
+  --foreground: #fafafa;
 
   /* Card surfaces */
-  --card: #ffffff;
-  --card-foreground: #171717;
+  --card: #18181b;
+  --card-foreground: #fafafa;
+
+  /* Popover/Modal surfaces */
+  --popover: #27272a;
+  --popover-foreground: #fafafa;
+
+  /* Primary action color - Emerald green */
+  --primary: #10b981;
+  --primary-foreground: #0a0a0a;
+
+  /* Secondary/muted elements */
+  --secondary: #27272a;
+  --secondary-foreground: #d4d4d8;
+
+  /* Muted text and backgrounds */
+  --muted: #3f3f46;
+  --muted-foreground: #a1a1aa;
+
+  /* Accents - Emerald green */
+  --accent: #10b981;
+  --accent-foreground: #0a0a0a;
+
+  /* Gem accent */
+  --gem: #064e3b;
+  --gem-foreground: #6ee7b7;
+
+  /* Destructive actions */
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
+
+  /* Success states */
+  --success: #10b981;
+  --success-foreground: #0a0a0a;
+
+  /* Warning states */
+  --warning: #f59e0b;
+  --warning-foreground: #0a0a0a;
+
+  /* Info states */
+  --info: #3b82f6;
+  --info-foreground: #fafafa;
+
+  /* Highlight */
+  --highlight: #a78bfa;
+  --highlight-foreground: #fafafa;
+
+  /* Borders and inputs */
+  --border: #3f3f46;
+  --input: #27272a;
+  --ring: #10b981;
+
+  /* AI gradient colors */
+  --ai-gradient-start: #10b981;
+  --ai-gradient-end: #3b82f6;
+  --ai-glow: rgba(16, 185, 129, 0.3);
+
+  /* Context tag colors */
+  --tag-meetings: #1e3a5f;
+  --tag-meetings-foreground: #93c5fd;
+  --tag-feedback: #4c1d3d;
+  --tag-feedback-foreground: #f9a8d4;
+  --tag-conflict: #450a0a;
+  --tag-conflict-foreground: #fca5a5;
+  --tag-focus: #312e81;
+  --tag-focus-foreground: #a5b4fc;
+  --tag-health: #064e3b;
+  --tag-health-foreground: #6ee7b7;
+  --tag-relationships: #451a03;
+  --tag-relationships-foreground: #fcd34d;
+  --tag-parenting: #3b0764;
+  --tag-parenting-foreground: #d8b4fe;
+  --tag-other: #27272a;
+  --tag-other-foreground: #d4d4d8;
+}
+
+/* ===== THEME 3: AMETHYST ===== */
+/* Deep purple-gray with soft purple accents - Calm, creative, modern */
+[data-theme="amethyst"] {
+  /* Core backgrounds - Deep purple-grays */
+  --background: #13111c;
+  --foreground: #f5f3ff;
+
+  /* Card surfaces */
+  --card: #1c1826;
+  --card-foreground: #f5f3ff;
+
+  /* Popover/Modal surfaces */
+  --popover: #2a2438;
+  --popover-foreground: #f5f3ff;
+
+  /* Primary action color - Soft purple */
+  --primary: #a78bfa;
+  --primary-foreground: #0a0a0a;
+
+  /* Secondary/muted elements */
+  --secondary: #2a2438;
+  --secondary-foreground: #d4d4d8;
+
+  /* Muted text and backgrounds */
+  --muted: #3b3450;
+  --muted-foreground: #a1a1aa;
+
+  /* Accents - Soft purple */
+  --accent: #a78bfa;
+  --accent-foreground: #0a0a0a;
+
+  /* Gem accent */
+  --gem: #4c1d95;
+  --gem-foreground: #c4b5fd;
+
+  /* Destructive actions */
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
+
+  /* Success states */
+  --success: #10b981;
+  --success-foreground: #0a0a0a;
+
+  /* Warning states */
+  --warning: #f59e0b;
+  --warning-foreground: #0a0a0a;
+
+  /* Info states */
+  --info: #3b82f6;
+  --info-foreground: #f5f3ff;
+
+  /* Highlight */
+  --highlight: #c084fc;
+  --highlight-foreground: #f5f3ff;
+
+  /* Borders and inputs */
+  --border: #3b3450;
+  --input: #2a2438;
+  --ring: #a78bfa;
+
+  /* AI gradient colors */
+  --ai-gradient-start: #a78bfa;
+  --ai-gradient-end: #ec4899;
+  --ai-glow: rgba(167, 139, 250, 0.3);
+
+  /* Context tag colors */
+  --tag-meetings: #312e81;
+  --tag-meetings-foreground: #a5b4fc;
+  --tag-feedback: #4c1d3d;
+  --tag-feedback-foreground: #f9a8d4;
+  --tag-conflict: #450a0a;
+  --tag-conflict-foreground: #fca5a5;
+  --tag-focus: #4c1d95;
+  --tag-focus-foreground: #c4b5fd;
+  --tag-health: #064e3b;
+  --tag-health-foreground: #6ee7b7;
+  --tag-relationships: #451a03;
+  --tag-relationships-foreground: #fcd34d;
+  --tag-parenting: #3b0764;
+  --tag-parenting-foreground: #d8b4fe;
+  --tag-other: #2a2438;
+  --tag-other-foreground: #d4d4d8;
+}
+
+/* ===== THEME 4: OCEAN ===== */
+/* Deep teal-gray with sapphire blue accents - Cool, serene, trustworthy */
+[data-theme="ocean"] {
+  /* Core backgrounds - Deep teal-grays */
+  --background: #0c1517;
+  --foreground: #f0fdfa;
+
+  /* Card surfaces */
+  --card: #111f22;
+  --card-foreground: #f0fdfa;
+
+  /* Popover/Modal surfaces */
+  --popover: #1a2e32;
+  --popover-foreground: #f0fdfa;
+
+  /* Primary action color - Sapphire blue */
+  --primary: #3b82f6;
+  --primary-foreground: #f0fdfa;
+
+  /* Secondary/muted elements */
+  --secondary: #1a2e32;
+  --secondary-foreground: #cbd5e1;
+
+  /* Muted text and backgrounds */
+  --muted: #234e52;
+  --muted-foreground: #94a3b8;
+
+  /* Accents - Sapphire blue */
+  --accent: #3b82f6;
+  --accent-foreground: #f0fdfa;
+
+  /* Gem accent */
+  --gem: #164e63;
+  --gem-foreground: #67e8f9;
+
+  /* Destructive actions */
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
+
+  /* Success states */
+  --success: #10b981;
+  --success-foreground: #0a0a0a;
+
+  /* Warning states */
+  --warning: #f59e0b;
+  --warning-foreground: #0a0a0a;
+
+  /* Info states */
+  --info: #0ea5e9;
+  --info-foreground: #f0fdfa;
+
+  /* Highlight */
+  --highlight: #06b6d4;
+  --highlight-foreground: #f0fdfa;
+
+  /* Borders and inputs */
+  --border: #234e52;
+  --input: #1a2e32;
+  --ring: #3b82f6;
+
+  /* AI gradient colors */
+  --ai-gradient-start: #3b82f6;
+  --ai-gradient-end: #06b6d4;
+  --ai-glow: rgba(59, 130, 246, 0.3);
+
+  /* Context tag colors */
+  --tag-meetings: #164e63;
+  --tag-meetings-foreground: #67e8f9;
+  --tag-feedback: #4c1d3d;
+  --tag-feedback-foreground: #f9a8d4;
+  --tag-conflict: #450a0a;
+  --tag-conflict-foreground: #fca5a5;
+  --tag-focus: #1e3a5f;
+  --tag-focus-foreground: #93c5fd;
+  --tag-health: #064e3b;
+  --tag-health-foreground: #6ee7b7;
+  --tag-relationships: #451a03;
+  --tag-relationships-foreground: #fcd34d;
+  --tag-parenting: #3b0764;
+  --tag-parenting-foreground: #d8b4fe;
+  --tag-other: #1a2e32;
+  --tag-other-foreground: #cbd5e1;
+}
+
+/* ===== THEME 5: RUBY ===== */
+/* Dark warm gray with ruby red accents - Bold, energetic, passionate */
+[data-theme="ruby"] {
+  /* Core backgrounds - Dark warm grays */
+  --background: #141111;
+  --foreground: #fef2f2;
+
+  /* Card surfaces */
+  --card: #1f1a1a;
+  --card-foreground: #fef2f2;
+
+  /* Popover/Modal surfaces */
+  --popover: #2d2626;
+  --popover-foreground: #fef2f2;
+
+  /* Primary action color - Ruby red */
+  --primary: #f43f5e;
+  --primary-foreground: #fef2f2;
+
+  /* Secondary/muted elements */
+  --secondary: #2d2626;
+  --secondary-foreground: #d6d3d1;
+
+  /* Muted text and backgrounds */
+  --muted: #44403c;
+  --muted-foreground: #a8a29e;
+
+  /* Accents - Ruby red */
+  --accent: #f43f5e;
+  --accent-foreground: #fef2f2;
+
+  /* Gem accent */
+  --gem: #881337;
+  --gem-foreground: #fda4af;
+
+  /* Destructive actions */
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
+
+  /* Success states */
+  --success: #10b981;
+  --success-foreground: #0a0a0a;
+
+  /* Warning states */
+  --warning: #f59e0b;
+  --warning-foreground: #0a0a0a;
+
+  /* Info states */
+  --info: #3b82f6;
+  --info-foreground: #fef2f2;
+
+  /* Highlight */
+  --highlight: #fb7185;
+  --highlight-foreground: #fef2f2;
+
+  /* Borders and inputs */
+  --border: #44403c;
+  --input: #2d2626;
+  --ring: #f43f5e;
+
+  /* AI gradient colors */
+  --ai-gradient-start: #f43f5e;
+  --ai-gradient-end: #ec4899;
+  --ai-glow: rgba(244, 63, 94, 0.3);
+
+  /* Context tag colors */
+  --tag-meetings: #1e3a5f;
+  --tag-meetings-foreground: #93c5fd;
+  --tag-feedback: #881337;
+  --tag-feedback-foreground: #fda4af;
+  --tag-conflict: #7f1d1d;
+  --tag-conflict-foreground: #fca5a5;
+  --tag-focus: #312e81;
+  --tag-focus-foreground: #a5b4fc;
+  --tag-health: #064e3b;
+  --tag-health-foreground: #6ee7b7;
+  --tag-relationships: #451a03;
+  --tag-relationships-foreground: #fcd34d;
+  --tag-parenting: #3b0764;
+  --tag-parenting-foreground: #d8b4fe;
+  --tag-other: #2d2626;
+  --tag-other-foreground: #d6d3d1;
+}
+
+/* ===== THEME 6: SUNRISE (LIGHT THEME) ===== */
+/* Warm off-white with amber/orange accents - Bright, optimistic, easy daytime reading */
+[data-theme="sunrise"] {
+  /* Core backgrounds - Warm off-whites */
+  --background: #fffbf5;
+  --foreground: #1c1917;
+
+  /* Card surfaces */
+  --card: #fff7ed;
+  --card-foreground: #1c1917;
 
   /* Popover/Modal surfaces */
   --popover: #ffffff;
-  --popover-foreground: #171717;
+  --popover-foreground: #1c1917;
 
-  /* Primary action color - Emerald green */
-  --primary: #059669;
-  --primary-foreground: #ffffff;
+  /* Primary action color - Amber/orange */
+  --primary: #f59e0b;
+  --primary-foreground: #1c1917;
 
   /* Secondary/muted elements */
-  --secondary: #f5f5f5;
-  --secondary-foreground: #525252;
+  --secondary: #ffedd5;
+  --secondary-foreground: #57534e;
 
   /* Muted text and backgrounds */
-  --muted: #e5e5e5;
-  --muted-foreground: #737373;
+  --muted: #fed7aa;
+  --muted-foreground: #78716c;
 
-  /* Accents - Sapphire blue */
-  --accent: #0F52BA;
-  --accent-foreground: #ffffff;
+  /* Accents - Amber/orange */
+  --accent: #f59e0b;
+  --accent-foreground: #1c1917;
 
-  /* Gem accent - Emerald tint for tags */
-  --gem: #d1fae5;
-  --gem-foreground: #065f46;
+  /* Gem accent */
+  --gem: #fef3c7;
+  --gem-foreground: #92400e;
 
-  /* Destructive actions - Ruby red */
+  /* Destructive actions */
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
 
-  /* Success states - Emerald */
+  /* Success states */
   --success: #059669;
   --success-foreground: #ffffff;
 
-  /* Warning states - Amber/Topaz */
+  /* Warning states */
   --warning: #d97706;
   --warning-foreground: #ffffff;
 
-  /* Info states - Sapphire blue */
-  --info: #0F52BA;
+  /* Info states */
+  --info: #2563eb;
   --info-foreground: #ffffff;
 
-  /* Highlight - Amethyst purple */
+  /* Highlight */
   --highlight: #7c3aed;
   --highlight-foreground: #ffffff;
 
   /* Borders and inputs */
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #059669;
+  --border: #fed7aa;
+  --input: #ffedd5;
+  --ring: #f59e0b;
 
   /* AI gradient colors */
-  --ai-gradient-start: #059669;
-  --ai-gradient-end: #0F52BA;
-  --ai-glow: rgba(5, 150, 105, 0.2);
+  --ai-gradient-start: #f59e0b;
+  --ai-gradient-end: #ea580c;
+  --ai-glow: rgba(245, 158, 11, 0.2);
 
   /* Context tag colors - Light mode pastels */
   --tag-meetings: #dbeafe;
@@ -167,8 +507,8 @@
   --tag-relationships-foreground: #92400e;
   --tag-parenting: #f3e8ff;
   --tag-parenting-foreground: #6b21a8;
-  --tag-other: #f5f5f5;
-  --tag-other-foreground: #525252;
+  --tag-other: #ffedd5;
+  --tag-other-foreground: #57534e;
 }
 
 /* Tailwind v4 theme configuration */
@@ -236,11 +576,12 @@
   border-color: var(--border);
 }
 
+/* Color scheme based on theme */
 html {
   color-scheme: dark;
 }
 
-html.light {
+html[data-theme="sunrise"] {
   color-scheme: light;
 }
 
@@ -250,14 +591,14 @@ body {
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Theme transition for all elements */
 *,
 *::before,
 *::after {
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 /* Animations for dialogs */

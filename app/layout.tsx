@@ -9,17 +9,14 @@ export const metadata: Metadata = {
 };
 
 // Inline script to prevent flash of wrong theme
+// Must match the theme list in lib/themes.ts
 const themeScript = `
   (function() {
     try {
+      var validThemes = ['midnight', 'obsidian', 'amethyst', 'ocean', 'ruby', 'sunrise'];
       var stored = localStorage.getItem('gemkeeper-theme');
-      var theme = stored === 'light' || stored === 'dark' ? stored : null;
-      if (!theme) {
-        theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-      }
-      if (theme === 'light') {
-        document.documentElement.classList.add('light');
-      }
+      var theme = validThemes.includes(stored) ? stored : 'midnight';
+      document.documentElement.setAttribute('data-theme', theme);
     } catch (e) {}
   })();
 `;
@@ -30,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-theme="midnight">
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
