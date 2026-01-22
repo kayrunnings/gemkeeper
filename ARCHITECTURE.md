@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-**GemKeeper** is a wisdom accountability partner application that helps users capture, remember, and apply insights from books, podcasts, videos, and life experiences. The app enforces intentionality by limiting users to 10 active "gems" at a time.
+**GemKeeper** is a "thoughts that find you" application that helps users capture, remember, and apply insights from books, podcasts, videos, and life experiences. The app enforces intentionality by limiting users to 10 active "gems" at a time.
 
 ### Key Features
 - **Gem Collection**: Capture insights manually or via AI extraction

@@ -68,7 +68,7 @@ export default function LoginPage() {
             <Gem className="h-8 w-8 text-primary-foreground" />
           </div>
           <h1 className="text-2xl font-semibold">ThoughtFolio</h1>
-          <p className="text-muted-foreground mt-1">Your wisdom accountability partner</p>
+          <p className="text-muted-foreground mt-1">Thoughts that find you</p>
         </div>
 
         {/* Auth card */}
