@@ -18,12 +18,14 @@ import {
   Sparkles,
   AlertTriangle,
   Trash2,
-  RotateCcw
+  RotateCcw,
+  Menu,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { getDailyGem, logCheckin, retireGem, resetSkipCount } from "@/lib/gems"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { MobileNav } from "@/components/app-sidebar"
 
 type CheckinState = "prompt" | "stale" | "success" | "skip"
 
@@ -35,6 +37,7 @@ export default function CheckinPage() {
   const [checkinState, setCheckinState] = useState<CheckinState>("prompt")
   const [reflectionNote, setReflectionNote] = useState("")
   const [newApplicationCount, setNewApplicationCount] = useState(0)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -165,6 +168,15 @@ export default function CheckinPage() {
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {/* Mobile menu button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
             <Link href="/gems" className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
                 <GemIcon className="h-5 w-5 text-primary-foreground" />
@@ -192,6 +204,9 @@ export default function CheckinPage() {
           </div>
         </div>
       </header>
+
+      {/* Mobile navigation */}
+      <MobileNav isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
 
       {/* Main content */}
       <main className="flex-1 flex items-center justify-center p-4 md:p-8">

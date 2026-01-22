@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Gem, Loader2, LogOut, ArrowLeft, RefreshCw, Settings as SettingsIcon, Sparkles, AlertCircle } from "lucide-react"
+import { Gem, Loader2, LogOut, ArrowLeft, RefreshCw, Settings as SettingsIcon, Sparkles, AlertCircle, Menu, X } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { grantAIConsent, revokeAIConsent } from "./actions"
 import { AIConsentModal } from "@/components/ai-consent-modal"
 import Link from "next/link"
+import { AppSidebar, MobileNav } from "@/components/app-sidebar"
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -23,6 +24,7 @@ export default function SettingsPage() {
   const [showAIConsentModal, setShowAIConsentModal] = useState(false)
   const [isRevokingAI, setIsRevokingAI] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   // Form state
   const [name, setName] = useState("")
@@ -184,11 +186,20 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {/* Mobile menu button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
             <Link href="/gems" className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
                 <Gem className="h-5 w-5 text-primary-foreground" />
@@ -217,19 +228,25 @@ export default function SettingsPage() {
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
-        <div className="flex items-center gap-2 mb-6">
-          <Link href="/gems">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div className="flex items-center gap-2">
-            <SettingsIcon className="h-5 w-5" />
-            <h2 className="text-2xl font-semibold">Settings</h2>
-          </div>
+      {/* Mobile navigation */}
+      <MobileNav isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+
+      {/* Main content with sidebar */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar - desktop */}
+        <div className="hidden md:block">
+          <AppSidebar />
         </div>
+
+        {/* Settings area */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+          <div className="max-w-2xl mx-auto">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="flex items-center gap-2">
+                <SettingsIcon className="h-5 w-5" />
+                <h2 className="text-2xl font-semibold">Settings</h2>
+              </div>
+            </div>
 
         {successMessage && (
           <div className="mb-6 p-3 rounded-md bg-green-100 text-green-800 text-sm">
@@ -423,7 +440,9 @@ export default function SettingsPage() {
             )}
           </Button>
         </div>
+        </div>
       </main>
+      </div>
 
       {/* AI Consent Modal */}
       <AIConsentModal
