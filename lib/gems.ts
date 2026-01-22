@@ -1,5 +1,73 @@
 import { createClient } from "@/lib/supabase/client"
-import { Gem, CreateGemInput } from "@/lib/types/gem"
+import { Gem, CreateGemInput, MAX_ACTIVE_GEMS } from "@/lib/types/gem"
+
+// Create multiple gems at once (for AI extraction)
+export async function createMultipleGems(
+  gems: Array<{
+    content: string
+    context_tag: CreateGemInput["context_tag"]
+    source?: string
+    source_url?: string
+  }>
+): Promise<{ gems: Gem[]; error: string | null }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { gems: [], error: "Not authenticated" }
+  }
+
+  // Check current active gem count
+  const { count, error: countError } = await supabase
+    .from("gems")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("status", "active")
+
+  if (countError) {
+    return { gems: [], error: countError.message }
+  }
+
+  const currentCount = count || 0
+  const availableSlots = MAX_ACTIVE_GEMS - currentCount
+
+  if (availableSlots <= 0) {
+    return {
+      gems: [],
+      error: `You have ${MAX_ACTIVE_GEMS} active gems. Retire some before adding more.`
+    }
+  }
+
+  if (gems.length > availableSlots) {
+    return {
+      gems: [],
+      error: `You can only add ${availableSlots} more gem${availableSlots === 1 ? "" : "s"}. You selected ${gems.length}.`
+    }
+  }
+
+  // Prepare gems for insertion
+  const gemsToInsert = gems.map((gem) => ({
+    user_id: user.id,
+    content: gem.content,
+    context_tag: gem.context_tag,
+    source: gem.source || null,
+    source_url: gem.source_url || null,
+    status: "active" as const,
+    application_count: 0,
+    skip_count: 0,
+  }))
+
+  const { data, error } = await supabase
+    .from("gems")
+    .insert(gemsToInsert)
+    .select()
+
+  if (error) {
+    return { gems: [], error: error.message }
+  }
+
+  return { gems: data || [], error: null }
+}
 
 // Update a gem with partial data
 export async function updateGem(

@@ -13,7 +13,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, Gem as GemIcon, Loader2, MoreHorizontal, Trash2, ExternalLink, LogOut, Menu, X, StickyNote, CheckCircle, Sun, Moon, Trophy, Settings } from "lucide-react"
+import { Plus, Gem as GemIcon, Loader2, MoreHorizontal, Trash2, ExternalLink, LogOut, Menu, X, StickyNote, CheckCircle, Sun, Moon, Trophy, Settings, Sparkles } from "lucide-react"
+import { ExtractGemsModal } from "@/components/extract-gems-modal"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -22,8 +23,10 @@ export default function GemsPage() {
   const [gems, setGems] = useState<Gem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [isExtractModalOpen, setIsExtractModalOpen] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [hasAIConsent, setHasAIConsent] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -49,6 +52,15 @@ export default function GemsPage() {
         setGems(data || [])
       }
 
+      // Fetch profile for AI consent status
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("ai_consent_given")
+        .eq("id", user.id)
+        .single()
+
+      setHasAIConsent(profile?.ai_consent_given ?? false)
+
       setIsLoading(false)
     }
 
@@ -58,6 +70,20 @@ export default function GemsPage() {
   const handleGemCreated = (gem: Gem) => {
     setGems((prev) => [gem, ...prev])
     setIsFormOpen(false)
+  }
+
+  const handleGemsExtracted = async () => {
+    // Refresh gems list after extraction
+    const { data } = await supabase
+      .from("gems")
+      .select("*")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+
+    if (data) {
+      setGems(data)
+    }
+    setIsExtractModalOpen(false)
   }
 
   const handleDeleteGem = async (gemId: string) => {
@@ -143,6 +169,16 @@ export default function GemsPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <Button
+              onClick={() => setIsExtractModalOpen(true)}
+              variant="outline"
+              className="gap-2"
+              disabled={isAtLimit}
+              title={isAtLimit ? `Maximum ${MAX_ACTIVE_GEMS} active gems reached` : "Extract gems from content using AI"}
+            >
+              <Sparkles className="h-4 w-4" />
+              <span className="hidden sm:inline">Extract</span>
+            </Button>
             <Button
               onClick={() => setIsFormOpen(true)}
               className="gap-2"
@@ -402,6 +438,15 @@ export default function GemsPage() {
         onClose={() => setIsFormOpen(false)}
         onGemCreated={handleGemCreated}
         currentGemCount={gemCount}
+      />
+
+      {/* Extract gems modal */}
+      <ExtractGemsModal
+        isOpen={isExtractModalOpen}
+        onClose={() => setIsExtractModalOpen(false)}
+        onGemsCreated={handleGemsExtracted}
+        activeGemCount={gemCount}
+        hasAIConsent={hasAIConsent}
       />
     </div>
   )

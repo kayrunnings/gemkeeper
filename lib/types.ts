@@ -7,6 +7,17 @@ export interface Folder {
   updated_at: string
 }
 
+// Note attachment type
+export interface NoteAttachment {
+  id: string
+  note_id: string
+  file_name: string
+  file_type: string // mime type
+  file_size: number
+  storage_path: string
+  created_at: string
+}
+
 // Note type definition
 export interface Note {
   id: string
@@ -15,6 +26,7 @@ export interface Note {
   tags: string[]
   is_favorite: boolean
   folder_id: string | null
+  attachments?: NoteAttachment[]
   created_at: string
   updated_at: string
   user_id: string
@@ -26,6 +38,12 @@ export interface NoteInput {
   content: string
   tags: string[]
   is_favorite?: boolean
+}
+
+// For uploading attachments
+export interface AttachmentUpload {
+  file: File
+  base64?: string
 }
 
 // User type (from Supabase Auth)
