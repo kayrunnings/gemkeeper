@@ -1,41 +1,1015 @@
-# GemKeeper - Epic 6: AI-Powered Features + Notes System
+# TASKS.md - Epic 8: Individual Gem Schedules & Moment-Based Surfacing
 
 ## Overview
 
-Leverage AI to enhance gem capture by extracting insights from long-form content and media. Build out a full Notes system that serves as a staging area for ideas before they become gems.
+Enhance GemKeeper with two major features:
+1. **Individual Gem Schedules** - Each gem can have custom check-in times (cron-like flexibility)
+2. **Moments** - On-demand situational gem surfacing (manual + calendar-triggered)
 
-**Tech Stack:** Next.js + TypeScript + Tailwind + shadcn/ui + Supabase + Google Gemini
-
-**Repo:** github.com/kayrunnings/gemkeeper
-
-**Deployed:** gemkeeper.vercel.app
-
-**Linear Issues:** KAY-41 (Epic), KAY-42 (US-6.1)
-
----
-
-## Current State
-
-- ✅ Epics 1-4 complete (Auth, Gem Capture, Gem Management, Proactive Surfacing)
-- ✅ Database tables created: `ai_extractions`, `ai_usage`, `notes`, `note_attachments`
-- ✅ Profile columns added: `ai_consent_given`, `ai_consent_date`
-- ✅ Gemini API key configured in Vercel (`GOOGLE_AI_API_KEY`)
-- ✅ Supabase Storage bucket: `note-attachments` with RLS policies
-- ✅ Task 6.1 complete (AI Privacy Consent Modal)
-- ✅ Task 6.9 complete (Usage Display in Settings)
+**Linear Epic:** KAY-52
+**GitHub Repo:** kayrunnings/gemkeeper
+**Deployed URL:** gemkeeper.vercel.app
+**Supabase Project:** GemKeeper
 
 ---
 
-## Environment Variables
+## Pre-Build Checklist
 
+- [ ] Run `epic8-schema.sql` in Supabase SQL Editor
+- [ ] Verify all 5 tables exist: `gem_schedules`, `moments`, `moment_gems`, `calendar_connections`, `calendar_events_cache`
+- [ ] Verify RLS policies are active
+- [ ] Google OAuth credentials available (for calendar integration)
+- [ ] Microsoft OAuth credentials available (for Outlook integration)
+
+---
+
+## Build Order
+
+Execute tasks in this order (dependencies noted):
+
+1. **8.1** - Individual Gem Schedules (foundation, no dependencies)
+2. **8.2** - Moment Entry Modal (UI entry point)
+3. **8.4** - AI Gem Matching (core moment logic)
+4. **8.5** - Prep Card Display (moment visualization)
+5. **8.3** - Calendar Integration (enhancement, can be parallel with 8.4/8.5)
+
+---
+
+## Task 8.1: Individual Gem Check-in Schedules (KAY-53)
+
+### 8.1.1 TypeScript Types
+**File:** `types/schedules.ts`
+
+```typescript
+export interface GemSchedule {
+  id: string;
+  gem_id: string;
+  user_id: string;
+  cron_expression: string;
+  human_readable: string;
+  timezone: string;
+  schedule_type: 'daily' | 'weekly' | 'monthly' | 'custom';
+  days_of_week: number[] | null;  // 0=Sun, 6=Sat
+  time_of_day: string | null;     // "14:00:00"
+  day_of_month: number | null;
+  is_active: boolean;
+  next_trigger_at: string | null;
+  last_triggered_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ScheduleInput {
+  schedule_type: 'daily' | 'weekly' | 'monthly' | 'custom';
+  days_of_week?: number[];
+  time_of_day: string;          // "14:00"
+  day_of_month?: number;
+  timezone?: string;
+}
+
+export interface NLPScheduleResult {
+  cron_expression: string;
+  human_readable: string;
+  schedule_type: 'daily' | 'weekly' | 'monthly' | 'custom';
+  days_of_week: number[] | null;
+  time_of_day: string;
+  day_of_month: number | null;
+  confidence: number;
+}
+```
+
+### 8.1.2 Schedule Service Functions
+**File:** `lib/schedules.ts`
+
+```typescript
+import { createClient } from '@/lib/supabase/client';
+import type { GemSchedule, ScheduleInput } from '@/types/schedules';
+
+// CRUD operations
+export async function createGemSchedule(gemId: string, input: ScheduleInput): Promise<GemSchedule>;
+export async function getGemSchedules(gemId: string): Promise<GemSchedule[]>;
+export async function updateGemSchedule(scheduleId: string, updates: Partial<ScheduleInput>): Promise<GemSchedule>;
+export async function deleteGemSchedule(scheduleId: string): Promise<void>;
+export async function toggleScheduleActive(scheduleId: string, isActive: boolean): Promise<void>;
+
+// Cron generation
+export function generateCronExpression(input: ScheduleInput): string;
+export function generateHumanReadable(input: ScheduleInput): string;
+export function calculateNextTrigger(cronExpression: string, timezone: string): Date;
+```
+
+**Implementation Notes:**
+- Use `cron-parser` npm package for cron validation and next trigger calculation
+- Install: `npm install cron-parser`
+- Store timezone per schedule (default to user's profile timezone)
+
+### 8.1.3 NLP Schedule Parser API Route
+**File:** `app/api/schedules/parse/route.ts`
+
+```typescript
+// POST /api/schedules/parse
+// Body: { text: "every Tuesday at 2pm" }
+// Response: { result: NLPScheduleResult }
+
+// Use Gemini API to parse natural language into schedule components
+// Prompt template provided below
+```
+
+**Gemini Prompt:**
+```
+Parse this natural language schedule into a structured format.
+
+INPUT: "{user_input}"
+
+Return JSON with:
+- cron_expression: standard cron format (minute hour day month weekday)
+- human_readable: friendly text like "Every Tuesday at 2:00 PM"
+- schedule_type: "daily" | "weekly" | "monthly" | "custom"
+- days_of_week: array of 0-6 (0=Sunday) or null
+- time_of_day: "HH:MM" 24-hour format
+- day_of_month: 1-31 or -1 for last day or null
+- confidence: 0.0-1.0
+
+Examples:
+"every tuesday at 2pm" → {"cron_expression":"0 14 * * 2","human_readable":"Every Tuesday at 2:00 PM","schedule_type":"weekly","days_of_week":[2],"time_of_day":"14:00","day_of_month":null,"confidence":0.95}
+"weekday mornings at 8" → {"cron_expression":"0 8 * * 1-5","human_readable":"Every weekday at 8:00 AM","schedule_type":"weekly","days_of_week":[1,2,3,4,5],"time_of_day":"08:00","day_of_month":null,"confidence":0.9}
+```
+
+### 8.1.4 Visual Schedule Picker Component
+**File:** `components/schedules/SchedulePicker.tsx`
+
+Props:
+```typescript
+interface SchedulePickerProps {
+  gemId: string;
+  existingSchedules: GemSchedule[];
+  onScheduleCreate: (schedule: GemSchedule) => void;
+  onScheduleUpdate: (schedule: GemSchedule) => void;
+  onScheduleDelete: (scheduleId: string) => void;
+}
+```
+
+UI Elements:
+- [ ] Tabs: "Visual" | "Natural Language"
+- [ ] Visual tab:
+  - Frequency selector: Daily / Specific Days / Monthly
+  - Day multi-select chips (Mon-Sun)
+  - Time picker (15-min increments)
+  - Monthly: day-of-month dropdown (1-31, Last day)
+- [ ] NLP tab:
+  - Large text input with placeholder
+  - "Parse" button
+  - Parsed result preview with confidence indicator
+  - "Confirm" / "Edit Manually" actions
+- [ ] Schedule preview: "Every Tuesday at 2:00 PM"
+- [ ] Save button
+
+### 8.1.5 Gem Detail View Integration
+**File:** `components/gems/GemDetail.tsx` (update existing)
+
+Add to gem detail view:
+- [ ] "Schedule" accordion section
+- [ ] List of active schedules as badges
+- [ ] "Add Schedule" button opens SchedulePicker modal
+- [ ] Each schedule has edit/delete/toggle actions
+- [ ] "Next check-in" display showing soonest trigger time
+
+### 8.1.6 Gem Card Schedule Badge
+**File:** `components/gems/GemCard.tsx` (update existing)
+
+- [ ] If gem has active schedules, show small clock icon + count
+- [ ] Hover tooltip shows human-readable schedule list
+
+### 8.1.7 Tests for Task 8.1
+
+**File:** `__tests__/schedules/cron.test.ts`
+```typescript
+describe('generateCronExpression', () => {
+  it('generates daily cron', () => {
+    const input = { schedule_type: 'daily', time_of_day: '08:00' };
+    expect(generateCronExpression(input)).toBe('0 8 * * *');
+  });
+
+  it('generates weekly cron for specific days', () => {
+    const input = { schedule_type: 'weekly', days_of_week: [1, 3, 5], time_of_day: '14:00' };
+    expect(generateCronExpression(input)).toBe('0 14 * * 1,3,5');
+  });
+
+  it('generates monthly cron for last day', () => {
+    const input = { schedule_type: 'monthly', day_of_month: -1, time_of_day: '09:00' };
+    expect(generateCronExpression(input)).toBe('0 9 L * *');
+  });
+});
+
+describe('generateHumanReadable', () => {
+  it('formats daily schedules', () => {
+    const input = { schedule_type: 'daily', time_of_day: '08:00' };
+    expect(generateHumanReadable(input)).toBe('Every day at 8:00 AM');
+  });
+
+  it('formats weekday schedules', () => {
+    const input = { schedule_type: 'weekly', days_of_week: [1, 2, 3, 4, 5], time_of_day: '09:00' };
+    expect(generateHumanReadable(input)).toBe('Weekdays at 9:00 AM');
+  });
+});
+```
+
+**File:** `__tests__/schedules/api.test.ts`
+```typescript
+describe('POST /api/schedules/parse', () => {
+  it('parses "every tuesday at 2pm"', async () => {
+    const response = await fetch('/api/schedules/parse', {
+      method: 'POST',
+      body: JSON.stringify({ text: 'every tuesday at 2pm' }),
+    });
+    const data = await response.json();
+    expect(data.result.cron_expression).toBe('0 14 * * 2');
+    expect(data.result.confidence).toBeGreaterThan(0.8);
+  });
+
+  it('returns low confidence for ambiguous input', async () => {
+    const response = await fetch('/api/schedules/parse', {
+      method: 'POST',
+      body: JSON.stringify({ text: 'sometimes in the morning' }),
+    });
+    const data = await response.json();
+    expect(data.result.confidence).toBeLessThan(0.7);
+  });
+});
+```
+
+**File:** `__tests__/schedules/components.test.tsx`
+```typescript
+describe('SchedulePicker', () => {
+  it('renders visual picker by default', () => {
+    render(<SchedulePicker gemId="123" existingSchedules={[]} />);
+    expect(screen.getByText('Daily')).toBeInTheDocument();
+  });
+
+  it('switches to NLP mode', async () => {
+    render(<SchedulePicker gemId="123" existingSchedules={[]} />);
+    await userEvent.click(screen.getByText('Natural Language'));
+    expect(screen.getByPlaceholderText(/every tuesday/i)).toBeInTheDocument();
+  });
+
+  it('calls onScheduleCreate when saving', async () => {
+    const onCreate = jest.fn();
+    render(<SchedulePicker gemId="123" existingSchedules={[]} onScheduleCreate={onCreate} />);
+    // Fill form and submit
+    await userEvent.click(screen.getByText('Save Schedule'));
+    expect(onCreate).toHaveBeenCalled();
+  });
+});
+```
+
+---
+
+## Task 8.2: Moment Entry Modal (KAY-54)
+
+### 8.2.1 TypeScript Types
+**File:** `types/moments.ts`
+
+```typescript
+export interface Moment {
+  id: string;
+  user_id: string;
+  description: string;
+  source: 'manual' | 'calendar';
+  calendar_event_id: string | null;
+  calendar_event_title: string | null;
+  calendar_event_start: string | null;
+  gems_matched_count: number;
+  ai_processing_time_ms: number | null;
+  status: 'active' | 'completed' | 'dismissed';
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MomentGem {
+  id: string;
+  moment_id: string;
+  gem_id: string;
+  user_id: string;
+  relevance_score: number;
+  relevance_reason: string | null;
+  was_helpful: boolean | null;
+  was_reviewed: boolean;
+  created_at: string;
+  gem?: Gem;  // Joined gem data
+}
+
+export interface MomentWithGems extends Moment {
+  matched_gems: MomentGem[];
+}
+```
+
+### 8.2.2 Moment Service Functions
+**File:** `lib/moments.ts`
+
+```typescript
+export async function createMoment(description: string, source?: 'manual' | 'calendar', calendarData?: CalendarEventData): Promise<Moment>;
+export async function getMoment(momentId: string): Promise<MomentWithGems | null>;
+export async function getRecentMoments(limit?: number): Promise<Moment[]>;
+export async function updateMomentStatus(momentId: string, status: 'active' | 'completed' | 'dismissed'): Promise<void>;
+export async function recordMomentGemFeedback(momentGemId: string, wasHelpful: boolean): Promise<void>;
+export async function markGemReviewed(momentGemId: string): Promise<void>;
+```
+
+### 8.2.3 Moment Entry Modal Component
+**File:** `components/moments/MomentEntryModal.tsx`
+
+Props:
+```typescript
+interface MomentEntryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onMomentCreated: (moment: MomentWithGems) => void;
+}
+```
+
+States:
+- `idle` - Initial state, input visible
+- `loading` - AI is processing
+- `success` - Redirect to prep card
+- `empty` - No gems matched
+- `error` - AI call failed
+
+UI Elements:
+- [ ] Slide-up sheet on mobile, centered dialog on desktop
+- [ ] Textarea with placeholder: "What's coming up? e.g., '1:1 with my manager about promotion'"
+- [ ] Character counter (500 max)
+- [ ] "Find My Gems ✨" primary button
+- [ ] Loading state: "Finding your wisdom..." with shimmer animation
+- [ ] Empty state: "No gems matched this moment. Your wisdom is still growing! 🌱"
+- [ ] Error state with retry button
+
+### 8.2.4 Moment Trigger Button (FAB)
+**File:** `components/moments/MomentFAB.tsx`
+
+- [ ] Floating action button visible on home and gems list
+- [ ] Icon: sparkles or lightbulb
+- [ ] Label: "Moment"
+- [ ] Keyboard shortcut: Cmd+M / Ctrl+M
+- [ ] Opens MomentEntryModal
+
+### 8.2.5 API Route for Moment Creation
+**File:** `app/api/moments/route.ts`
+
+```typescript
+// POST /api/moments
+// Body: { description: string, source?: 'manual' | 'calendar', calendarData?: {...} }
+// Response: { moment: MomentWithGems }
+
+// Flow:
+// 1. Validate input
+// 2. Create moment record
+// 3. Call AI matching (8.4) to get matched gems
+// 4. Insert moment_gems records
+// 5. Update moment.gems_matched_count
+// 6. Return full moment with gems
+```
+
+### 8.2.6 Tests for Task 8.2
+
+**File:** `__tests__/moments/modal.test.tsx`
+```typescript
+describe('MomentEntryModal', () => {
+  it('renders input when open', () => {
+    render(<MomentEntryModal isOpen={true} onClose={() => {}} />);
+    expect(screen.getByPlaceholderText(/what's coming up/i)).toBeInTheDocument();
+  });
+
+  it('shows character count', async () => {
+    render(<MomentEntryModal isOpen={true} onClose={() => {}} />);
+    const input = screen.getByRole('textbox');
+    await userEvent.type(input, 'Test moment');
+    expect(screen.getByText('11/500')).toBeInTheDocument();
+  });
+
+  it('disables submit when empty', () => {
+    render(<MomentEntryModal isOpen={true} onClose={() => {}} />);
+    expect(screen.getByText('Find My Gems')).toBeDisabled();
+  });
+
+  it('shows loading state during submission', async () => {
+    render(<MomentEntryModal isOpen={true} onClose={() => {}} />);
+    await userEvent.type(screen.getByRole('textbox'), 'Test moment');
+    await userEvent.click(screen.getByText('Find My Gems'));
+    expect(screen.getByText(/finding your wisdom/i)).toBeInTheDocument();
+  });
+});
+```
+
+**File:** `__tests__/moments/api.test.ts`
+```typescript
+describe('POST /api/moments', () => {
+  it('creates moment and returns matched gems', async () => {
+    const response = await fetch('/api/moments', {
+      method: 'POST',
+      body: JSON.stringify({ description: '1:1 with manager about promotion' }),
+    });
+    const data = await response.json();
+    expect(data.moment.id).toBeDefined();
+    expect(data.moment.matched_gems).toBeInstanceOf(Array);
+  });
+
+  it('validates description is required', async () => {
+    const response = await fetch('/api/moments', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it('handles AI matching errors gracefully', async () => {
+    // Mock AI failure
+    const response = await fetch('/api/moments', {
+      method: 'POST',
+      body: JSON.stringify({ description: 'test' }),
+    });
+    // Should still create moment with 0 matches
+    expect(response.status).toBe(200);
+  });
+});
+```
+
+---
+
+## Task 8.3: Calendar Integration for Auto-Moments (KAY-55)
+
+### 8.3.1 TypeScript Types
+**File:** `types/calendar.ts`
+
+```typescript
+export interface CalendarConnection {
+  id: string;
+  user_id: string;
+  provider: 'google' | 'outlook';
+  email: string;
+  is_active: boolean;
+  last_sync_at: string | null;
+  sync_error: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CalendarEvent {
+  id: string;
+  external_event_id: string;
+  title: string;
+  description: string | null;
+  start_time: string;
+  end_time: string;
+  moment_created: boolean;
+  moment_id: string | null;
+}
+
+export interface CalendarSyncResult {
+  events_synced: number;
+  events_added: number;
+  events_updated: number;
+  errors: string[];
+}
+```
+
+### 8.3.2 OAuth Configuration
+**Files:** 
+- `app/api/auth/google-calendar/route.ts` - Google OAuth callback
+- `app/api/auth/outlook-calendar/route.ts` - Outlook OAuth callback
+
+**Environment Variables Needed:**
+```
+GOOGLE_CALENDAR_CLIENT_ID=
+GOOGLE_CALENDAR_CLIENT_SECRET=
+GOOGLE_CALENDAR_REDIRECT_URI=
+
+OUTLOOK_CLIENT_ID=
+OUTLOOK_CLIENT_SECRET=
+OUTLOOK_REDIRECT_URI=
+```
+
+**Google OAuth Scopes:**
+- `https://www.googleapis.com/auth/calendar.readonly`
+- `https://www.googleapis.com/auth/calendar.events.readonly`
+
+**Microsoft OAuth Scopes:**
+- `Calendars.Read`
+- `offline_access`
+
+### 8.3.3 Calendar Service Functions
+**File:** `lib/calendar.ts`
+
+```typescript
+// Connection management
+export async function connectGoogleCalendar(code: string): Promise<CalendarConnection>;
+export async function connectOutlookCalendar(code: string): Promise<CalendarConnection>;
+export async function disconnectCalendar(connectionId: string): Promise<void>;
+export async function getCalendarConnections(): Promise<CalendarConnection[]>;
+
+// Sync operations
+export async function syncCalendarEvents(connectionId: string): Promise<CalendarSyncResult>;
+export async function getPendingEventsForMoments(): Promise<CalendarEvent[]>;
+
+// Token management
+export async function refreshGoogleToken(connectionId: string): Promise<void>;
+export async function refreshOutlookToken(connectionId: string): Promise<void>;
+```
+
+**Dependencies:**
 ```bash
-# Existing
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+npm install googleapis @microsoft/microsoft-graph-client
+```
 
-# For Epic 6
-GOOGLE_AI_API_KEY=your_gemini_api_key
+### 8.3.4 Calendar Settings Component
+**File:** `components/settings/CalendarSettings.tsx`
+
+UI Elements:
+- [ ] "Connect Google Calendar" button (if not connected)
+- [ ] "Connect Outlook Calendar" button (if not connected)
+- [ ] Connected calendars list with disconnect button
+- [ ] Last sync timestamp
+- [ ] Auto-moment toggle: "Auto-prepare for calendar events"
+- [ ] Lead time dropdown: 15 min / 30 min / 1 hour / 2 hours
+- [ ] Event filter: "All events" / "Meetings only" / "Custom keywords"
+
+### 8.3.5 Auto-Moment Background Sync
+**File:** `lib/calendar-sync.ts`
+
+```typescript
+// Called on app open and periodically
+export async function checkForUpcomingEvents(): Promise<void> {
+  // 1. Get user's lead time preference
+  // 2. Get pending events within lead time window
+  // 3. For each event without moment:
+  //    a. Create moment with source='calendar'
+  //    b. Run AI matching
+  //    c. Mark event as moment_created=true
+  //    d. Show in-app notification
+}
+```
+
+### 8.3.6 In-App Notification Banner
+**File:** `components/moments/MomentBanner.tsx`
+
+Props:
+```typescript
+interface MomentBannerProps {
+  moment: Moment;
+  onTap: () => void;
+  onDismiss: () => void;
+}
+```
+
+- [ ] Sticky banner at top of app
+- [ ] Text: "✨ {event_title} in {time} - Tap to prepare"
+- [ ] Dismiss button
+- [ ] Auto-dismiss after event start time
+
+### 8.3.7 Tests for Task 8.3
+
+**File:** `__tests__/calendar/oauth.test.ts`
+```typescript
+describe('Google Calendar OAuth', () => {
+  it('exchanges code for tokens', async () => {
+    const connection = await connectGoogleCalendar('mock_code');
+    expect(connection.provider).toBe('google');
+    expect(connection.email).toBeDefined();
+  });
+
+  it('stores refresh token securely', async () => {
+    const connection = await connectGoogleCalendar('mock_code');
+    // Verify token is in database (encrypted)
+    const stored = await getCalendarConnections();
+    expect(stored[0].id).toBe(connection.id);
+  });
+});
+
+describe('Outlook Calendar OAuth', () => {
+  it('exchanges code for tokens', async () => {
+    const connection = await connectOutlookCalendar('mock_code');
+    expect(connection.provider).toBe('outlook');
+  });
+});
+```
+
+**File:** `__tests__/calendar/sync.test.ts`
+```typescript
+describe('syncCalendarEvents', () => {
+  it('syncs next 24 hours of events', async () => {
+    const result = await syncCalendarEvents('connection_id');
+    expect(result.events_synced).toBeGreaterThan(0);
+  });
+
+  it('does not duplicate events on re-sync', async () => {
+    await syncCalendarEvents('connection_id');
+    const result = await syncCalendarEvents('connection_id');
+    expect(result.events_added).toBe(0);
+  });
+});
+
+describe('checkForUpcomingEvents', () => {
+  it('creates moments for events within lead time', async () => {
+    // Setup: event starting in 25 minutes, lead time = 30 minutes
+    await checkForUpcomingEvents();
+    const moments = await getRecentMoments(1);
+    expect(moments[0].source).toBe('calendar');
+  });
+
+  it('does not create duplicate moments', async () => {
+    await checkForUpcomingEvents();
+    await checkForUpcomingEvents();
+    const moments = await getRecentMoments(10);
+    // Should only have one moment per event
+  });
+});
+```
+
+---
+
+## Task 8.4: AI-Powered Gem Matching for Moments (KAY-56)
+
+### 8.4.1 TypeScript Types
+**File:** `types/matching.ts`
+
+```typescript
+export interface GemMatch {
+  gem_id: string;
+  relevance_score: number;  // 0.0 to 1.0
+  relevance_reason: string;
+}
+
+export interface MatchingRequest {
+  moment_description: string;
+  gems: Array<{
+    id: string;
+    content: string;
+    context_tag: string;
+    source: string | null;
+  }>;
+}
+
+export interface MatchingResponse {
+  matches: GemMatch[];
+  processing_time_ms: number;
+}
+```
+
+### 8.4.2 AI Matching Service
+**File:** `lib/matching.ts`
+
+```typescript
+export async function matchGemsToMoment(
+  momentDescription: string, 
+  gems: Gem[]
+): Promise<MatchingResponse>;
+```
+
+**Gemini Prompt Template:**
+```
+You are a wisdom matching assistant. Given a user's upcoming moment/situation and their collection of saved insights (gems), identify which gems are most relevant.
+
+MOMENT: {moment_description}
+
+USER'S GEMS:
+{gems_list_formatted}
+
+For each gem, consider:
+1. Direct topical relevance (does the gem's advice apply to this situation?)
+2. Context tag match (e.g., "meetings" tag for a meeting moment)
+3. Underlying principles (even if not directly mentioned, could this wisdom help?)
+
+Return a JSON array of relevant gems (max 5, minimum relevance 0.5):
+[
+  {
+    "gem_id": "uuid",
+    "relevance_score": 0.85,
+    "relevance_reason": "Brief explanation of why this gem applies..."
+  }
+]
+
+If no gems are relevant, return an empty array: []
+Respond with ONLY the JSON array, no additional text.
+```
+
+### 8.4.3 API Route for Matching
+**File:** `app/api/moments/match/route.ts`
+
+```typescript
+// POST /api/moments/match
+// Body: { moment_id: string }
+// Response: { matches: GemMatch[], processing_time_ms: number }
+
+// Flow:
+// 1. Get moment by ID
+// 2. Get all active gems for user
+// 3. If no gems, return empty matches
+// 4. Call Gemini API with prompt
+// 5. Parse response, validate scores
+// 6. Return matches sorted by score DESC
+```
+
+**Error Handling:**
+- AI timeout (5s): Return empty matches with error flag
+- Malformed response: Parse error, return empty matches
+- Rate limit: 20 moment matches per user per hour
+
+### 8.4.4 Tests for Task 8.4
+
+**File:** `__tests__/matching/ai.test.ts`
+```typescript
+describe('matchGemsToMoment', () => {
+  it('returns matches above 0.5 threshold', async () => {
+    const gems = [
+      { id: '1', content: 'Listen more than you speak', context_tag: 'meetings', source: 'Book' },
+      { id: '2', content: 'Always be learning', context_tag: 'focus', source: 'Quote' },
+    ];
+    const result = await matchGemsToMoment('1:1 with manager', gems);
+    
+    result.matches.forEach(match => {
+      expect(match.relevance_score).toBeGreaterThanOrEqual(0.5);
+    });
+  });
+
+  it('returns max 5 matches', async () => {
+    const gems = Array(10).fill(null).map((_, i) => ({
+      id: String(i),
+      content: `Gem ${i}`,
+      context_tag: 'meetings',
+      source: null,
+    }));
+    const result = await matchGemsToMoment('big meeting', gems);
+    expect(result.matches.length).toBeLessThanOrEqual(5);
+  });
+
+  it('returns empty array when no gems match', async () => {
+    const gems = [
+      { id: '1', content: 'Recipe for pasta', context_tag: 'health', source: null },
+    ];
+    const result = await matchGemsToMoment('quarterly business review', gems);
+    expect(result.matches).toHaveLength(0);
+  });
+
+  it('handles AI timeout gracefully', async () => {
+    // Mock slow response
+    const result = await matchGemsToMoment('test', []);
+    expect(result.matches).toEqual([]);
+    expect(result.processing_time_ms).toBeDefined();
+  });
+
+  it('includes relevance reasons', async () => {
+    const gems = [{ id: '1', content: 'Listen actively', context_tag: 'meetings', source: null }];
+    const result = await matchGemsToMoment('feedback session', gems);
+    
+    if (result.matches.length > 0) {
+      expect(result.matches[0].relevance_reason).toBeTruthy();
+    }
+  });
+});
+```
+
+---
+
+## Task 8.5: Moment Prep Card Display (KAY-57)
+
+### 8.5.1 Prep Card Page
+**File:** `app/moments/[id]/prepare/page.tsx`
+
+Server component that:
+- Fetches moment with matched gems
+- Renders PrepCard component
+- Handles 404 if moment not found
+
+### 8.5.2 Prep Card Component
+**File:** `components/moments/PrepCard.tsx`
+
+Props:
+```typescript
+interface PrepCardProps {
+  moment: MomentWithGems;
+  onComplete: () => void;
+}
+```
+
+UI Layout:
+- [ ] Header with moment context
+  - "Preparing for: {description or calendar_event_title}"
+  - If calendar: "Starting in {time_until}"
+  - Back button
+- [ ] Matched gems list (sorted by relevance)
+  - Full gem content
+  - Source attribution
+  - Context tag badge
+  - AI relevance reason: "Why this applies: {reason}"
+  - Relevance indicator (subtle visual)
+  - "Got it ✓" button (marks reviewed)
+  - "Not helpful" button (records feedback)
+- [ ] Empty state (no matches)
+  - Friendly illustration
+  - "No gems matched this moment, but you've got this! 💪"
+  - "Add a gem for next time" CTA
+- [ ] Footer
+  - "Done Preparing" primary button
+  - Marks moment as completed
+
+### 8.5.3 Recent Moments Section
+**File:** `components/moments/RecentMoments.tsx`
+
+- [ ] Section on home page showing last 10 moments
+- [ ] Each moment shows: description preview, time ago, matched count
+- [ ] Tapping reopens prep card (read-only mode)
+- [ ] "See all" link to moments history page
+
+### 8.5.4 Moments History Page
+**File:** `app/moments/page.tsx`
+
+- [ ] List of all moments, newest first
+- [ ] Filter by source (all / manual / calendar)
+- [ ] Each item: description, source badge, match count, created date
+- [ ] Tapping opens prep card (read-only)
+
+### 8.5.5 Deep Link Support
+**File:** Update `next.config.js` if needed
+
+- Route: `/moments/[id]/prepare`
+- Should be shareable/bookmarkable
+- Auth required (redirect to login if not authenticated)
+
+### 8.5.6 Tests for Task 8.5
+
+**File:** `__tests__/moments/prepcard.test.tsx`
+```typescript
+describe('PrepCard', () => {
+  const mockMoment: MomentWithGems = {
+    id: '1',
+    description: '1:1 with manager',
+    source: 'manual',
+    gems_matched_count: 2,
+    matched_gems: [
+      { gem_id: '1', relevance_score: 0.9, relevance_reason: 'Listening applies to 1:1s' },
+      { gem_id: '2', relevance_score: 0.7, relevance_reason: 'Feedback context matches' },
+    ],
+    // ... other fields
+  };
+
+  it('renders moment header', () => {
+    render(<PrepCard moment={mockMoment} />);
+    expect(screen.getByText(/preparing for/i)).toBeInTheDocument();
+    expect(screen.getByText('1:1 with manager')).toBeInTheDocument();
+  });
+
+  it('shows gems sorted by relevance', () => {
+    render(<PrepCard moment={mockMoment} />);
+    const gems = screen.getAllByTestId('gem-card');
+    // First gem should have higher relevance
+  });
+
+  it('shows relevance reasons', () => {
+    render(<PrepCard moment={mockMoment} />);
+    expect(screen.getByText(/listening applies/i)).toBeInTheDocument();
+  });
+
+  it('marks gem as reviewed on "Got it" click', async () => {
+    const onReview = jest.fn();
+    render(<PrepCard moment={mockMoment} />);
+    await userEvent.click(screen.getAllByText('Got it')[0]);
+    // Verify visual change and API call
+  });
+
+  it('records feedback on "Not helpful" click', async () => {
+    render(<PrepCard moment={mockMoment} />);
+    await userEvent.click(screen.getAllByText('Not helpful')[0]);
+    // Verify API call with was_helpful=false
+  });
+
+  it('calls onComplete when Done Preparing clicked', async () => {
+    const onComplete = jest.fn();
+    render(<PrepCard moment={mockMoment} onComplete={onComplete} />);
+    await userEvent.click(screen.getByText('Done Preparing'));
+    expect(onComplete).toHaveBeenCalled();
+  });
+
+  it('shows empty state when no gems matched', () => {
+    const emptyMoment = { ...mockMoment, gems_matched_count: 0, matched_gems: [] };
+    render(<PrepCard moment={emptyMoment} />);
+    expect(screen.getByText(/no gems matched/i)).toBeInTheDocument();
+    expect(screen.getByText(/add a gem/i)).toBeInTheDocument();
+  });
+});
+
+describe('RecentMoments', () => {
+  it('shows last 10 moments', async () => {
+    render(<RecentMoments />);
+    await waitFor(() => {
+      expect(screen.getAllByTestId('moment-item').length).toBeLessThanOrEqual(10);
+    });
+  });
+
+  it('links to prep card on click', async () => {
+    render(<RecentMoments />);
+    await userEvent.click(screen.getAllByTestId('moment-item')[0]);
+    // Verify navigation
+  });
+});
+```
+
+---
+
+## Integration Tests
+
+**File:** `__tests__/integration/moment-flow.test.ts`
+
+```typescript
+describe('Complete Moment Flow', () => {
+  it('creates moment, matches gems, shows prep card', async () => {
+    // 1. User opens moment modal
+    // 2. Types description
+    // 3. Submits
+    // 4. AI matching runs
+    // 5. Navigates to prep card
+    // 6. Gems are displayed
+    // 7. User marks as complete
+  });
+
+  it('calendar event triggers auto-moment', async () => {
+    // 1. Connect calendar
+    // 2. Sync event starting in 25 min
+    // 3. Background check runs
+    // 4. Moment is created
+    // 5. Banner appears
+    // 6. User taps to see prep card
+  });
+
+  it('gem schedule triggers notification badge', async () => {
+    // 1. Create gem with schedule
+    // 2. Wait until trigger time
+    // 3. Badge appears on gem card
+    // 4. Next trigger time updates
+  });
+});
+```
+
+---
+
+## File Structure Summary
+
+```
+gemkeeper/
+├── types/
+│   ├── schedules.ts          # 8.1.1
+│   ├── moments.ts            # 8.2.1
+│   ├── calendar.ts           # 8.3.1
+│   └── matching.ts           # 8.4.1
+├── lib/
+│   ├── schedules.ts          # 8.1.2
+│   ├── moments.ts            # 8.2.2
+│   ├── calendar.ts           # 8.3.3
+│   ├── calendar-sync.ts      # 8.3.5
+│   └── matching.ts           # 8.4.2
+├── app/
+│   ├── api/
+│   │   ├── schedules/
+│   │   │   └── parse/route.ts    # 8.1.3
+│   │   ├── moments/
+│   │   │   ├── route.ts          # 8.2.5
+│   │   │   └── match/route.ts    # 8.4.3
+│   │   └── auth/
+│   │       ├── google-calendar/route.ts   # 8.3.2
+│   │       └── outlook-calendar/route.ts  # 8.3.2
+│   └── moments/
+│       ├── page.tsx              # 8.5.4
+│       └── [id]/
+│           └── prepare/page.tsx  # 8.5.1
+├── components/
+│   ├── schedules/
+│   │   └── SchedulePicker.tsx    # 8.1.4
+│   ├── moments/
+│   │   ├── MomentEntryModal.tsx  # 8.2.3
+│   │   ├── MomentFAB.tsx         # 8.2.4
+│   │   ├── MomentBanner.tsx      # 8.3.6
+│   │   ├── PrepCard.tsx          # 8.5.2
+│   │   └── RecentMoments.tsx     # 8.5.3
+│   ├── settings/
+│   │   └── CalendarSettings.tsx  # 8.3.4
+│   └── gems/
+│       ├── GemDetail.tsx (update)    # 8.1.5
+│       └── GemCard.tsx (update)      # 8.1.6
+└── __tests__/
+    ├── schedules/
+    │   ├── cron.test.ts          # 8.1.7
+    │   ├── api.test.ts           # 8.1.7
+    │   └── components.test.tsx   # 8.1.7
+    ├── moments/
+    │   ├── modal.test.tsx        # 8.2.6
+    │   ├── api.test.ts           # 8.2.6
+    │   └── prepcard.test.tsx     # 8.5.6
+    ├── calendar/
+    │   ├── oauth.test.ts         # 8.3.7
+    │   └── sync.test.ts          # 8.3.7
+    ├── matching/
+    │   └── ai.test.ts            # 8.4.4
+    └── integration/
+        └── moment-flow.test.ts
 ```
 
 ---
@@ -43,788 +1017,79 @@ GOOGLE_AI_API_KEY=your_gemini_api_key
 ## Dependencies to Install
 
 ```bash
-npm install @google/generative-ai
+npm install cron-parser googleapis @microsoft/microsoft-graph-client
 ```
 
 ---
 
-## Database Schema Reference
+## Environment Variables
 
-### Existing Tables (already created)
+Add to `.env.local` and Vercel:
 
-**ai_extractions** - Caches AI extraction results
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| user_id | UUID | References auth.users |
-| input_content | TEXT | Original content submitted |
-| input_hash | VARCHAR(64) | SHA-256 hash for caching |
-| source | TEXT | User-provided source attribution |
-| extracted_gems | JSONB | Array of extracted gems |
-| tokens_used | INTEGER | Tokens consumed |
-| created_at | TIMESTAMPTZ | Creation timestamp |
+```
+# Existing
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+GEMINI_API_KEY=
 
-**ai_usage** - Daily rate limiting
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| user_id | UUID | References auth.users |
-| usage_date | DATE | Date of usage |
-| extraction_count | INTEGER | Extractions today |
-| tokens_used | INTEGER | Tokens used today |
-| created_at | TIMESTAMPTZ | Creation timestamp |
-| updated_at | TIMESTAMPTZ | Last update |
+# New for Epic 8
+GOOGLE_CALENDAR_CLIENT_ID=
+GOOGLE_CALENDAR_CLIENT_SECRET=
+GOOGLE_CALENDAR_REDIRECT_URI=https://gemkeeper.vercel.app/api/auth/google-calendar
 
-**notes** - User notes (staging area for gems)
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| user_id | UUID | References auth.users |
-| title | TEXT | Optional note title |
-| content | TEXT | Note content |
-| created_at | TIMESTAMPTZ | Creation timestamp |
-| updated_at | TIMESTAMPTZ | Last update |
-
-**note_attachments** - Media files attached to notes
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| note_id | UUID | References notes |
-| user_id | UUID | References auth.users |
-| file_name | TEXT | Original filename |
-| file_type | TEXT | MIME type (image/png, etc.) |
-| file_size | INTEGER | Size in bytes |
-| storage_path | TEXT | Path in Supabase Storage |
-| created_at | TIMESTAMPTZ | Creation timestamp |
-
-**profiles** - Additional columns for AI
-| Column | Type | Description |
-|--------|------|-------------|
-| ai_consent_given | BOOLEAN | User consented to AI |
-| ai_consent_date | TIMESTAMPTZ | When consent was given |
+OUTLOOK_CLIENT_ID=
+OUTLOOK_CLIENT_SECRET=
+OUTLOOK_REDIRECT_URI=https://gemkeeper.vercel.app/api/auth/outlook-calendar
+```
 
 ---
 
-## PART 1: Text-Based AI Extraction (Tasks 6.2 - 6.8, 6.10)
-
-### Task 6.2: Gemini API Integration ⬜
-
-**Create:** `lib/ai/gemini.ts`
-
-**Requirements:**
-```typescript
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
-
-export interface ExtractedGem {
-  content: string;        // The extracted insight (max 200 chars)
-  context_tag: ContextTag;
-  source_quote?: string;  // Original text this was derived from
-  confidence?: number;    // 0-1 confidence score (optional)
-}
-
-export interface ExtractionResult {
-  gems: ExtractedGem[];
-  tokens_used: number;
-}
-
-export async function extractGemsFromContent(
-  content: string,
-  source?: string
-): Promise<ExtractionResult>
-```
-
-**System prompt for extraction:**
-```typescript
-const EXTRACTION_SYSTEM_PROMPT = `You are a wisdom extractor for GemKeeper, an app that helps users capture and apply insights.
-
-Given text content, identify 3-7 key insights that would be valuable to remember and apply in daily life.
-
-For each insight:
-1. Extract a concise, memorable phrase (under 200 characters)
-2. Focus on actionable wisdom, not facts or summaries
-3. Prefer direct quotes when they're powerful, otherwise paraphrase
-4. Assign a context tag from: meetings, feedback, conflict, focus, health, relationships, parenting, other
-5. Include the source_quote if directly quoting
-
-Respond ONLY with valid JSON in this format:
-{
-  "gems": [
-    {
-      "content": "The insight text",
-      "context_tag": "meetings",
-      "source_quote": "Original quote if applicable"
-    }
-  ]
-}`;
-```
-
-**Implementation:**
-```typescript
-export async function extractGemsFromContent(
-  content: string,
-  source?: string
-): Promise<ExtractionResult> {
-  const model = genAI.getGenerativeModel({ 
-    model: 'gemini-1.5-flash',
-    generationConfig: {
-      responseMimeType: 'application/json',
-      maxOutputTokens: 1024,
-    },
-  });
-
-  const userPrompt = source 
-    ? `Source: ${source}\n\nContent:\n${content}`
-    : content;
-
-  const result = await model.generateContent([
-    { text: EXTRACTION_SYSTEM_PROMPT },
-    { text: userPrompt },
-  ]);
-
-  const response = result.response;
-  const text = response.text();
-  const parsed = JSON.parse(text);
-
-  const usage = response.usageMetadata;
-  const tokensUsed = (usage?.promptTokenCount || 0) + (usage?.candidatesTokenCount || 0);
-
-  return {
-    gems: parsed.gems,
-    tokens_used: tokensUsed,
-  };
-}
-```
-
-**Commit:** `feat(ai): Add Gemini API integration for gem extraction`
-
----
-
-### Task 6.3: Rate Limiting Service ⬜
-
-**Create:** `lib/ai/rate-limit.ts`
-
-**Requirements:**
-```typescript
-import { createClient } from '@/lib/supabase/server';
-import { createHash } from 'crypto';
-
-const DAILY_EXTRACTION_LIMIT = 10;
-const DAILY_TOKEN_LIMIT = 50000;
-
-export interface UsageStatus {
-  extractionsToday: number;
-  extractionsRemaining: number;
-  tokensToday: number;
-  canExtract: boolean;
-  resetTime: Date;
-}
-
-export async function checkUsageLimit(userId: string): Promise<UsageStatus>
-
-export async function recordUsage(
-  userId: string, 
-  tokensUsed: number
-): Promise<void>
-
-export async function getCachedExtraction(
-  userId: string, 
-  contentHash: string
-): Promise<ExtractionResult | null>
-
-export async function cacheExtraction(
-  userId: string,
-  contentHash: string,
-  content: string,
-  source: string | null,
-  result: ExtractionResult
-): Promise<void>
-
-export function hashContent(content: string): string {
-  return createHash('sha256').update(content).digest('hex');
-}
-```
-
-**Implementation details:**
-- Query `ai_usage` table for today's usage
-- Upsert usage record after each extraction
-- Check `ai_extractions` table for cached results by hash
-- Reset time is midnight UTC
-
-**Commit:** `feat(ai): Add rate limiting and caching for AI extractions`
-
----
-
-### Task 6.4: Extract Gems API Route ⬜
-
-**Create:** `app/api/ai/extract/route.ts`
-
-**Requirements:**
-```typescript
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { extractGemsFromContent } from '@/lib/ai/gemini';
-import { 
-  checkUsageLimit, 
-  recordUsage, 
-  getCachedExtraction, 
-  cacheExtraction, 
-  hashContent 
-} from '@/lib/ai/rate-limit';
-
-export async function POST(request: NextRequest) {
-  // 1. Authenticate user
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  // 2. Check AI consent
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('ai_consent_given')
-    .eq('id', user.id)
-    .single();
-  
-  if (!profile?.ai_consent_given) {
-    return NextResponse.json({ error: 'AI consent required' }, { status: 403 });
-  }
-
-  // 3. Parse request body
-  const { content, source } = await request.json();
-  
-  if (!content || typeof content !== 'string') {
-    return NextResponse.json({ error: 'Content is required' }, { status: 400 });
-  }
-
-  if (content.length > 10000) {
-    return NextResponse.json({ error: 'Content too long (max 10,000 chars)' }, { status: 400 });
-  }
-
-  // 4. Check rate limit
-  const usage = await checkUsageLimit(user.id);
-  if (!usage.canExtract) {
-    return NextResponse.json({ 
-      error: 'Daily limit reached',
-      usage 
-    }, { status: 429 });
-  }
-
-  // 5. Check cache
-  const contentHash = hashContent(content);
-  const cached = await getCachedExtraction(user.id, contentHash);
-  if (cached) {
-    return NextResponse.json({ 
-      gems: cached.gems,
-      cached: true,
-      usage 
-    });
-  }
-
-  // 6. Call Gemini API
-  try {
-    const result = await extractGemsFromContent(content, source);
-
-    // 7. Record usage and cache result
-    await recordUsage(user.id, result.tokens_used);
-    await cacheExtraction(user.id, contentHash, content, source || null, result);
-
-    // 8. Return extracted gems
-    const updatedUsage = await checkUsageLimit(user.id);
-    return NextResponse.json({
-      gems: result.gems,
-      cached: false,
-      usage: updatedUsage
-    });
-
-  } catch (error) {
-    console.error('Extraction error:', error);
-    return NextResponse.json({ error: 'Extraction failed' }, { status: 500 });
-  }
-}
-```
-
-**Commit:** `feat(ai): Add extract gems API route with rate limiting`
-
----
-
-### Task 6.5: Extract Gems UI - Entry Point ⬜
-
-**Modify:** `app/(protected)/gems/page.tsx` or wherever the gem creation UI lives
-
-**Requirements:**
-- Add "Extract from Content" button/tab alongside manual gem entry
-- Button shows sparkle/AI icon to indicate AI feature
-- Clicking opens the extraction modal (Task 6.6)
-- If user hasn't given AI consent, show consent modal first (already built in 6.1)
-
-**UI mockup:**
-```
-[+ Add Gem]  [✨ Extract from Content]
-```
-
-**Commit:** `feat(ai): Add extract gems entry point to gem creation UI`
-
----
-
-### Task 6.6: Extract Gems UI - Extraction Modal ⬜
-
-**Create:** `components/extract-gems-modal.tsx`
-
-**Requirements:**
-- Full-screen modal or slide-over panel
-- Two-step flow:
-  1. **Input step:** Textarea for pasting content + optional source field
-  2. **Review step:** Show extracted gems with checkboxes
-
-**Input step UI:**
-```
-┌─────────────────────────────────────────────┐
-│  ✨ Extract Gems from Content               │
-│                                             │
-│  Source (optional):                         │
-│  ┌─────────────────────────────────────┐   │
-│  │ e.g., "Atomic Habits by James Clear"│   │
-│  └─────────────────────────────────────┘   │
-│                                             │
-│  Paste your content:                        │
-│  ┌─────────────────────────────────────┐   │
-│  │                                     │   │
-│  │                                     │   │
-│  │                                     │   │
-│  │                                     │   │
-│  └─────────────────────────────────────┘   │
-│  0 / 10,000 characters                      │
-│                                             │
-│  [Cancel]              [Extract Gems ✨]    │
-└─────────────────────────────────────────────┘
-```
-
-**Review step UI:**
-```
-┌─────────────────────────────────────────────┐
-│  ✨ Review Extracted Gems                   │
-│                                             │
-│  We found 5 gems. Select which to save:     │
-│                                             │
-│  ☑ "Start with the end in mind"             │
-│    Tag: [Focus ▼]                [Edit]     │
-│                                             │
-│  ☑ "Be proactive, not reactive"             │
-│    Tag: [Meetings ▼]             [Edit]     │
-│                                             │
-│  ☐ "Seek first to understand"               │
-│    Tag: [Feedback ▼]             [Edit]     │
-│                                             │
-│  ⚠️ You have 8/10 active gems.              │
-│     You can save up to 2 more.              │
-│                                             │
-│  [Back]           [Save 2 Selected Gems]    │
-└─────────────────────────────────────────────┘
-```
-
-**State management:**
-- Track loading state during API call
-- Show skeleton/shimmer while extracting
-- Track selected gems and edits
-- Validate against 10-gem limit
-
-**Commit:** `feat(ai): Add extraction modal with input and review steps`
-
----
-
-### Task 6.7: Extracted Gem Preview Card ⬜
-
-**Create:** `components/extracted-gem-card.tsx`
-
-**Requirements:**
-- Checkbox for selection
-- Gem content (editable inline or via modal)
-- Context tag dropdown (editable)
-- Source quote if present (collapsible)
-- Visual indicator if edited from original
-
-**Props:**
-```typescript
-interface ExtractedGemCardProps {
-  gem: ExtractedGem;
-  selected: boolean;
-  onSelect: (selected: boolean) => void;
-  onEdit: (updates: Partial<ExtractedGem>) => void;
-  disabled?: boolean; // When at gem limit
-}
-```
-
-**Commit:** `feat(ai): Add extracted gem preview card component`
-
----
-
-### Task 6.8: Save Extracted Gems (Bulk) ⬜
-
-**Create:** `lib/gems.ts` - add bulk save function (or add to existing)
-
-**Requirements:**
-```typescript
-export async function saveExtractedGems(
-  gems: Array<{
-    content: string;
-    context_tag: ContextTag;
-    source?: string;
-    source_url?: string;
-  }>
-): Promise<{ saved: number; errors: string[] }>
-```
-
-**Implementation:**
-- Validate total won't exceed 10-gem limit
-- Insert all gems in a transaction
-- Return count of saved gems and any errors
-
-**Update extraction modal:**
-- Call this function when user clicks "Save Selected Gems"
-- Show success toast with count
-- Close modal and refresh gems list
-- Handle partial failures gracefully
-
-**Commit:** `feat(ai): Add bulk save for extracted gems`
-
----
-
-### Task 6.10: Error Handling & Edge Cases ⬜
-
-**Requirements:**
-
-1. **Empty extraction result:**
-   - If AI returns 0 gems, show friendly message
-   - "We couldn't find any clear insights in this content. Try pasting content with more actionable advice or quotes."
-
-2. **API errors:**
-   - Network failure: "Connection failed. Please try again."
-   - Rate limit (429): Show usage stats and reset time
-   - Server error (500): "Something went wrong. Please try again later."
-
-3. **Content validation:**
-   - Too short (< 100 chars): "Content is too short. Please paste more text."
-   - Too long (> 10,000 chars): Show character count and trim warning
-
-4. **Gem limit handling:**
-   - At limit (10/10): Disable extraction, show retirement prompt
-   - Near limit: Show warning with count
-   - Selection exceeds remaining: Disable save, show warning
-
-5. **Consent revoked mid-session:**
-   - If user revokes consent in another tab, handle gracefully
-   - Re-check consent on each extraction attempt
-
-**Commit:** `feat(ai): Add comprehensive error handling for AI extraction`
-
----
-
-## PART 2: Notes System (Tasks 6.11 - 6.15)
-
-### Task 6.11: Notes Service Functions ⬜
-
-**Create:** `lib/notes.ts`
-
-**Requirements:**
-```typescript
-import { createClient } from '@/lib/supabase/server';
-
-export interface Note {
-  id: string;
-  user_id: string;
-  title: string | null;
-  content: string | null;
-  created_at: string;
-  updated_at: string;
-  attachments?: NoteAttachment[];
-}
-
-export interface NoteAttachment {
-  id: string;
-  note_id: string;
-  user_id: string;
-  file_name: string;
-  file_type: string;
-  file_size: number;
-  storage_path: string;
-  created_at: string;
-}
-
-// CRUD operations
-export async function getNotes(): Promise<Note[]>
-export async function getNote(id: string): Promise<Note | null>
-export async function createNote(data: { title?: string; content?: string }): Promise<Note>
-export async function updateNote(id: string, data: { title?: string; content?: string }): Promise<Note>
-export async function deleteNote(id: string): Promise<void>
-
-// Attachment operations
-export async function addAttachment(
-  noteId: string, 
-  file: File
-): Promise<NoteAttachment>
-
-export async function deleteAttachment(attachmentId: string): Promise<void>
-
-export async function getAttachmentUrl(storagePath: string): Promise<string>
-```
-
-**Implementation notes:**
-- Use Supabase Storage for file uploads
-- Store files as `{user_id}/{note_id}/{filename}`
-- Generate signed URLs for viewing attachments
-- Delete storage files when attachment record is deleted
-
-**Commit:** `feat(notes): Add notes service with CRUD and attachment operations`
-
----
-
-### Task 6.12: Notes List UI ⬜
-
-**Create:** `app/(protected)/notes/page.tsx`
-
-**Requirements:**
-- List all user's notes, sorted by updated_at desc
-- Each note card shows:
-  - Title (or "Untitled Note")
-  - Content preview (first 100 chars)
-  - Attachment count badge if has attachments
-  - Updated date
-- "New Note" button
-- Empty state: "Capture ideas before they become gems"
-
-**Commit:** `feat(notes): Add notes list page`
-
----
-
-### Task 6.13: Note Editor UI ⬜
-
-**Create:** `app/(protected)/notes/[id]/page.tsx` and `components/note-editor.tsx`
-
-**Requirements:**
-- Full-page editor with:
-  - Title input (optional)
-  - Content textarea (auto-expanding)
-  - Auto-save on blur or after 2 seconds of no typing
-- Attachment section:
-  - Grid of attachment thumbnails
-  - "+ Add Image" button
-  - Click to view full size
-  - Delete button on each attachment
-- Actions:
-  - "✨ Extract Gems" button (opens extraction flow with note content + images)
-  - "Delete Note" button (with confirmation)
-  - Back to notes list
-
-**UI Layout:**
-```
-┌─────────────────────────────────────────────┐
-│  ← Notes                    [✨ Extract] 🗑️ │
-│                                             │
-│  ┌─────────────────────────────────────┐   │
-│  │ Note title...                       │   │
-│  └─────────────────────────────────────┘   │
-│                                             │
-│  ┌─────────────────────────────────────┐   │
-│  │                                     │   │
-│  │ Write your thoughts here...         │   │
-│  │                                     │   │
-│  │                                     │   │
-│  └─────────────────────────────────────┘   │
-│                                             │
-│  Attachments (2)                            │
-│  ┌───────┐ ┌───────┐ ┌───────┐            │
-│  │ 📷    │ │ 📷    │ │  +    │            │
-│  │ img1  │ │ img2  │ │ Add   │            │
-│  └───────┘ └───────┘ └───────┘            │
-│                                             │
-└─────────────────────────────────────────────┘
-```
-
-**Commit:** `feat(notes): Add note editor with attachments`
-
----
-
-### Task 6.14: Image Upload Component ⬜
-
-**Create:** `components/image-upload.tsx`
-
-**Requirements:**
-- Drag-and-drop zone
-- Click to open file picker
-- Accept: image/png, image/jpeg, image/gif, image/webp
-- Max file size: 5MB
-- Show upload progress
-- Show error states (file too large, wrong type)
-- Preview before upload completes
-
-**Props:**
-```typescript
-interface ImageUploadProps {
-  onUpload: (file: File) => Promise<void>;
-  maxSize?: number; // bytes, default 5MB
-  accept?: string[]; // MIME types
-  disabled?: boolean;
-}
-```
-
-**Commit:** `feat(notes): Add image upload component with drag-and-drop`
-
----
-
-### Task 6.15: AI Extraction from Notes (Text + Images) ⬜
-
-**Modify:** `lib/ai/gemini.ts` - add multimodal extraction
-
-**Requirements:**
-```typescript
-export async function extractGemsFromNote(
-  content: string,
-  images: Array<{ data: string; mimeType: string }>, // base64 encoded
-  source?: string
-): Promise<ExtractionResult>
-```
-
-**Implementation:**
-```typescript
-export async function extractGemsFromNote(
-  content: string,
-  images: Array<{ data: string; mimeType: string }>,
-  source?: string
-): Promise<ExtractionResult> {
-  const model = genAI.getGenerativeModel({ 
-    model: 'gemini-1.5-flash',
-    generationConfig: {
-      responseMimeType: 'application/json',
-      maxOutputTokens: 1024,
-    },
-  });
-
-  const parts: Part[] = [
-    { text: EXTRACTION_SYSTEM_PROMPT },
-  ];
-
-  // Add images
-  for (const image of images) {
-    parts.push({
-      inlineData: {
-        mimeType: image.mimeType,
-        data: image.data, // base64
-      },
-    });
-  }
-
-  // Add text content
-  const userPrompt = source 
-    ? `Source: ${source}\n\nContent:\n${content}`
-    : content || 'Extract insights from the images above.';
-  
-  parts.push({ text: userPrompt });
-
-  const result = await model.generateContent(parts);
-  // ... rest of implementation
-}
-```
-
-**Update API route:** `app/api/ai/extract/route.ts`
-- Accept optional `images` array in request body
-- Fetch images from Supabase Storage if note attachments provided
-- Convert to base64 for Gemini API
-
-**Update extraction modal:**
-- When triggered from a note, include note content and attachment images
-- Show which images are being analyzed
-
-**Commit:** `feat(ai): Add multimodal extraction from notes with images`
-
----
-
-## PART 3: Navigation & Polish
-
-### Task 6.16: Update Navigation ⬜
-
-**Modify:** Sidebar/navigation component
-
-**Requirements:**
-- Add "Notes" link to main navigation
-- Icon: 📝 or similar
-- Position: Between Gems and Settings
-- Active state highlighting
-
-**Navigation structure:**
-```
-💎 Gems (home)
-📝 Notes
-🏆 Trophy Case
-⚙️ Settings
-```
-
-**Commit:** `feat(nav): Add Notes to main navigation`
-
----
-
-### Task 6.17: Connect Notes UI to Existing "Notes" Section ⬜
-
-**Requirements:**
-- If there's existing Notes UI that's non-functional, wire it up to the new system
-- Remove any legacy Notekeeper code that's no longer needed
-- Ensure consistent styling with the rest of the app
-
-**Commit:** `refactor: Connect Notes section to new notes system`
-
----
-
-## Commit Sequence
-
-1. `feat(ai): Add Gemini API integration for gem extraction`
-2. `feat(ai): Add rate limiting and caching for AI extractions`
-3. `feat(ai): Add extract gems API route with rate limiting`
-4. `feat(ai): Add extract gems entry point to gem creation UI`
-5. `feat(ai): Add extraction modal with input and review steps`
-6. `feat(ai): Add extracted gem preview card component`
-7. `feat(ai): Add bulk save for extracted gems`
-8. `feat(ai): Add comprehensive error handling for AI extraction`
-9. `feat(notes): Add notes service with CRUD and attachment operations`
-10. `feat(notes): Add notes list page`
-11. `feat(notes): Add note editor with attachments`
-12. `feat(notes): Add image upload component with drag-and-drop`
-13. `feat(ai): Add multimodal extraction from notes with images`
-14. `feat(nav): Add Notes to main navigation`
-15. `refactor: Connect Notes section to new notes system`
-
----
-
-## Testing Checklist
-
-### Text Extraction
-- [ ] Can paste content and extract gems
-- [ ] Rate limiting works (10/day limit)
-- [ ] Caching works (same content returns cached result)
-- [ ] Can edit extracted gems before saving
-- [ ] Can change context tags
-- [ ] 10-gem limit is enforced
-- [ ] Error states display correctly
-
-### Notes System
-- [ ] Can create, edit, delete notes
-- [ ] Auto-save works
-- [ ] Can upload images (drag-drop and click)
-- [ ] File size limit enforced (5MB)
-- [ ] Can view attachment thumbnails
-- [ ] Can delete attachments
-- [ ] Can extract gems from note content
-- [ ] Can extract gems from note images
-- [ ] Navigation to Notes works
-
----
-
-## Notes for Claude Code
-
-- Always check for AI consent before making extraction API calls
-- Use the existing UI patterns from gem creation for consistency
-- The Supabase Storage bucket is called `note-attachments`
-- Files should be stored as `{user_id}/{note_id}/{filename}`
-- Gemini 1.5 Flash supports up to 16 images per request
-- Keep the extraction prompt focused on actionable wisdom, not summaries
+## Completion Checklist
+
+### Task 8.1: Individual Gem Schedules
+- [ ] Types created
+- [ ] Service functions implemented
+- [ ] NLP parse API route working
+- [ ] Visual scheduler component built
+- [ ] Gem detail view updated
+- [ ] Gem card badge added
+- [ ] All tests passing
+
+### Task 8.2: Moment Entry Modal
+- [ ] Types created
+- [ ] Service functions implemented
+- [ ] Modal component built
+- [ ] FAB trigger added
+- [ ] API route working
+- [ ] All tests passing
+
+### Task 8.3: Calendar Integration
+- [ ] Types created
+- [ ] OAuth routes implemented
+- [ ] Service functions working
+- [ ] Settings component built
+- [ ] Background sync working
+- [ ] Banner component built
+- [ ] All tests passing
+
+### Task 8.4: AI Gem Matching
+- [ ] Types created
+- [ ] Matching service implemented
+- [ ] API route working
+- [ ] All tests passing
+
+### Task 8.5: Prep Card Display
+- [ ] Prep card page created
+- [ ] PrepCard component built
+- [ ] Recent moments section added
+- [ ] Moments history page built
+- [ ] Deep links working
+- [ ] All tests passing
+
+### Integration
+- [ ] E2E moment flow tested
+- [ ] Calendar auto-moment tested
+- [ ] Schedule notification tested
+- [ ] Mobile responsive
+- [ ] No console errors
+- [ ] Vercel deployment successful
