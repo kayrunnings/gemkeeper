@@ -8,23 +8,20 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Gem, Loader2, LogOut, RefreshCw, Settings as SettingsIcon, Sparkles, AlertCircle, Menu, X } from "lucide-react"
+import { Loader2, LogOut, RefreshCw, Settings as SettingsIcon, Sparkles, AlertCircle } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { grantAIConsent, revokeAIConsent } from "./actions"
 import { AIConsentModal } from "@/components/ai-consent-modal"
-import Link from "next/link"
-import { AppSidebar, MobileNav } from "@/components/app-sidebar"
+import { LayoutShell } from "@/components/layout-shell"
+import { useToast } from "@/components/error-toast"
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [showAIConsentModal, setShowAIConsentModal] = useState(false)
   const [isRevokingAI, setIsRevokingAI] = useState(false)
-  const [aiError, setAiError] = useState<string | null>(null)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   // Form state
   const [name, setName] = useState("")
@@ -34,107 +31,112 @@ export default function SettingsPage() {
 
   const router = useRouter()
   const supabase = createClient()
+  const { showError, showSuccess } = useToast()
 
   useEffect(() => {
     async function loadData() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push("/login")
-        return
-      }
-      setUserEmail(user.email ?? null)
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          router.push("/login")
+          return
+        }
+        setUserEmail(user.email ?? null)
 
-      // Fetch profile
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single()
-
-      if (error && error.code !== "PGRST116") {
-        console.error("Error fetching profile:", error)
-      }
-
-      if (data) {
-        setProfile(data)
-        setName(data.name || "")
-        setTimezone(data.timezone || "America/New_York")
-        setDailyPromptTime(data.daily_prompt_time || "08:00")
-        setCheckinTime(data.checkin_time || "20:00")
-      } else {
-        // Create profile if it doesn't exist
-        const { data: newProfile, error: createError } = await supabase
+        // Fetch profile
+        const { data, error } = await supabase
           .from("profiles")
-          .insert({
-            id: user.id,
-            email: user.email,
-            onboarding_completed: false,
-          })
-          .select()
+          .select("*")
+          .eq("id", user.id)
           .single()
 
-        if (createError) {
-          console.error("Error creating profile:", createError)
-        } else if (newProfile) {
-          setProfile(newProfile)
+        if (error && error.code !== "PGRST116") {
+          showError(error, "Failed to load profile")
         }
-      }
 
-      setIsLoading(false)
+        if (data) {
+          setProfile(data)
+          setName(data.name || "")
+          setTimezone(data.timezone || "America/New_York")
+          setDailyPromptTime(data.daily_prompt_time || "08:00")
+          setCheckinTime(data.checkin_time || "20:00")
+        } else {
+          // Create profile if it doesn't exist
+          const { data: newProfile, error: createError } = await supabase
+            .from("profiles")
+            .insert({
+              id: user.id,
+              email: user.email,
+              onboarding_completed: false,
+            })
+            .select()
+            .single()
+
+          if (createError) {
+            showError(createError, "Failed to create profile")
+          } else if (newProfile) {
+            setProfile(newProfile)
+          }
+        }
+      } catch (err) {
+        showError(err, "Failed to load settings")
+      } finally {
+        setIsLoading(false)
+      }
     }
 
     loadData()
-  }, [router, supabase])
+  }, [router, supabase, showError])
 
   const handleSave = async () => {
     if (!profile) return
 
     setIsSaving(true)
-    setSuccessMessage(null)
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        name: name || null,
-        timezone,
-        daily_prompt_time: dailyPromptTime,
-        checkin_time: checkinTime,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", profile.id)
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          name: name || null,
+          timezone,
+          daily_prompt_time: dailyPromptTime,
+          checkin_time: checkinTime,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", profile.id)
 
-    if (error) {
-      console.error("Error updating profile:", error)
-    } else {
-      setSuccessMessage("Settings saved successfully!")
-      setTimeout(() => setSuccessMessage(null), 3000)
+      if (error) {
+        showError(error, "Failed to save settings")
+      } else {
+        showSuccess("Settings saved!", "Your preferences have been updated.")
+      }
+    } catch (err) {
+      showError(err, "Failed to save settings")
+    } finally {
+      setIsSaving(false)
     }
-
-    setIsSaving(false)
   }
 
   const handleReplayOnboarding = async () => {
     if (!profile) return
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        onboarding_completed: false,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", profile.id)
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          onboarding_completed: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", profile.id)
 
-    if (error) {
-      console.error("Error resetting onboarding:", error)
-    } else {
-      router.push("/onboarding")
+      if (error) {
+        showError(error, "Failed to reset onboarding")
+      } else {
+        router.push("/onboarding")
+      }
+    } catch (err) {
+      showError(err, "Failed to reset onboarding")
     }
-  }
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push("/login")
-    router.refresh()
   }
 
   const handleGrantAIConsent = async (): Promise<{ error: string | null }> => {
@@ -145,23 +147,25 @@ export default function SettingsPage() {
     if (result.data) {
       setProfile(result.data)
     }
-    setSuccessMessage("AI features enabled!")
-    setTimeout(() => setSuccessMessage(null), 3000)
+    showSuccess("AI features enabled!", "You can now extract gems with AI.")
     return { error: null }
   }
 
   const handleRevokeAIConsent = async () => {
     setIsRevokingAI(true)
-    setAiError(null)
-    const result = await revokeAIConsent()
-    if (result.error) {
-      setAiError(result.error)
-    } else if (result.data) {
-      setProfile(result.data)
-      setSuccessMessage("AI features disabled")
-      setTimeout(() => setSuccessMessage(null), 3000)
+    try {
+      const result = await revokeAIConsent()
+      if (result.error) {
+        showError(result.error)
+      } else if (result.data) {
+        setProfile(result.data)
+        showSuccess("AI features disabled")
+      }
+    } catch (err) {
+      showError(err, "Failed to disable AI features")
+    } finally {
+      setIsRevokingAI(false)
     }
-    setIsRevokingAI(false)
   }
 
   const formatConsentDate = (dateString: string | null) => {
@@ -178,7 +182,9 @@ export default function SettingsPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center">
+            <SettingsIcon className="h-8 w-8 text-muted-foreground" />
+          </div>
           <p className="text-muted-foreground">Loading settings...</p>
         </div>
       </div>
@@ -186,73 +192,18 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* Mobile menu button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
-            <Link href="/gems" className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-                <Gem className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <h1 className="text-xl font-semibold">GemKeeper</h1>
-            </Link>
+    <LayoutShell userEmail={userEmail}>
+      <div className="p-4 md:p-8 max-w-2xl mx-auto">
+        {/* Page header */}
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+            <SettingsIcon className="h-6 w-6 text-muted-foreground" />
           </div>
-
-          <div className="flex items-center gap-2 pl-3 border-l">
-            <div
-              className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium"
-              title={userEmail ?? undefined}
-            >
-              {userEmail?.[0]?.toUpperCase() ?? "U"}
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              title="Sign out"
-              onClick={handleSignOut}
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+            <p className="text-muted-foreground">Manage your preferences</p>
           </div>
         </div>
-      </header>
-
-      {/* Mobile navigation */}
-      <MobileNav isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
-
-      {/* Main content with sidebar */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar - desktop */}
-        <div className="hidden md:block">
-          <AppSidebar />
-        </div>
-
-        {/* Settings area */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
-          <div className="max-w-2xl mx-auto">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="flex items-center gap-2">
-                <SettingsIcon className="h-5 w-5" />
-                <h2 className="text-2xl font-semibold">Settings</h2>
-              </div>
-            </div>
-
-        {successMessage && (
-          <div className="mb-6 p-3 rounded-md bg-green-100 text-green-800 text-sm">
-            {successMessage}
-          </div>
-        )}
 
         <div className="space-y-6">
           {/* Profile Card */}
@@ -278,7 +229,7 @@ export default function SettingsPage() {
                   id="email"
                   value={userEmail || ""}
                   disabled
-                  className="bg-muted"
+                  className="bg-secondary"
                 />
                 <p className="text-xs text-muted-foreground">
                   Email cannot be changed
@@ -338,10 +289,11 @@ export default function SettingsPage() {
           </Card>
 
           {/* AI Features Card */}
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="h-1 ai-gradient" />
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-violet-500" />
+                <Sparkles className="h-5 w-5 text-primary ai-sparkle" />
                 AI Features
               </CardTitle>
               <CardDescription>
@@ -349,29 +301,24 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {aiError && (
-                <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive">
-                  <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-                  <p className="text-sm">{aiError}</p>
-                </div>
-              )}
-
               {profile?.ai_consent_given ? (
                 <>
-                  <div className="p-4 bg-violet-50 border border-violet-200 rounded-lg space-y-2">
+                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-violet-900">AI Features Enabled</span>
-                      <span className="text-xs px-2 py-1 bg-violet-100 text-violet-700 rounded-full">Active</span>
+                      <span className="text-sm font-medium">AI Features Enabled</span>
+                      <span className="text-xs px-2.5 py-1 bg-primary/10 text-primary rounded-full font-medium">
+                        Active
+                      </span>
                     </div>
                     {profile.ai_consent_date && (
-                      <p className="text-xs text-violet-700">
+                      <p className="text-xs text-muted-foreground">
                         Enabled on {formatConsentDate(profile.ai_consent_date)}
                       </p>
                     )}
                   </div>
                   <Button
                     variant="outline"
-                    className="w-full justify-center"
+                    className="w-full"
                     onClick={handleRevokeAIConsent}
                     disabled={isRevokingAI}
                   >
@@ -391,7 +338,8 @@ export default function SettingsPage() {
                     Enable AI-powered gem extraction to automatically find insights from your content.
                   </p>
                   <Button
-                    className="w-full gap-2 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600"
+                    variant="ai"
+                    className="w-full gap-2"
                     onClick={() => setShowAIConsentModal(true)}
                   >
                     <Sparkles className="h-4 w-4" />
@@ -407,7 +355,7 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle>Actions</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <Button
                 variant="outline"
                 className="w-full justify-start gap-2"
@@ -419,8 +367,12 @@ export default function SettingsPage() {
 
               <Button
                 variant="outline"
-                className="w-full justify-start gap-2 text-destructive hover:text-destructive"
-                onClick={handleSignOut}
+                className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={async () => {
+                  await supabase.auth.signOut()
+                  router.push("/login")
+                  router.refresh()
+                }}
               >
                 <LogOut className="h-4 w-4" />
                 Sign Out
@@ -429,7 +381,7 @@ export default function SettingsPage() {
           </Card>
 
           {/* Save Button */}
-          <Button onClick={handleSave} disabled={isSaving} className="w-full">
+          <Button onClick={handleSave} disabled={isSaving} className="w-full h-12">
             {isSaving ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -440,8 +392,6 @@ export default function SettingsPage() {
             )}
           </Button>
         </div>
-        </div>
-      </main>
       </div>
 
       {/* AI Consent Modal */}
@@ -450,6 +400,6 @@ export default function SettingsPage() {
         onClose={() => setShowAIConsentModal(false)}
         onConsent={handleGrantAIConsent}
       />
-    </div>
+    </LayoutShell>
   )
 }

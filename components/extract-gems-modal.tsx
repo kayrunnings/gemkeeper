@@ -301,8 +301,10 @@ export function ExtractGemsModal({
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-violet-500" />
-              {step === "success" ? "Gems Added!" : "Extract Gems from Content"}
+              <div className="w-8 h-8 rounded-lg ai-gradient flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-white" />
+              </div>
+              {step === "success" ? "Gems Added!" : "Extract Gems with AI"}
             </DialogTitle>
             {step === "input" && (
               <DialogDescription>
@@ -316,7 +318,7 @@ export function ExtractGemsModal({
             {step === "input" && (
               <div className="space-y-4">
                 {error && (
-                  <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive">
+                  <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive">
                     <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
                     <p className="text-sm">{error}</p>
                   </div>
@@ -331,13 +333,13 @@ export function ExtractGemsModal({
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder="Paste your content here..."
-                    className="min-h-[200px] resize-none"
+                    className="min-h-[180px] resize-none"
                     maxLength={10000}
                   />
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>{content.length} / 10,000 characters</span>
                     {content.length > 0 && content.length < 100 && (
-                      <span className="text-amber-600">
+                      <span className="text-warning">
                         Minimum 100 characters required
                       </span>
                     )}
@@ -351,32 +353,32 @@ export function ExtractGemsModal({
                     {mediaFiles.map((mf, i) => (
                       <div
                         key={i}
-                        className="relative group border rounded-lg p-2 flex items-center gap-2 bg-gray-50"
+                        className="relative group border rounded-xl p-2 flex items-center gap-2 bg-secondary/50"
                       >
                         {mf.preview ? (
                           <img
                             src={mf.preview}
                             alt=""
-                            className="w-10 h-10 object-cover rounded"
+                            className="w-10 h-10 object-cover rounded-lg"
                           />
                         ) : (
-                          <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
+                          <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
                             {getFileIcon(mf.file.type)}
                           </div>
                         )}
-                        <span className="text-xs text-gray-600 max-w-[100px] truncate">
+                        <span className="text-xs text-muted-foreground max-w-[100px] truncate">
                           {mf.file.name}
                         </span>
                         <button
                           onClick={() => removeFile(i)}
-                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute -top-1 -right-1 bg-destructive text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <X className="h-3 w-3" />
                         </button>
                       </div>
                     ))}
                     {mediaFiles.length < 5 && (
-                      <label className="border-2 border-dashed rounded-lg p-4 cursor-pointer hover:border-violet-400 transition-colors flex items-center gap-2 text-sm text-muted-foreground">
+                      <label className="border-2 border-dashed rounded-xl p-4 cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-colors flex items-center gap-2 text-sm text-muted-foreground">
                         <Upload className="h-4 w-4" />
                         Add media
                         <input
@@ -414,7 +416,8 @@ export function ExtractGemsModal({
                 <Button
                   onClick={handleExtract}
                   disabled={!hasInput}
-                  className="w-full gap-2 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600"
+                  variant="ai"
+                  className="w-full gap-2 h-12"
                 >
                   <Sparkles className="h-4 w-4" />
                   Extract Gems
@@ -424,12 +427,19 @@ export function ExtractGemsModal({
 
             {/* Loading Step */}
             {step === "loading" && (
-              <div className="py-12 text-center">
-                <Loader2 className="h-12 w-12 animate-spin text-violet-500 mx-auto mb-4" />
-                <p className="text-lg font-medium">Analyzing content...</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  This usually takes 5-10 seconds
+              <div className="py-16 text-center">
+                <div className="w-20 h-20 rounded-2xl ai-gradient flex items-center justify-center mx-auto mb-6 ai-glow">
+                  <Sparkles className="h-10 w-10 text-white ai-sparkle" />
+                </div>
+                <p className="text-xl font-semibold mb-2">AI is thinking...</p>
+                <p className="text-muted-foreground">
+                  Analyzing your content for insights
                 </p>
+                <div className="mt-6 flex justify-center">
+                  <div className="h-1 w-48 bg-secondary rounded-full overflow-hidden">
+                    <div className="h-full w-full ai-shimmer" />
+                  </div>
+                </div>
               </div>
             )}
 
@@ -437,14 +447,14 @@ export function ExtractGemsModal({
             {step === "review" && (
               <div className="space-y-4">
                 {error && (
-                  <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive">
+                  <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive">
                     <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
                     <p className="text-sm">{error}</p>
                   </div>
                 )}
 
                 <div className="flex items-center justify-between">
-                  <p className="font-medium">
+                  <p className="font-semibold">
                     Found {extractedGems.length} potential gem
                     {extractedGems.length !== 1 ? "s" : ""}
                   </p>
@@ -454,7 +464,7 @@ export function ExtractGemsModal({
                 </div>
 
                 {selectedCount > availableSlots && (
-                  <div className="flex items-start gap-2 p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800">
+                  <div className="flex items-start gap-2 p-3 rounded-xl bg-warning/10 border border-warning/20 text-warning">
                     <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
                     <p className="text-sm">
                       You have {activeGemCount}/{MAX_ACTIVE_GEMS} active gems. You
@@ -463,7 +473,7 @@ export function ExtractGemsModal({
                   </div>
                 )}
 
-                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2">
                   {extractedGems.map((gem, i) => (
                     <ExtractedGemCard
                       key={i}
@@ -486,7 +496,8 @@ export function ExtractGemsModal({
                   <Button
                     onClick={handleSaveSelected}
                     disabled={!canSave || isSaving}
-                    className="ml-auto gap-2 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600"
+                    variant="ai"
+                    className="ml-auto gap-2"
                   >
                     {isSaving ? (
                       <>
@@ -505,18 +516,18 @@ export function ExtractGemsModal({
 
             {/* Success Step */}
             {step === "success" && (
-              <div className="py-8 text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle2 className="h-8 w-8 text-green-600" />
+              <div className="py-12 text-center">
+                <div className="w-20 h-20 bg-success/10 rounded-2xl flex items-center justify-center mx-auto mb-6 animate-celebrate">
+                  <CheckCircle2 className="h-10 w-10 text-success" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">
+                <h3 className="text-xl font-bold mb-2">
                   Added {savedCount} gem{savedCount !== 1 ? "s" : ""} to your
                   collection!
                 </h3>
-                <p className="text-muted-foreground mb-6">
+                <p className="text-muted-foreground mb-8">
                   Your new gems are ready for daily practice.
                 </p>
-                <Button onClick={onClose}>View Gems</Button>
+                <Button onClick={onClose} className="h-11">View Gems</Button>
               </div>
             )}
           </div>
