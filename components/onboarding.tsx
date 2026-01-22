@@ -22,7 +22,7 @@ interface OnboardingStep {
 const STEPS: OnboardingStep[] = [
   {
     title: "Welcome to ThoughtFolio",
-    description: "Your wisdom accountability partner. Capture insights, surface them at the right moments, and stay accountable for applying what you learn.",
+    description: "Thoughts that find you. Capture insights, surface them at the right moments, and stay accountable for applying what you learn.",
     icon: <Gem className="h-12 w-12" />,
     color: "from-primary to-primary/80",
   },

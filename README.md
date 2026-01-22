@@ -1,6 +1,6 @@
   # ThoughtFolio
    
-   Your wisdom accountability partner. Capture insights, surface them at the right moments, and stay accountable for applying what you learn.
+   Thoughts that find you. Capture insights, surface them at the right moments, and stay accountable for applying what you learn.
    
    ## Tech Stack
    

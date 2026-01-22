@@ -4,8 +4,8 @@ import { ToastProvider } from "@/components/error-toast";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "ThoughtFolio | Your Wisdom Accountability Partner",
-  description: "Your wisdom accountability partner",
+  title: "ThoughtFolio | Thoughts that find you",
+  description: "Thoughts that find you",
 };
 
 // Inline script to prevent flash of wrong theme
