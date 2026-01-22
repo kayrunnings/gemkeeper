@@ -38,7 +38,7 @@ export default function OnboardingPage() {
         updated_at: new Date().toISOString(),
       })
 
-    router.push("/gems")
+    router.push("/home")
   }
 
   const handleSkip = async () => {

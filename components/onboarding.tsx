@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Gem, Sparkles, Bell, CheckCircle, ChevronRight, ChevronLeft } from "lucide-react"
+import { Gem, Sparkles, Bell, CheckCircle, ChevronRight, ChevronLeft, Wand2, Target, Calendar, FolderOpen, Tags } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/theme-toggle"
 
@@ -33,10 +33,40 @@ const STEPS: OnboardingStep[] = [
     color: "from-amber-500 to-orange-500",
   },
   {
+    title: "AI-Powered Extraction",
+    description: "Paste articles, book highlights, or transcripts and let AI extract wisdom gems automatically. No more manual copying!",
+    icon: <Wand2 className="h-12 w-12" />,
+    color: "from-violet-500 to-purple-500",
+  },
+  {
+    title: "Prepare for Your Moments",
+    description: "Create moments for upcoming situations—meetings, conversations, or challenges. We'll surface the perfect gems to help you prepare.",
+    icon: <Target className="h-12 w-12" />,
+    color: "from-teal-500 to-cyan-500",
+  },
+  {
+    title: "Calendar Integration",
+    description: "Connect your calendar to automatically create moments before important events. Never walk into a meeting unprepared again.",
+    icon: <Calendar className="h-12 w-12" />,
+    color: "from-blue-500 to-indigo-500",
+  },
+  {
     title: "Right Moment, Right Wisdom",
     description: "Daily prompts surface your gems when you need them. Each morning, you'll get a gem to focus on for the day.",
     icon: <Bell className="h-12 w-12" />,
-    color: "from-blue-500 to-indigo-500",
+    color: "from-orange-500 to-amber-500",
+  },
+  {
+    title: "Organize with Notes",
+    description: "Keep notes from books, podcasts, and articles. Extract gems from your notes anytime. Organize with folders to stay tidy.",
+    icon: <FolderOpen className="h-12 w-12" />,
+    color: "from-emerald-500 to-green-500",
+  },
+  {
+    title: "Tag for Context",
+    description: "Categorize gems by context—meetings, feedback, conflict, focus, health, relationships, and more. We'll match gems to moments based on these tags.",
+    icon: <Tags className="h-12 w-12" />,
+    color: "from-rose-500 to-pink-500",
   },
   {
     title: "Actually Apply It",
