@@ -6,15 +6,17 @@ import { Gem, CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS } from "@/lib/types/gem"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Gem as GemIcon, Loader2, LogOut, Trophy, CheckCircle, Calendar } from "lucide-react"
+import { Gem as GemIcon, Loader2, LogOut, Trophy, CheckCircle, Calendar, Menu, X } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { AppSidebar, MobileNav } from "@/components/app-sidebar"
 
 export default function TrophyCasePage() {
   const [gems, setGems] = useState<Gem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -87,6 +89,15 @@ export default function TrophyCasePage() {
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {/* Mobile menu button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
             <Link href="/gems" className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
                 <GemIcon className="h-5 w-5 text-primary-foreground" />
@@ -115,8 +126,18 @@ export default function TrophyCasePage() {
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-8">
+      {/* Mobile navigation */}
+      <MobileNav isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+
+      {/* Main content with sidebar */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar - desktop */}
+        <div className="hidden md:block">
+          <AppSidebar />
+        </div>
+
+        {/* Gems area */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
           {/* Header with trophy */}
           <div className="flex items-center gap-3 mb-6">
@@ -200,6 +221,7 @@ export default function TrophyCasePage() {
           )}
         </div>
       </main>
+      </div>
     </div>
   )
 }

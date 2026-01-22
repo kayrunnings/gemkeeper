@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Gem, CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS } from "@/lib/types/gem"
 import {
   Dialog,
@@ -28,13 +28,11 @@ export function GraduateGemDialog({ gem, isOpen, onClose, onGraduated }: Graduat
   const [error, setError] = useState<string | null>(null)
   const [showCelebration, setShowCelebration] = useState(false)
 
-  // Reset celebration when dialog opens
-  useEffect(() => {
-    if (isOpen) {
-      setShowCelebration(false)
-      setError(null)
-    }
-  }, [isOpen])
+  const handleClose = () => {
+    setShowCelebration(false)
+    setError(null)
+    onClose()
+  }
 
   const handleGraduate = async () => {
     setIsSubmitting(true)
@@ -64,7 +62,7 @@ export function GraduateGemDialog({ gem, isOpen, onClose, onGraduated }: Graduat
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && !showCelebration && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && !showCelebration && handleClose()}>
       <DialogContent className="sm:max-w-md">
         {showCelebration ? (
           // Celebration view
@@ -132,7 +130,7 @@ export function GraduateGemDialog({ gem, isOpen, onClose, onGraduated }: Graduat
             </div>
 
             <DialogFooter>
-              <Button variant="ghost" onClick={onClose} disabled={isSubmitting}>
+              <Button variant="ghost" onClick={handleClose} disabled={isSubmitting}>
                 Cancel
               </Button>
               <Button

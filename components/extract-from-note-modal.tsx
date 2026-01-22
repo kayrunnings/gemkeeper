@@ -170,14 +170,15 @@ export function ExtractFromNoteModal({
         }))
 
       // Combine note title and content
-      const noteContent = `${note.title}\n\n${note.content}`
+      const noteTitle = note.title || "Untitled Note"
+      const noteContent = `${noteTitle}\n\n${note.content || ""}`
 
       const response = await fetch("/api/ai/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: noteContent,
-          source: `Note: ${note.title}`,
+          source: `Note: ${noteTitle}`,
           media: mediaData.length > 0 ? mediaData : undefined,
         }),
       })
@@ -215,7 +216,7 @@ export function ExtractFromNoteModal({
         .map((gem) => ({
           content: gem.content,
           context_tag: gem.context_tag,
-          source: `Note: ${note.title}`,
+          source: `Note: ${note.title || "Untitled Note"}`,
         }))
 
       const response = await fetch("/api/gems/bulk", {
@@ -301,7 +302,7 @@ export function ExtractFromNoteModal({
             </DialogTitle>
             {step === "input" && (
               <DialogDescription>
-                Extract actionable insights from &ldquo;{note.title}&rdquo;
+                Extract actionable insights from &ldquo;{note.title || "Untitled Note"}&rdquo;
               </DialogDescription>
             )}
           </DialogHeader>
@@ -319,9 +320,9 @@ export function ExtractFromNoteModal({
 
                 {/* Note preview */}
                 <div className="p-4 bg-gray-50 border rounded-lg space-y-2">
-                  <h4 className="font-medium">{note.title}</h4>
+                  <h4 className="font-medium">{note.title || "Untitled Note"}</h4>
                   <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                    {truncateContent(note.content)}
+                    {truncateContent(note.content || "")}
                   </p>
                 </div>
 

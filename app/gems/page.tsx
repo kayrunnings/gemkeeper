@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, Gem as GemIcon, Loader2, MoreHorizontal, Trash2, ExternalLink, LogOut, Menu, X, StickyNote, CheckCircle, Sun, Moon, Trophy, Settings, Sparkles } from "lucide-react"
+import { Plus, Gem as GemIcon, Loader2, MoreHorizontal, Trash2, LogOut, Menu, X, StickyNote, CheckCircle, Sun, Moon, Trophy, Settings, Sparkles } from "lucide-react"
 import { ExtractGemsModal } from "@/components/extract-gems-modal"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"

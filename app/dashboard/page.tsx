@@ -9,7 +9,6 @@ import { Sidebar, FilterType } from "@/components/sidebar"
 import { Button } from "@/components/ui/button"
 import { Plus, LogOut, Gem, Loader2, Menu, X } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { cn } from "@/lib/utils"
 import { ExtractFromNoteModal } from "@/components/extract-from-note-modal"
 
 export default function DashboardPage() {
