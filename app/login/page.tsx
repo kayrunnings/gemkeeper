@@ -45,8 +45,8 @@ export default function LoginPage() {
         if (error) throw error
       }
 
-      // Redirect to dashboard on success
-      router.push("/dashboard")
+      // Redirect to home on success
+      router.push("/home")
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
