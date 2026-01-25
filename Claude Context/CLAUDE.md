@@ -19,7 +19,7 @@ ThoughtFolio (formerly GemKeeper) is a wisdom accountability partner app that he
 
 ## Documentation
 
-Before starting work, read these files in `.claude/`:
+Before starting work, read these files in `claude context/`:
 
 | File | Purpose |
 |------|---------|
