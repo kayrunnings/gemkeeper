@@ -4,7 +4,7 @@
 
 ## Project Overview
 
-ThoughtFolio (formerly GemKeeper) is a wisdom accountability partner app that helps users capture insights from books, podcasts, and life experiences, then proactively surfaces them for daily application. Unlike passive note-taking tools, ThoughtFolio uses constraint-based design (maximum 10 active "gems") and calendar-aware accountability to drive behavior change.
+ThoughtFolio (formerly GemKeeper) is a wisdom accountability partner app that helps users capture insights from books, podcasts, articles, videos, and life experiences, then proactively surfaces them for daily application. Unlike passive note-taking tools, ThoughtFolio uses constraint-based design (Active List of 10 thoughts) and calendar-aware accountability to drive behavior change.
 
 **Live App:** https://gemkeeper.vercel.app (rebrand to thoughtfolio pending)
 
@@ -19,7 +19,7 @@ ThoughtFolio (formerly GemKeeper) is a wisdom accountability partner app that he
 
 ## Documentation
 
-Before starting work, read these files in `claude context/`:
+Before starting work, read these files in `Claude Context/`:
 
 | File | Purpose |
 |------|---------|
@@ -49,6 +49,20 @@ Do not mix work across task files unless explicitly instructed.
 - **AI:** Google Gemini API (not Anthropic)
 - **Deployment:** Vercel (auto-deploy from main branch)
 - **Auth:** Supabase Auth
+
+## Key Concepts
+
+### Contexts
+User-defined life areas for organizing thoughts (e.g., Coding, PM, Relationships). Eight defaults provided, users can create custom contexts. Each context has a configurable thought limit (default: 20).
+
+### Thoughts (formerly "Gems")
+Captured insights/wisdom. Each thought belongs to one context. Thoughts can be Active (on Active List) or Passive.
+
+### Active List
+Curated subset of up to 10 thoughts that appear in daily prompts. Preserves the original constraint-based accountability model while allowing unlimited total thoughts across contexts.
+
+### Moments
+On-demand gem matching for upcoming situations. Moments search ALL thoughts across ALL contexts, regardless of Active status.
 
 ## Workflow Expectations
 
@@ -90,5 +104,6 @@ Do not mix work across task files unless explicitly instructed.
 ## Important Notes
 
 - The rebrand from GemKeeper → ThoughtFolio is in progress
+- Database uses "gems" table name but UI shows "thoughts"
 - API keys need regeneration on Supabase (reminder noted)
 - Always verify changes work in the live app at gemkeeper.vercel.app
