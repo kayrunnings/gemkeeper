@@ -24,7 +24,7 @@ This captures the core value proposition: proactive surfacing. You don't have to
 
 - A wisdom accountability partner
 - A system for applying what you learn
-- A curator of your most important insights
+- A curator of your most important insights organized by life context
 - A coach that knows your values and reminds you of them
 
 ### What ThoughtFolio Is Not
@@ -44,40 +44,47 @@ This captures the core value proposition: proactive surfacing. You don't have to
 | **Journaling Apps** | Reflection capture | No resurfacing, no application prompts |
 
 **ThoughtFolio's unique combination:**
-1. Constraint-based curation (10 gems max)
+1. Context-based curation with accountability (Active List of 10)
 2. Proactive, context-aware surfacing
 3. Accountability mechanisms (daily prompts, moments)
 4. Your wisdom, not AI-generated content
+5. URL-based extraction from articles and videos
 
 ---
 
 ## Core Principles
 
-### 1. Less is More
+### 1. Focused Accountability
 
-The 10-gem limit isn't a restriction — it's a feature. Constraints force prioritization. A focused collection of truly important insights beats an infinite archive of "maybe useful someday" highlights.
+The Active List (10 thoughts max) isn't a restriction — it's a feature. While users can capture unlimited thoughts across contexts, the Active List forces them to choose what matters most right now. These are the thoughts that will appear in daily prompts.
 
-**Implication:** We never encourage hoarding. We celebrate archiving. We make users feel good about saying "this isn't in my top 10 anymore."
+**Implication:** We encourage broad capture but focused attention. The Active List represents "what I'm working on applying."
 
 ### 2. Application Over Accumulation
 
-Success isn't measured in gems captured. It's measured in wisdom applied. Every feature should ask: "Does this help users actually use their insights?"
+Success isn't measured in thoughts captured. It's measured in wisdom applied. Every feature should ask: "Does this help users actually use their insights?"
 
 **Implication:** Daily prompts include action suggestions. Moments focus on preparation. We track "applied" status, not just "captured."
 
-### 3. Right Gem, Right Time
+### 3. Right Thought, Right Time
 
 Random resurfacing isn't enough. The right wisdom at the wrong time is noise. Context matters.
 
 **Implication:** Calendar integration, individual scheduling, and moment matching all serve this principle. We invest in timing intelligence.
 
-### 4. User's Words, User's Wisdom
+### 4. Organized by Life
+
+Different life areas need different wisdom. Coding insights don't help in parenting moments. Relationship advice doesn't apply to technical problems.
+
+**Implication:** Contexts let users organize by life domain. Moments search all contexts but surface contextually relevant thoughts.
+
+### 5. User's Words, User's Wisdom
 
 We help users capture and resurface their own insights. We don't generate wisdom for them. The AI assists extraction and matching, but the substance comes from the user.
 
-**Implication:** AI suggestions are always editable. We never put words in users' mouths. The gems belong to the user.
+**Implication:** AI suggestions are always editable. We never put words in users' mouths. The thoughts belong to the user.
 
-### 5. Gentle Accountability
+### 6. Gentle Accountability
 
 We're a supportive coach, not a nagging reminder app. Accountability should feel empowering, not guilt-inducing.
 
@@ -94,6 +101,7 @@ People who:
 - Care about personal growth and self-improvement
 - Have tried (and been frustrated by) other note-taking systems
 - Want their learning to actually change their behavior
+- Have multiple life domains they want to improve (work, health, relationships)
 
 ### Not Our User (Initially)
 
@@ -109,9 +117,10 @@ People who:
 ### 6-Month Success
 
 - Users report "I actually applied something I captured" moments
-- Gem collection feels curated, not cluttered
+- Thought collections feel organized by life context, not cluttered
 - Daily prompts feel relevant, not random
 - Users recommend to fellow learners
+- Average user has 3+ contexts with thoughts in each
 
 ### 12-Month Success
 
@@ -119,6 +128,7 @@ People who:
 - Users have stories of wisdom applied at key moments
 - Word-of-mouth drives growth among intentional learners
 - Clear retention signal: users return weekly
+- URL extraction is primary capture method
 
 ---
 
@@ -133,11 +143,11 @@ People who:
 
 ### Example Copy
 
-**Good:** "Your gems are ready when you need them."
+**Good:** "Your thoughts are ready when you need them."
 **Bad:** "Unlock your full potential with AI-powered wisdom surfacing!"
 
-**Good:** "Time to make room — which gem has served its purpose?"
-**Bad:** "Warning: You've reached your gem limit!"
+**Good:** "This context is full — which thought has served its purpose?"
+**Bad:** "Warning: You've reached your thought limit!"
 
 **Good:** "This insight might help with your presentation tomorrow."
 **Bad:** "Don't forget to apply your learnings! 🚀"
@@ -150,7 +160,7 @@ Things we're still figuring out:
 
 - **Monetization:** Freemium? Subscription? What's the free tier?
 - **Mobile app:** When do we need native vs. responsive web?
-- **Sharing:** Should users be able to share gems? With whom?
+- **Sharing:** Should users be able to share thoughts? With whom?
 - **Integrations:** Which sources should we pull from automatically?
 
 ---
