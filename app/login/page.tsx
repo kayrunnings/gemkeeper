@@ -68,7 +68,7 @@ export default function LoginPage() {
             <Gem className="h-8 w-8 text-primary-foreground" />
           </div>
           <h1 className="text-2xl font-semibold">ThoughtFolio</h1>
-          <p className="text-muted-foreground mt-1">Thoughts that find you... at the right moment</p>
+          <p className="text-muted-foreground mt-1">Knowledge that finds you... when you need it the most</p>
 
           {/* App description */}
           <div className="mt-6 space-y-3 text-sm text-muted-foreground max-w-sm text-center">

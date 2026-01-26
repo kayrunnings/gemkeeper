@@ -140,7 +140,7 @@ export default function HomePage() {
             {getGreeting()}, {displayName}!
           </h1>
           <p className="text-muted-foreground mt-1">
-            Here&apos;s your wisdom dashboard
+            Here&apos;s your knowledge dashboard
           </p>
         </div>
 
