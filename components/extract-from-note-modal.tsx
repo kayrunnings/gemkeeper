@@ -431,7 +431,7 @@ export function ExtractFromNoteModal({
                 </div>
 
                 {selectedCount > availableSlots && (
-                  <div className="flex items-start gap-2 p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800">
+                  <div className="flex items-start gap-2 p-3 rounded-xl bg-warning/10 border border-warning/20 text-warning">
                     <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
                     <p className="text-sm">
                       You have {activeGemCount}/{MAX_ACTIVE_GEMS} active thoughts. You

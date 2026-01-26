@@ -151,7 +151,7 @@ export default function TrophyCasePage() {
                         ? gem.custom_context
                         : CONTEXT_TAG_LABELS[gem.context_tag]}
                     </Badge>
-                    <div className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+                    <div className="flex items-center gap-1.5 text-xs text-warning bg-warning/10 px-2 py-1 rounded-full">
                       <Trophy className="h-3 w-3" />
                       Graduated {formatDate(gem.graduated_at)}
                     </div>

@@ -458,10 +458,10 @@ export function SchedulePicker({
                     variant="outline"
                     className={cn(
                       nlpResult.confidence >= 0.8
-                        ? "bg-green-100 text-green-800"
+                        ? "bg-success/10 text-success border-success/30"
                         : nlpResult.confidence >= 0.5
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-red-100 text-red-800"
+                        ? "bg-warning/10 text-warning border-warning/30"
+                        : "bg-destructive/10 text-destructive border-destructive/30"
                     )}
                   >
                     {Math.round(nlpResult.confidence * 100)}% confident

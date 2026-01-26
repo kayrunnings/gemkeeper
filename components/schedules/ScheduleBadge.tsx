@@ -60,7 +60,7 @@ export function ScheduleBadge({ gemId, className, showNextTrigger = false }: Sch
     <Badge
       variant="outline"
       className={cn(
-        "bg-blue-50 text-blue-700 border-blue-200 gap-1",
+        "bg-info/10 text-info border-info/30 gap-1",
         className
       )}
       title={
