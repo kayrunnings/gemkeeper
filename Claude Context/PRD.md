@@ -42,16 +42,29 @@ ThoughtFolio is a wisdom accountability partner that helps users capture insight
 User-defined life areas for organizing thoughts. Eight defaults provided (Meetings, Feedback, Conflict, Focus, Health, Relationships, Parenting, Other). Users can create unlimited custom contexts. Each context has a configurable thought limit (default: 20, range: 5-100).
 
 ### Thoughts
-Captured insights/wisdom. Each thought belongs to one context. Thoughts have a status (active, retired, graduated) and can be on the Active List or Passive.
+Captured insights/wisdom. Each thought belongs to one context. Thoughts have a status:
+
+| Status | Description | Visible In |
+|--------|-------------|------------|
+| `active` | Available for use | Thoughts page |
+| `passive` | Available but dormant | Thoughts page (filtered) |
+| `retired` | Archived, kept for historical record | Retired page |
+| `graduated` | Applied 5+ times, mastered | ThoughtBank |
 
 ### Active List
-Curated subset of up to 10 thoughts (fixed limit) that appear in daily prompts. Represents "what I'm working on applying right now." Preserves constraint-based accountability while allowing unlimited total thoughts.
+Curated subset of up to 10 thoughts (fixed limit) that appear in daily prompts. Controlled by `is_on_active_list` boolean, separate from status. Only thoughts with `status IN ('active', 'passive')` can be on the Active List. Represents "what I'm working on applying right now."
 
 ### Passive Thoughts
-Thoughts not on the Active List. Still searchable, still available for Moments, but excluded from daily prompts. This is the "wisdom library" — always there when needed.
+Thoughts with `is_on_active_list = false`. Still searchable, still available for Moments, but excluded from daily prompts. This is the "wisdom library" — always there when needed.
+
+### Retired Thoughts
+Thoughts the user has archived. Kept for historical reference but excluded from Thoughts page, Moments, and daily prompts. Visible on dedicated Retired page. Can be restored to active status.
+
+### Graduated Thoughts
+Thoughts applied 5+ times. Automatically moved to ThoughtBank as "mastered wisdom." Excluded from daily prompts but celebrated as achievements.
 
 ### Moments
-User-described upcoming situations that trigger AI matching against ALL thoughts (Active + Passive, all contexts). Returns the most relevant thoughts with explanations.
+User-described upcoming situations that trigger AI matching against ALL thoughts with `status IN ('active', 'passive')` across ALL contexts. Returns the most relevant thoughts with explanations.
 
 ---
 
@@ -84,6 +97,7 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 - [ ] User can delete custom contexts (thoughts move to "Other")
 - [ ] User cannot delete default contexts
 - [ ] Context appears on thought cards and in dropdowns
+- [ ] Context color on cards matches color in Settings
 
 ---
 
@@ -106,17 +120,18 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 | FR-2.3 | User can extract from URL | URL parsed, content extracted |
 | FR-2.4 | User can specify source and context | Fields saved to database |
 | FR-2.5 | System enforces per-context limits | Error when context is full |
-| FR-2.6 | New thoughts default to Passive | `is_on_active_list = false` |
+| FR-2.6 | New thoughts default to Passive | `is_on_active_list = false`, `status = 'active'` |
 | FR-2.7 | AI auto-suggests context based on content | Context pre-populated in form |
 
 **Acceptance Criteria:**
 - [ ] User can add thought via text input
 - [ ] User can paste content and extract thoughts via AI
-- [ ] User can paste URL and extract thoughts
+- [ ] User can paste URL and extract thoughts (From URL tab)
+- [ ] User can paste YouTube URL and extract from transcript
 - [ ] User can specify source and source type
 - [ ] User can select context from dropdown (shows count)
 - [ ] User is blocked when context is at limit
-- [ ] New thoughts are Passive by default
+- [ ] New thoughts are Passive by default (not on Active List)
 
 ---
 
@@ -132,41 +147,58 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 |----|-------------|-------------------|
 | FR-3.1 | Thoughts have `is_on_active_list` boolean | Column exists, default false |
 | FR-3.2 | Maximum 10 thoughts on Active List | 11th toggle returns error |
-| FR-3.3 | User can toggle Active status | Toggle updates database |
-| FR-3.4 | Active status visually distinct | Badge/indicator on cards |
-| FR-3.5 | Filter by Active/Passive available | Filter works in UI |
+| FR-3.3 | User can toggle Active status from card | Toggle updates database |
+| FR-3.4 | User can toggle Active status from detail page | Toggle updates database |
+| FR-3.5 | Active status visually distinct | Star/badge indicator on cards |
+| FR-3.6 | Filter by Active/Passive available | Filter tabs work in UI |
+| FR-3.7 | Only active/passive thoughts can be on Active List | Retired/graduated excluded |
 
 **Acceptance Criteria:**
-- [ ] User can toggle any thought's Active status
-- [ ] Maximum 10 Active thoughts enforced
-- [ ] When at limit, toggling shows error
-- [ ] Active status has visual indicator
-- [ ] Filter option: All / Active / Passive
+- [ ] User can toggle any thought's Active status from card (star icon)
+- [ ] User can toggle Active status from thought detail page
+- [ ] Maximum 10 Active thoughts enforced with error toast
+- [ ] Active status has visual indicator (filled star = active)
+- [ ] Filter tabs: All / Active List / Passive
 - [ ] Active count shown in header ("Active: 7/10")
+- [ ] Cannot add retired/graduated thoughts to Active List
 
 ---
 
 ### 4. Thought Management
 
-**Description:** Users can organize, archive, and revisit their thoughts.
+**Description:** Users can organize, retire, and revisit their thoughts.
 
 **Features:**
 - View thoughts by context or all
 - Filter by Active/Passive status
-- Archive/unarchive thoughts
-- Favorite thoughts for quick access
+- Retire thoughts (move to Retired page)
+- Restore retired thoughts
+- Delete thoughts permanently
 - Edit thought content and source
-- Delete thoughts
 - Move thoughts between contexts
+
+**Functional Requirements:**
+
+| ID | Requirement | Testable Criteria |
+|----|-------------|-------------------|
+| FR-4.1 | User can filter thoughts by context | Filter shows only matching thoughts |
+| FR-4.2 | User can filter thoughts by Active/Passive | Filter tabs work |
+| FR-4.3 | User can retire thought | Status set to 'retired', retired_at set |
+| FR-4.4 | User can permanently delete thought | Row removed from database |
+| FR-4.5 | User can view retired thoughts | Retired page shows retired thoughts |
+| FR-4.6 | User can restore retired thought | Status set to 'active', retired_at cleared |
+| FR-4.7 | User can edit thought content | Content updated in database |
+| FR-4.8 | User can change thought context | Context updated in database |
 
 **Acceptance Criteria:**
 - [ ] User can view thoughts filtered by context
 - [ ] User can view thoughts filtered by Active/Passive
-- [ ] User can toggle archive status
-- [ ] User can favorite/unfavorite thoughts
+- [ ] User can retire thought (moves to Retired page)
+- [ ] User can delete thought permanently (with confirmation)
+- [ ] Retired page accessible from navigation
+- [ ] User can restore retired thoughts
 - [ ] User can edit thought content
 - [ ] User can change thought's context
-- [ ] User can delete thoughts (with confirmation)
 
 ---
 
@@ -178,7 +210,7 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 
 | ID | Requirement | Testable Criteria |
 |----|-------------|-------------------|
-| FR-5.1 | Daily prompts only surface Active thoughts | Query filters `is_on_active_list = true` |
+| FR-5.1 | Daily prompts only surface Active thoughts | Query filters `is_on_active_list = true` AND `status IN ('active', 'passive')` |
 | FR-5.2 | Selection based on relevance and recency | Least recently surfaced prioritized |
 | FR-5.3 | AI generates contextual prompt | Prompt includes actionable suggestion |
 | FR-5.4 | User can mark as "applied" | Updates application count |
@@ -199,7 +231,7 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 
 **Features:**
 - Paste text from books, articles, transcripts
-- Paste URL for automatic extraction
+- Paste URL for automatic extraction (articles, YouTube)
 - AI identifies key insights (3-7 per extraction)
 - AI suggests context based on content
 - User reviews and selects which to save
@@ -210,7 +242,7 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 | ID | Requirement | Testable Criteria |
 |----|-------------|-------------------|
 | FR-6.1 | Accept text content 100-10,000 chars | Validation enforced |
-| FR-6.2 | Accept URLs for extraction | URL input field exists |
+| FR-6.2 | Accept URLs for extraction | URL input tab exists |
 | FR-6.3 | Detect URL type (article vs YouTube) | Different handlers triggered |
 | FR-6.4 | Parse article content with Readability | Text extracted from HTML |
 | FR-6.5 | Fetch YouTube transcripts when available | Transcript API returns text |
@@ -221,8 +253,8 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 | FR-6.10 | Rate limit: 10 extractions/day | Usage tracked and enforced |
 
 **Acceptance Criteria:**
-- [ ] User can paste long-form content
-- [ ] User can paste URL (Substack, Medium, blogs)
+- [ ] User can paste long-form content (Paste Text tab)
+- [ ] User can paste URL (From URL tab)
 - [ ] User can paste YouTube URL
 - [ ] AI returns list of extracted insights
 - [ ] AI suggests context for each insight
@@ -281,7 +313,7 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 | ID | Requirement | Testable Criteria |
 |----|-------------|-------------------|
 | FR-9.1 | User can describe moment via text | Text field accepts input |
-| FR-9.2 | AI searches ALL thoughts (Active + Passive) | Query includes all statuses |
+| FR-9.2 | AI searches thoughts with status IN ('active', 'passive') | Query includes active and passive only |
 | FR-9.3 | AI searches ALL contexts | No context filter applied |
 | FR-9.4 | AI returns ranked relevant thoughts | Top 3-5 with scores |
 | FR-9.5 | Each match includes explanation | Relevance reason provided |
@@ -291,7 +323,7 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 - [ ] User can describe moment via text
 - [ ] User can set when moment will occur
 - [ ] AI returns ranked relevant thoughts from ALL contexts
-- [ ] AI searches both Active and Passive thoughts
+- [ ] AI searches both Active and Passive thoughts (not retired/graduated)
 - [ ] Each match includes relevance explanation
 - [ ] User can log reflection after moment
 
