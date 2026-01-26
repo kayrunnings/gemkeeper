@@ -22,7 +22,7 @@ import {
   FileAudio,
   FileVideo,
 } from "lucide-react"
-import { ExtractedGemCard, ExtractedGem } from "./extracted-gem-card"
+import { ExtractedThoughtCard, ExtractedThought } from "./extracted-thought-card"
 import { MAX_ACTIVE_GEMS } from "@/lib/types/gem"
 import { Note } from "@/lib/types"
 import { AIConsentModal } from "./ai-consent-modal"
@@ -63,7 +63,7 @@ export function ExtractFromNoteModal({
 }: ExtractFromNoteModalProps) {
   const [step, setStep] = useState<Step>("input")
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
-  const [extractedGems, setExtractedGems] = useState<ExtractedGem[]>([])
+  const [extractedGems, setExtractedThoughts] = useState<ExtractedThought[]>([])
   const [selectedGems, setSelectedGems] = useState<Set<number>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const [usage, setUsage] = useState<UsageStatus | null>(null)
@@ -81,7 +81,7 @@ export function ExtractFromNoteModal({
     if (isOpen) {
       setStep("input")
       setMediaFiles([])
-      setExtractedGems([])
+      setExtractedThoughts([])
       setSelectedGems(new Set())
       setError(null)
       setSavedCount(0)
@@ -195,9 +195,9 @@ export function ExtractFromNoteModal({
       }
 
       const thoughts = data.thoughts || []
-      setExtractedGems(thoughts)
+      setExtractedThoughts(thoughts)
       setUsage(data.usage)
-      setSelectedGems(new Set(thoughts.map((_: ExtractedGem, i: number) => i)))
+      setSelectedGems(new Set(thoughts.map((_: ExtractedThought, i: number) => i)))
       setStep("review")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to extract gems")
@@ -244,7 +244,7 @@ export function ExtractFromNoteModal({
 
   const handleTryAgain = () => {
     setStep("input")
-    setExtractedGems([])
+    setExtractedThoughts([])
     setSelectedGems(new Set())
     setError(null)
   }
@@ -261,8 +261,8 @@ export function ExtractFromNoteModal({
     })
   }
 
-  const handleGemUpdate = (index: number, gem: ExtractedGem) => {
-    setExtractedGems((prev) => {
+  const handleGemUpdate = (index: number, gem: ExtractedThought) => {
+    setExtractedThoughts((prev) => {
       const next = [...prev]
       next[index] = gem
       return next
@@ -442,9 +442,9 @@ export function ExtractFromNoteModal({
 
                 <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
                   {extractedGems.map((gem, i) => (
-                    <ExtractedGemCard
+                    <ExtractedThoughtCard
                       key={i}
-                      gem={gem}
+                      thought={gem}
                       selected={selectedGems.has(i)}
                       onSelect={(selected) => handleGemSelect(i, selected)}
                       onUpdate={(updated) => handleGemUpdate(i, updated)}

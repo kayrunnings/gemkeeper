@@ -79,9 +79,9 @@ export function LayoutShell({
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 h-16 border-b bg-card/80 backdrop-blur-md supports-[backdrop-filter]:bg-card/60">
+      <header className="sticky top-0 z-40 h-16 border-b glass-sidebar">
         <div className="h-full px-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* Mobile menu button */}
@@ -155,7 +155,7 @@ export function LayoutShell({
         {/* Sidebar - Desktop */}
         <aside
           className={cn(
-            "hidden md:flex flex-col border-r bg-card transition-all duration-300 ease-in-out",
+            "hidden md:flex flex-col glass-sidebar transition-all duration-300 ease-in-out",
             isSidebarCollapsed ? "w-16" : "w-60"
           )}
         >
@@ -169,10 +169,10 @@ export function LayoutShell({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                     active
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      ? "glass-button-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-[var(--glass-hover-bg)] hover:text-foreground"
                   )}
                   title={isSidebarCollapsed ? item.label : undefined}
                 >
@@ -182,7 +182,7 @@ export function LayoutShell({
               )
             })}
 
-            <div className="my-3 border-t" />
+            <div className="my-3 border-t border-[var(--glass-sidebar-border)]" />
 
             {secondaryNavItems.map((item) => {
               const Icon = item.icon
@@ -192,10 +192,10 @@ export function LayoutShell({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                     active
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      ? "glass-button-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-[var(--glass-hover-bg)] hover:text-foreground"
                   )}
                   title={isSidebarCollapsed ? item.label : undefined}
                 >
@@ -207,12 +207,12 @@ export function LayoutShell({
           </nav>
 
           {/* Collapse toggle */}
-          <div className="p-3 border-t">
+          <div className="p-3 border-t border-[var(--glass-sidebar-border)]">
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start gap-3 text-muted-foreground hover:text-foreground",
+                "w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-[var(--glass-hover-bg)]",
                 isSidebarCollapsed && "justify-center"
               )}
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
@@ -229,7 +229,7 @@ export function LayoutShell({
         {/* Sidebar - Mobile */}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-40 w-64 bg-card border-r p-4 pt-20 md:hidden transition-transform duration-300 ease-in-out",
+            "fixed inset-y-0 left-0 z-40 w-64 glass-sidebar p-4 pt-20 md:hidden transition-transform duration-300 ease-in-out",
             isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
@@ -243,10 +243,10 @@ export function LayoutShell({
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
                     active
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-secondary"
+                      ? "glass-button-primary text-primary-foreground"
+                      : "hover:bg-[var(--glass-hover-bg)]"
                   )}
                 >
                   <Icon className="h-5 w-5" />
@@ -255,7 +255,7 @@ export function LayoutShell({
               )
             })}
 
-            <div className="my-3 border-t" />
+            <div className="my-3 border-t border-[var(--glass-sidebar-border)]" />
 
             {secondaryNavItems.map((item) => {
               const Icon = item.icon
@@ -266,10 +266,10 @@ export function LayoutShell({
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
                     active
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-secondary"
+                      ? "glass-button-primary text-primary-foreground"
+                      : "hover:bg-[var(--glass-hover-bg)]"
                   )}
                 >
                   <Icon className="h-5 w-5" />
@@ -287,7 +287,7 @@ export function LayoutShell({
 
         {/* Right panel - Contextual actions */}
         {rightPanel && showRightPanel && (
-          <aside className="hidden lg:block w-80 border-l bg-card overflow-y-auto slide-in-right">
+          <aside className="hidden lg:block w-80 glass-sidebar border-l-0 overflow-y-auto slide-in-right">
             {rightPanel}
           </aside>
         )}
