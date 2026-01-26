@@ -97,11 +97,11 @@ Expand ThoughtFolio from global 10-thought limit to contextual organization with
 - [ ] 9.6 Write tests (deferred to Phase 5)
 
 #### 10.0 YouTube Extraction (traces to: FR-6.5)
-- [ ] 10.1 Install `youtube-transcript`
-- [ ] 10.2 Implement transcript extraction
-- [ ] 10.3 Handle "no transcript" gracefully
-- [ ] 10.4 Extract video title for source
-- [ ] 10.5 Test with various URLs
+- [x] 10.1 Install `youtube-transcript`
+- [x] 10.2 Implement transcript extraction
+- [x] 10.3 Handle "no transcript" gracefully
+- [x] 10.4 Extract video title for source (via oEmbed API)
+- [ ] 10.5 Test with various URLs (deferred to Phase 5)
 
 #### 11.0 URL Extraction UI (traces to: FR-6.2, FR-6.6, FR-6.7)
 - [ ] 11.1 Update `components/extract-gems-modal.tsx`:

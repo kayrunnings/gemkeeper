@@ -1,5 +1,6 @@
 import { Readability } from "@mozilla/readability"
 import { JSDOM } from "jsdom"
+import { YoutubeTranscript } from "youtube-transcript"
 
 export type UrlType = "article" | "youtube" | "unknown"
 
@@ -213,8 +214,81 @@ function extractDomainFromUrl(url: string): string {
 }
 
 /**
+ * Extract YouTube video transcript
+ */
+export async function extractYouTubeTranscript(
+  url: string
+): Promise<{
+  content: ExtractedContent | null
+  error: string | null
+}> {
+  const videoId = extractYouTubeVideoId(url)
+
+  if (!videoId) {
+    return { content: null, error: "Could not extract video ID from YouTube URL" }
+  }
+
+  try {
+    // Fetch transcript
+    const transcriptItems = await YoutubeTranscript.fetchTranscript(videoId)
+
+    if (!transcriptItems || transcriptItems.length === 0) {
+      return {
+        content: null,
+        error: "No transcript available for this video. The video may not have captions enabled.",
+      }
+    }
+
+    // Combine transcript into a single text
+    const transcriptText = transcriptItems.map((item) => item.text).join(" ")
+
+    if (transcriptText.trim().length < 100) {
+      return { content: null, error: "Transcript is too short to extract meaningful content" }
+    }
+
+    // Try to get video title from oEmbed API
+    let title = "YouTube Video"
+    try {
+      const oEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
+      const oEmbedResponse = await fetch(oEmbedUrl)
+      if (oEmbedResponse.ok) {
+        const oEmbedData = await oEmbedResponse.json()
+        title = oEmbedData.title || title
+      }
+    } catch {
+      // Ignore oEmbed errors, use default title
+    }
+
+    return {
+      content: {
+        title,
+        content: transcriptText.trim(),
+        siteName: "YouTube",
+        url,
+        type: "youtube",
+      },
+      error: null,
+    }
+  } catch (err) {
+    if (err instanceof Error) {
+      // Common YouTube transcript errors
+      if (err.message.includes("Could not find any transcript")) {
+        return {
+          content: null,
+          error: "No transcript available for this video. The video may not have captions enabled.",
+        }
+      }
+      if (err.message.includes("Video is unavailable")) {
+        return { content: null, error: "This YouTube video is unavailable or private" }
+      }
+      return { content: null, error: `YouTube extraction error: ${err.message}` }
+    }
+    return { content: null, error: "Failed to extract YouTube transcript" }
+  }
+}
+
+/**
  * Main extraction function that handles both articles and YouTube
- * (YouTube extraction is handled separately in Task 10.0)
  */
 export async function extractFromUrl(
   url: string,
@@ -233,8 +307,7 @@ export async function extractFromUrl(
   const urlType = detectUrlType(url)
 
   if (urlType === "youtube") {
-    // YouTube will be handled by a separate function (Task 10.0)
-    return { content: null, error: "YouTube extraction requires transcript API - not yet implemented" }
+    return extractYouTubeTranscript(url)
   }
 
   if (urlType === "article") {

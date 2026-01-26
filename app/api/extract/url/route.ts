@@ -36,19 +36,7 @@ export async function POST(request: NextRequest) {
 
     const urlType = detectUrlType(url)
 
-    // Handle YouTube separately (will be enhanced in Task 10.0)
-    if (urlType === "youtube") {
-      const videoId = extractYouTubeVideoId(url)
-      return NextResponse.json({
-        type: "youtube",
-        videoId,
-        url,
-        // Placeholder - will be enhanced with transcript in Task 10.0
-        error: "YouTube transcript extraction not yet implemented. Please paste the video content manually.",
-      })
-    }
-
-    // Extract article content
+    // Extract content (handles both articles and YouTube)
     const { content, error } = await extractFromUrl(url, 10000)
 
     if (error) {
