@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, useCallback, useSyncExternalStore } from "react"
+import { createContext, useContext, useEffect, useState, useCallback } from "react"
 import { Theme, THEMES, DEFAULT_THEME, STORAGE_KEY, isValidTheme, getNextTheme, THEME_INFO } from "@/lib/themes"
 
 interface ThemeContextType {
@@ -12,7 +12,7 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
-function getStoredTheme(): Theme {
+function getInitialTheme(): Theme {
   if (typeof window === "undefined") return DEFAULT_THEME
 
   const stored = localStorage.getItem(STORAGE_KEY)
@@ -22,36 +22,14 @@ function getStoredTheme(): Theme {
   return DEFAULT_THEME
 }
 
-function subscribeToStorage(callback: () => void) {
-  window.addEventListener("storage", callback)
-  return () => window.removeEventListener("storage", callback)
-}
-
-function getServerSnapshot(): Theme {
-  return DEFAULT_THEME
-}
-
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Use useSyncExternalStore for reading localStorage without causing cascading renders
-  const storedTheme = useSyncExternalStore(
-    subscribeToStorage,
-    getStoredTheme,
-    getServerSnapshot
-  )
+  // Single state with lazy initialization - no sync effects needed
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme)
 
-  const [theme, setThemeState] = useState<Theme>(storedTheme)
-
-  // Sync theme state with stored theme on mount
+  // Apply theme to DOM and persist - only runs when theme actually changes
   useEffect(() => {
-    setThemeState(storedTheme)
-  }, [storedTheme])
-
-  useEffect(() => {
-    // Apply theme to document using data-theme attribute
     const root = document.documentElement
     root.setAttribute("data-theme", theme)
-
-    // Persist to localStorage
     localStorage.setItem(STORAGE_KEY, theme)
   }, [theme])
 

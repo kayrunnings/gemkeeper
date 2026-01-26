@@ -3,6 +3,7 @@ import "./globals.css";
 import { ToastProvider } from "@/components/error-toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { UIThemeProvider } from "@/lib/ui-theme-context";
+import { SidebarProvider } from "@/lib/sidebar-context";
 
 export const metadata: Metadata = {
   title: "ThoughtFolio | Thoughts that find you",
@@ -42,9 +43,11 @@ export default function RootLayout({
       <body className="antialiased min-h-screen">
         <ThemeProvider>
           <UIThemeProvider>
-            <ToastProvider>
-              {children}
-            </ToastProvider>
+            <SidebarProvider>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </SidebarProvider>
           </UIThemeProvider>
         </ThemeProvider>
       </body>

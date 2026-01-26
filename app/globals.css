@@ -659,14 +659,54 @@
   --ui-blur-enabled: 0;
 }
 
-/* Light theme adjustments for glass mode */
-:root[data-theme="sunrise"][data-ui-theme="glass"] {
+/* Theme-specific glass button colors - each theme gets its own primary color treatment */
+
+/* Midnight (default) - Orange */
+[data-theme="midnight"][data-ui-theme="glass"] {
+  --glass-button-primary-bg: rgba(249, 115, 22, 0.85);
+  --glass-button-primary-border: rgba(249, 115, 22, 0.4);
+  --glass-button-primary-shadow: 0 8px 16px rgba(249, 115, 22, 0.25);
+}
+
+/* Obsidian - Emerald green */
+[data-theme="obsidian"][data-ui-theme="glass"] {
+  --glass-button-primary-bg: rgba(16, 185, 129, 0.85);
+  --glass-button-primary-border: rgba(16, 185, 129, 0.4);
+  --glass-button-primary-shadow: 0 8px 16px rgba(16, 185, 129, 0.25);
+}
+
+/* Amethyst - Soft purple */
+[data-theme="amethyst"][data-ui-theme="glass"] {
+  --glass-button-primary-bg: rgba(167, 139, 250, 0.85);
+  --glass-button-primary-border: rgba(167, 139, 250, 0.4);
+  --glass-button-primary-shadow: 0 8px 16px rgba(167, 139, 250, 0.25);
+}
+
+/* Ocean - Sapphire blue */
+[data-theme="ocean"][data-ui-theme="glass"] {
+  --glass-button-primary-bg: rgba(59, 130, 246, 0.85);
+  --glass-button-primary-border: rgba(59, 130, 246, 0.4);
+  --glass-button-primary-shadow: 0 8px 16px rgba(59, 130, 246, 0.25);
+}
+
+/* Ruby - Rose red */
+[data-theme="ruby"][data-ui-theme="glass"] {
+  --glass-button-primary-bg: rgba(244, 63, 94, 0.85);
+  --glass-button-primary-border: rgba(244, 63, 94, 0.4);
+  --glass-button-primary-shadow: 0 8px 16px rgba(244, 63, 94, 0.25);
+}
+
+/* Sunrise (Light theme) - Amber with adjusted glass */
+[data-theme="sunrise"][data-ui-theme="glass"] {
   --glass-card-bg: rgba(255, 255, 255, 0.6);
   --glass-card-border: rgba(0, 0, 0, 0.1);
   --glass-sidebar-bg: rgba(255, 255, 255, 0.5);
   --glass-sidebar-border: rgba(0, 0, 0, 0.08);
   --glass-modal-bg: rgba(255, 255, 255, 0.8);
   --glass-modal-border: rgba(0, 0, 0, 0.1);
+  --glass-button-primary-bg: rgba(245, 158, 11, 0.9);
+  --glass-button-primary-border: rgba(245, 158, 11, 0.4);
+  --glass-button-primary-shadow: 0 8px 16px rgba(245, 158, 11, 0.2);
   --glass-button-secondary-bg: rgba(0, 0, 0, 0.05);
   --glass-button-secondary-border: rgba(0, 0, 0, 0.1);
   --glass-input-bg: rgba(255, 255, 255, 0.5);
@@ -765,12 +805,8 @@ body {
   min-height: 100vh;
 }
 
-/* Theme transition for all elements */
-*,
-*::before,
-*::after {
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
+/* Theme transitions - only applied to key elements, not globally */
+/* Global * transitions cause flickering when changing themes */
 
 /* Animations for dialogs */
 @keyframes fadeIn {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, ReactNode } from "react"
+import { useState, useEffect, ReactNode } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import {
@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { useSidebar } from "@/lib/sidebar-context"
 
 interface NavItem {
   href: string
@@ -59,11 +59,17 @@ export function LayoutShell({
   showRightPanel = false,
   onToggleRightPanel,
 }: LayoutShellProps) {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const { isCollapsedByDefault } = useSidebar()
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(isCollapsedByDefault)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+
+  // Sync sidebar state when preference changes (e.g., from settings page)
+  useEffect(() => {
+    setIsSidebarCollapsed(isCollapsedByDefault)
+  }, [isCollapsedByDefault])
 
   const isActive = (href: string) => {
     if (href === "/thoughts") {
@@ -116,9 +122,6 @@ export function LayoutShell({
                 <PanelRight className={cn("h-5 w-5 transition-colors", showRightPanel && "text-primary")} />
               </Button>
             )}
-
-            {/* Theme toggle */}
-            <ThemeToggle />
 
             {/* User info and sign out */}
             <div className="flex items-center gap-2 pl-2 border-l">
