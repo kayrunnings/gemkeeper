@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils"
 export interface ExtractedGem {
   content: string
   context_tag: ContextTag
+  // New: optional context_id for new context system
+  context_id?: string
   source_quote?: string
 }
 

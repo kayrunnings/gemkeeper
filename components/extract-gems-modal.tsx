@@ -28,6 +28,8 @@ import { ExtractedGemCard, ExtractedGem } from "./extracted-gem-card"
 import { MAX_ACTIVE_GEMS } from "@/lib/types/gem"
 import { AIConsentModal } from "./ai-consent-modal"
 import { grantAIConsent } from "@/app/settings/actions"
+import { ContextDropdown, useContexts } from "@/components/contexts/ContextDropdown"
+import type { ContextWithCount } from "@/lib/types/context"
 
 interface ExtractGemsModalProps {
   isOpen: boolean
@@ -72,6 +74,9 @@ export function ExtractGemsModal({
   const [savedCount, setSavedCount] = useState(0)
   const [showConsentModal, setShowConsentModal] = useState(false)
   const [consentGranted, setConsentGranted] = useState(hasAIConsent)
+  const [defaultContextId, setDefaultContextId] = useState<string | null>(null)
+  const [defaultContext, setDefaultContext] = useState<ContextWithCount | null>(null)
+  const { contexts } = useContexts()
 
   const availableSlots = MAX_ACTIVE_GEMS - activeGemCount
   const selectedCount = selectedGems.size
@@ -89,6 +94,8 @@ export function ExtractGemsModal({
       setError(null)
       setSavedCount(0)
       setConsentGranted(hasAIConsent)
+      setDefaultContextId(null)
+      setDefaultContext(null)
     } else {
       // Clean up object URLs when modal closes
       mediaFiles.forEach((mf) => {
@@ -98,6 +105,11 @@ export function ExtractGemsModal({
       })
     }
   }, [isOpen, hasAIConsent]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleDefaultContextChange = (contextId: string, context: ContextWithCount) => {
+    setDefaultContextId(contextId)
+    setDefaultContext(context)
+  }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -223,6 +235,8 @@ export function ExtractGemsModal({
         .map((gem) => ({
           content: gem.content,
           context_tag: gem.context_tag,
+          // Use the gem's context_id if set, otherwise fall back to default context
+          context_id: gem.context_id || defaultContextId || undefined,
           source: source || undefined,
         }))
 
@@ -461,6 +475,19 @@ export function ExtractGemsModal({
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {selectedCount} selected
+                  </p>
+                </div>
+
+                {/* Default context for all gems */}
+                <div className="space-y-2">
+                  <Label>Default context for all thoughts</Label>
+                  <ContextDropdown
+                    value={defaultContextId}
+                    onChange={handleDefaultContextChange}
+                    showCount={true}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Set a default context for all extracted thoughts (can be changed per-thought below)
                   </p>
                 </div>
 

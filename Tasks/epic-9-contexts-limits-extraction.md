@@ -65,10 +65,10 @@ Expand ThoughtFolio from global 10-thought limit to contextual organization with
 ### Phase 3: Thought UI Updates
 
 #### 6.0 Update Thought Creation (traces to: FR-2.4, FR-2.5)
-- [ ] 6.1 Update `components/gems/gem-form.tsx` - context dropdown from API
-- [ ] 6.2 Update `components/extract-gems-modal.tsx` - context dropdown
-- [ ] 6.3 Show per-context limit ("Coding: 12/20")
-- [ ] 6.4 Block creation if context full
+- [x] 6.1 Update `components/gems/gem-form.tsx` - context dropdown from API
+- [x] 6.2 Update `components/extract-gems-modal.tsx` - context dropdown
+- [x] 6.3 Show per-context limit ("Coding: 12/20")
+- [x] 6.4 Block creation if context full
 
 #### 7.0 Update Thought Cards & List (traces to: FR-3.3, FR-3.4, FR-3.5)
 - [ ] 7.1 Add Active badge to `components/gems/gem-card.tsx`
