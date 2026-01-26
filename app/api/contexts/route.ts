@@ -38,11 +38,12 @@ export async function GET() {
     }
 
     // Get thought counts per context
+    // Only count active and passive thoughts (not retired/graduated)
     const { data: counts, error: countsError } = await supabase
       .from("gems")
       .select("context_id")
       .eq("user_id", user.id)
-      .eq("status", "active")
+      .in("status", ["active", "passive"])
       .not("context_id", "is", null)
 
     if (countsError) {

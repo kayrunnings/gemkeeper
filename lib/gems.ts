@@ -17,12 +17,12 @@ export async function createMultipleGems(
     return { gems: [], error: "Not authenticated" }
   }
 
-  // Check current active gem count
+  // Check current active/passive gem count
   const { count, error: countError } = await supabase
     .from("gems")
     .select("*", { count: "exact", head: true })
     .eq("user_id", user.id)
-    .eq("status", "active")
+    .in("status", ["active", "passive"])
 
   if (countError) {
     return { gems: [], error: countError.message }
@@ -188,7 +188,8 @@ export async function graduateGem(
   return { gem: data, error: null }
 }
 
-// Get the daily gem (least recently surfaced active gem)
+// Get the daily gem (least recently surfaced active gem on Active List)
+// DEPRECATED: Use getDailyThought from lib/thoughts.ts instead
 export async function getDailyGem(): Promise<{ gem: Gem | null; error: string | null }> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -197,11 +198,13 @@ export async function getDailyGem(): Promise<{ gem: Gem | null; error: string | 
     return { gem: null, error: "Not authenticated" }
   }
 
+  // Get thoughts on the Active List with active or passive status
   const { data, error } = await supabase
     .from("gems")
     .select("*")
     .eq("user_id", user.id)
-    .eq("status", "active")
+    .in("status", ["active", "passive"])
+    .eq("is_on_active_list", true)
     .order("last_surfaced_at", { ascending: true, nullsFirst: true })
     .limit(1)
     .single()

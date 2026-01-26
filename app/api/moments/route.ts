@@ -63,12 +63,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get all active gems for the user
+    // Get all active and passive gems for the user (not retired/graduated)
+    // Moments should search the full wisdom library
     const { data: gems, error: gemsError } = await supabase
       .from("gems")
       .select("id, content, context_tag, source")
       .eq("user_id", user.id)
-      .eq("status", "active")
+      .in("status", ["active", "passive"])
 
     if (gemsError) {
       console.error("Gems fetch error:", gemsError)

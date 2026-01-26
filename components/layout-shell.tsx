@@ -17,6 +17,7 @@ import {
   PanelRight,
   X,
   Home,
+  Archive,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -38,6 +39,7 @@ const navItems: NavItem[] = [
 ]
 
 const secondaryNavItems: NavItem[] = [
+  { href: "/retired", label: "Retired", icon: Archive },
   { href: "/dashboard", label: "Notes", icon: StickyNote },
   { href: "/settings", label: "Settings", icon: Settings },
 ]

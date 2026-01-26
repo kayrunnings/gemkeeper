@@ -68,10 +68,11 @@ export default function GemsPage() {
         }
         setUserEmail(user.email ?? null)
 
+        // Fetch active and passive thoughts (not retired/graduated)
         const { data, error } = await supabase
           .from("gems")
           .select("*")
-          .eq("status", "active")
+          .in("status", ["active", "passive"])
           .order("created_at", { ascending: false })
 
         if (error) {
@@ -113,11 +114,11 @@ export default function GemsPage() {
   }
 
   const handleGemsExtracted = async () => {
-    // Refresh gems list after extraction
+    // Refresh gems list after extraction (active and passive, not retired/graduated)
     const { data } = await supabase
       .from("gems")
       .select("*")
-      .eq("status", "active")
+      .in("status", ["active", "passive"])
       .order("created_at", { ascending: false })
 
     if (data) {

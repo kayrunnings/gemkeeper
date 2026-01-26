@@ -46,12 +46,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get thought count for this context
+    // Only count active and passive thoughts (not retired/graduated)
     const { count } = await supabase
       .from("gems")
       .select("*", { count: "exact", head: true })
       .eq("context_id", id)
       .eq("user_id", user.id)
-      .eq("status", "active")
+      .in("status", ["active", "passive"])
 
     return NextResponse.json({
       context: {

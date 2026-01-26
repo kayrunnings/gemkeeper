@@ -104,12 +104,15 @@ export async function extractArticleContent(
         return { content: null, error: "Page not found (404)" }
       }
       if (response.status === 403) {
-        return { content: null, error: "Access denied (403) - page may be behind a paywall" }
+        return { content: null, error: "Access denied - this site blocks automated requests" }
       }
       if (response.status === 429) {
         return { content: null, error: "Too many requests - please try again later" }
       }
-      return { content: null, error: `HTTP error: ${response.status}` }
+      if (response.status >= 500) {
+        return { content: null, error: "Website is temporarily unavailable" }
+      }
+      return { content: null, error: `Could not access page (HTTP ${response.status})` }
     }
 
     const html = await response.text()
@@ -148,11 +151,15 @@ export async function extractArticleContent(
 
     if (err instanceof Error) {
       if (err.name === "AbortError") {
-        return { content: null, error: "Request timed out after 10 seconds" }
+        return { content: null, error: "Request timed out - the website may be slow or blocking requests" }
       }
-      return { content: null, error: err.message }
+      // Check for common network errors
+      if (err.message.includes("fetch failed") || err.message.includes("ECONNREFUSED")) {
+        return { content: null, error: "Could not connect to website - it may be blocking automated requests" }
+      }
+      return { content: null, error: `Extraction failed: ${err.message}` }
     }
-    return { content: null, error: "Unknown error occurred while extracting content" }
+    return { content: null, error: "Could not extract content from this website" }
   }
 }
 

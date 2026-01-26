@@ -52,22 +52,38 @@ export async function getContexts(): Promise<{
   }
 
   // Get thought counts per context
+  // Only count active and passive thoughts (not retired/graduated)
+  // We need to count both by context_id AND by context_tag (legacy field)
   const { data: counts, error: countsError } = await supabase
     .from("gems")
-    .select("context_id")
+    .select("context_id, context_tag")
     .eq("user_id", user.id)
-    .eq("status", "active")
-    .not("context_id", "is", null)
+    .in("status", ["active", "passive"])
 
   if (countsError) {
     return { contexts: [], error: countsError.message }
   }
 
+  // Build a slug-to-id map for matching context_tag to context_id
+  const slugToIdMap = new Map<string, string>()
+  for (const context of contexts || []) {
+    slugToIdMap.set(context.slug, context.id)
+  }
+
   // Count thoughts per context
+  // Priority: context_id > context_tag (match via slug)
   const countMap = new Map<string, number>()
   for (const row of counts || []) {
-    const contextId = row.context_id as string
-    countMap.set(contextId, (countMap.get(contextId) || 0) + 1)
+    let contextId = row.context_id as string | null
+
+    // If no context_id but has context_tag, try to match via slug
+    if (!contextId && row.context_tag) {
+      contextId = slugToIdMap.get(row.context_tag) || null
+    }
+
+    if (contextId) {
+      countMap.set(contextId, (countMap.get(contextId) || 0) + 1)
+    }
   }
 
   // Merge counts with contexts
@@ -479,12 +495,13 @@ export async function getContextThoughtCount(
     return { count: 0, error: "Not authenticated" }
   }
 
+  // Only count active and passive thoughts (not retired/graduated)
   const { count, error } = await supabase
     .from("gems")
     .select("*", { count: "exact", head: true })
     .eq("context_id", contextId)
     .eq("user_id", user.id)
-    .eq("status", "active")
+    .in("status", ["active", "passive"])
 
   if (error) {
     return { count: 0, error: error.message }
@@ -520,13 +537,13 @@ export async function isContextAtLimit(
     return { atLimit: false, count: 0, limit: 0, error: contextError.message }
   }
 
-  // Get current count
+  // Get current count - only count active and passive thoughts (not retired/graduated)
   const { count, error: countError } = await supabase
     .from("gems")
     .select("*", { count: "exact", head: true })
     .eq("context_id", contextId)
     .eq("user_id", user.id)
-    .eq("status", "active")
+    .in("status", ["active", "passive"])
 
   if (countError) {
     return { atLimit: false, count: 0, limit: 0, error: countError.message }

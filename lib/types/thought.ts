@@ -2,7 +2,9 @@
 export type { Context, ContextWithCount } from "./context"
 
 // Status of a thought in the lifecycle
-export type ThoughtStatus = "active" | "retired" | "graduated"
+// active = available thought, passive = available but dormant
+// retired = archived (historical), graduated = applied 5+ times (mastered)
+export type ThoughtStatus = "active" | "passive" | "retired" | "graduated"
 
 // Thought type matching the database schema
 export interface Thought {

@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Thought } from "@/lib/types/thought"
+import type { ContextWithCount } from "@/lib/types/context"
 import { createClient } from "@/lib/supabase/client"
 import { getDailyThought } from "@/lib/thoughts"
 import { getRecentMoments } from "@/lib/moments"
+import { getContexts } from "@/lib/contexts"
 import { LayoutShell } from "@/components/layout-shell"
 import { DailyThoughtCard } from "@/components/home/DailyThoughtCard"
 import { ActivityStatsCard } from "@/components/home/ActivityStatsCard"
@@ -31,6 +33,7 @@ function getGreeting(): string {
 export default function HomePage() {
   const [dailyThought, setDailyThought] = useState<Thought | null>(null)
   const [moments, setMoments] = useState<Moment[]>([])
+  const [contexts, setContexts] = useState<ContextWithCount[]>([])
   const [stats, setStats] = useState<Stats>({ activeGems: 0, graduatedGems: 0, totalApplications: 0 })
   const [isLoading, setIsLoading] = useState(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
@@ -61,9 +64,10 @@ export default function HomePage() {
         }
 
         // Fetch all data in parallel
-        const [thoughtResult, momentsResult, activeGemsResult, graduatedGemsResult] = await Promise.all([
+        const [thoughtResult, momentsResult, contextsResult, activeGemsResult, graduatedGemsResult] = await Promise.all([
           getDailyThought(),
           getRecentMoments(10),
+          getContexts(),
           supabase
             .from("gems")
             .select("application_count")
@@ -82,6 +86,10 @@ export default function HomePage() {
 
         if (momentsResult.moments) {
           setMoments(momentsResult.moments)
+        }
+
+        if (contextsResult.contexts) {
+          setContexts(contextsResult.contexts)
         }
 
         // Calculate stats
@@ -138,7 +146,7 @@ export default function HomePage() {
         {/* Main grid */}
         <div className="grid gap-6 md:grid-cols-2">
           {/* Today's Thought - Full width */}
-          <DailyThoughtCard thought={dailyThought} className="md:col-span-2" />
+          <DailyThoughtCard thought={dailyThought} contexts={contexts} className="md:col-span-2" />
 
           {/* Quick Actions */}
           <QuickActionsCard />
