@@ -18,25 +18,25 @@ This document tracks key product and technical decisions with their rationale. C
 
 ## Product Decisions
 
-### 2024-XX-XX: Constraint-Based Design (10 Gem Limit)
+### 2024-XX-XX: Constraint-Based Design (10 Thought Limit)
 
-**Decision:** Limit users to 10 active gems at a time.
+**Decision:** Limit users to 10 active thoughts at a time on their Active List.
 
 **Rationale:**
 - Forces prioritization over hoarding
-- Creates a "wisdom portfolio" mindset rather than a dumping ground
+- Creates a "knowledge portfolio" mindset rather than a dumping ground
 - Differentiates from Readwise and other "save everything" tools
 - Psychological research supports constraints for behavior change
 
 **Alternatives Considered:**
-- Unlimited gems with smart filtering → Rejected: doesn't force prioritization
+- Unlimited thoughts with smart filtering → Rejected: doesn't force prioritization
 - Tiered limits (free vs. paid) → Deferred: may revisit for monetization
 
 ---
 
 ### 2024-XX-XX: Proactive Surfacing Over Passive Storage
 
-**Decision:** ThoughtFolio proactively surfaces gems rather than waiting for users to search.
+**Decision:** ThoughtFolio proactively surfaces thoughts rather than waiting for users to search.
 
 **Rationale:**
 - Most note apps fail because content is captured but never revisited
@@ -56,7 +56,7 @@ This document tracks key product and technical decisions with their rationale. C
 
 **Rationale:**
 - "GemKeeper" sounds like a game or jewelry app
-- "ThoughtFolio" communicates wisdom/thought curation
+- "ThoughtFolio" communicates thought/knowledge curation
 - Tagline emphasizes proactive surfacing (key differentiator)
 - More professional, scalable brand
 
@@ -67,14 +67,14 @@ This document tracks key product and technical decisions with their rationale. C
 
 ---
 
-### 2025-01-XX: Individual Gem Scheduling (Epic 8)
+### 2025-01-XX: Individual Thought Scheduling (Epic 8)
 
-**Decision:** Allow users to set custom check-in times per gem, not just global preferences.
+**Decision:** Allow users to set custom check-in times per thought, not just global preferences.
 
 **Rationale:**
-- Different gems are relevant at different times (morning motivation vs. evening reflection)
+- Different thoughts are relevant at different times (morning motivation vs. evening reflection)
 - Gives users control while maintaining proactive surfacing
-- Enables "right gem at the right time" experience
+- Enables "right thought at the right time" experience
 
 **Alternatives Considered:**
 - Global schedule only → Rejected: too inflexible
@@ -84,13 +84,13 @@ This document tracks key product and technical decisions with their rationale. C
 
 ### 2025-01-XX: Moments Feature (On-Demand Matching)
 
-**Decision:** Let users describe upcoming situations to receive AI-matched relevant gems.
+**Decision:** Let users describe upcoming situations to receive AI-matched relevant thoughts.
 
 **Rationale:**
 - Bridges scheduled surfacing and search
 - High-value moments (presentations, difficult conversations) benefit from prep
 - Creates "coach in your pocket" experience
-- Validates gem relevance through practical application
+- Validates thought relevance through practical application
 
 **Alternatives Considered:**
 - Calendar-only matching → Rejected: not all important moments are calendared
@@ -130,6 +130,62 @@ This document tracks key product and technical decisions with their rationale. C
 - Single status field with "active_list" as a status → Rejected: conflates lifecycle with engagement
 - No passive status (just active/retired/graduated) → Rejected: need distinction between "available" and "dormant"
 - Soft delete instead of hard delete → Rejected: user expects delete to mean delete
+
+---
+
+### 2025-01-26: Discover Something New! Feature (Epic 12)
+
+**Decision:** Add AI-powered content discovery that finds external knowledge based on user's contexts and interests.
+
+**Rationale:**
+- Users want to expand their knowledge library without manual searching
+- Contexts provide strong signal for personalization
+- Complements existing "capture your own" model with "discover new" capability
+- Limited to 8/day (4 curated + 4 directed) to prevent endless scrolling
+- User always controls what becomes "their" thought (edit before save)
+
+**Key Design Choices:**
+1. **Dashboard card only** — no sidebar nav, keeps discovery as invitation not distraction
+2. **Grid of 4** — user browses and picks, not forced linear flow
+3. **Three paths** — free-text search, context chips, "Surprise Me"
+4. **Separate session limits** — encourages both exploration modes without competing
+5. **Skipped content tracking** — prevents re-suggesting rejected content
+6. **User edits before saving** — preserves "user's words" principle
+7. **Fresh daily** — no persistence of unseen discoveries
+
+**Alternatives Considered:**
+- Single daily session (8 total) → Rejected: wanted to encourage both exploration modes
+- Card-by-card flow → Rejected: less browsable, more pressure
+- Sidebar nav item → Rejected: too prominent, could become distraction
+- Persist unseen discoveries → Rejected: simpler to refresh daily
+
+**Consequences:**
+- New database tables: discoveries, discovery_usage, discovery_skips
+- New API routes: /api/discover/*
+- Gemini grounding feature required for web search
+- Dashboard component changes
+- May need to monitor API costs
+
+**Product Principle Alignment:**
+- "User's Words, User's Knowledge" — AI finds raw material, user decides what becomes their thought
+- "Right Thought, Right Time" — context-aware discovery
+- "Gentle Accountability" — no pressure to save, lightweight skip
+
+---
+
+### 2025-01-26: Terminology Update - Knowledge over Wisdom
+
+**Decision:** Use "knowledge" and "thoughts" instead of "wisdom" throughout the product.
+
+**Rationale:**
+- "Wisdom" feels pretentious and heavy
+- "Knowledge" is more accessible and accurate
+- "Thoughts" already established as primary term
+- Aligns better with the practical, actionable nature of the app
+
+**Alternatives Considered:**
+- Keep "wisdom" → Rejected: user feedback indicated it felt too lofty
+- "Insights" → Rejected: sounds too corporate/analytical
 
 ---
 
@@ -226,7 +282,7 @@ Items we've discussed but intentionally not decided yet:
 - **Push notifications:** Deferred to future iOS app version
 - **Monetization model:** Deferred until product-market fit validated
 - **Multi-theme system:** Planned but not yet prioritized
-- **Team/shared gems:** Out of scope for v1
+- **Team/shared thoughts:** Out of scope for v1
 
 ---
 
