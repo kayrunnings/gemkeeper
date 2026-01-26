@@ -27,15 +27,15 @@ Expand ThoughtFolio from global 10-thought limit to contextual organization with
 - [x] 1.5 Update imports across codebase
 
 #### 2.0 Create Context Service (traces to: FR-1.1 through FR-1.8)
-- [ ] 2.1 Create `lib/contexts.ts` with CRUD functions:
+- [x] 2.1 Create `lib/contexts.ts` with CRUD functions:
   - `getContexts()` - list with thought counts
   - `getContextBySlug(slug)` - single context
   - `createContext(input)` - create custom
   - `updateContext(id, input)` - update name/color/limit
   - `deleteContext(id)` - delete, move thoughts to "Other"
   - `getContextThoughtCount(contextId)` - count
-- [ ] 2.2 Add validation: unique names, max 50 chars, can't delete defaults
-- [ ] 2.3 Write unit tests
+- [x] 2.2 Add validation: unique names, max 50 chars, can't delete defaults
+- [x] 2.3 Write unit tests
 
 #### 3.0 Create Context API Routes (traces to: FR-1.1 through FR-1.8)
 - [ ] 3.1 Create `app/api/contexts/route.ts` (GET, POST)
@@ -142,7 +142,7 @@ Expand ThoughtFolio from global 10-thought limit to contextual organization with
 - `lib/types/index.ts` - created
 
 ### Services
-- `lib/contexts.ts` - create
+- `lib/contexts.ts` - created
 - `lib/thoughts.ts` - update
 - `lib/url-extractor.ts` - create
 - `lib/ai/gemini.ts` - update prompts
