@@ -18,12 +18,15 @@ import { ContextSettings } from "@/components/settings/ContextSettings"
 import { useToast } from "@/components/error-toast"
 import { useUITheme, UI_THEMES, UI_THEME_INFO, UITheme } from "@/lib/ui-theme-context"
 import { useTheme, THEMES, THEME_INFO, Theme } from "@/components/theme-provider"
+import { useSidebar } from "@/lib/sidebar-context"
 import { cn } from "@/lib/utils"
+import { PanelLeftClose, PanelLeft } from "lucide-react"
 
 // Appearance Settings Component
 function AppearanceSettings() {
   const { theme, setTheme } = useTheme()
   const { uiTheme, setUITheme } = useUITheme()
+  const { isCollapsedByDefault, setCollapsedByDefault } = useSidebar()
 
   return (
     <Card>
@@ -97,6 +100,46 @@ function AppearanceSettings() {
                 <span className="text-xs font-medium">{THEME_INFO[t].name}</span>
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Sidebar Default State */}
+        <div className="space-y-3">
+          <Label>Sidebar</Label>
+          <p className="text-xs text-muted-foreground">
+            Choose the default state of the left navigation panel
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setCollapsedByDefault(false)}
+              className={cn(
+                "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                !isCollapsedByDefault
+                  ? "border-primary bg-primary/10"
+                  : "border-[var(--glass-card-border)] hover:border-[var(--glass-hover-border)] hover:bg-[var(--glass-hover-bg)]"
+              )}
+            >
+              <PanelLeft className="h-6 w-6" />
+              <span className="text-sm font-medium">Expanded</span>
+              <span className="text-xs text-muted-foreground text-center">
+                Sidebar always visible with labels
+              </span>
+            </button>
+            <button
+              onClick={() => setCollapsedByDefault(true)}
+              className={cn(
+                "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                isCollapsedByDefault
+                  ? "border-primary bg-primary/10"
+                  : "border-[var(--glass-card-border)] hover:border-[var(--glass-hover-border)] hover:bg-[var(--glass-hover-bg)]"
+              )}
+            >
+              <PanelLeftClose className="h-6 w-6" />
+              <span className="text-sm font-medium">Collapsed</span>
+              <span className="text-xs text-muted-foreground text-center">
+                Icons only, more content space
+              </span>
+            </button>
           </div>
         </div>
       </CardContent>

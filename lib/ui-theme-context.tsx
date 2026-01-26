@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, useCallback, useSyncExternalStore } from "react"
+import { createContext, useContext, useEffect, useState, useCallback } from "react"
 
 // UI theme types - Glass (frosted) vs Classic (solid)
 export const UI_THEMES = ["glass", "classic"] as const
@@ -33,7 +33,7 @@ interface UIThemeContextType {
 
 const UIThemeContext = createContext<UIThemeContextType | undefined>(undefined)
 
-function getStoredUITheme(): UITheme {
+function getInitialUITheme(): UITheme {
   if (typeof window === "undefined") return DEFAULT_UI_THEME
 
   const stored = localStorage.getItem(UI_THEME_STORAGE_KEY)
@@ -43,36 +43,14 @@ function getStoredUITheme(): UITheme {
   return DEFAULT_UI_THEME
 }
 
-function subscribeToStorage(callback: () => void) {
-  window.addEventListener("storage", callback)
-  return () => window.removeEventListener("storage", callback)
-}
-
-function getServerSnapshot(): UITheme {
-  return DEFAULT_UI_THEME
-}
-
 export function UIThemeProvider({ children }: { children: React.ReactNode }) {
-  // Use useSyncExternalStore for reading localStorage without causing cascading renders
-  const storedTheme = useSyncExternalStore(
-    subscribeToStorage,
-    getStoredUITheme,
-    getServerSnapshot
-  )
+  // Single state with lazy initialization - no sync effects needed
+  const [uiTheme, setUIThemeState] = useState<UITheme>(getInitialUITheme)
 
-  const [uiTheme, setUIThemeState] = useState<UITheme>(storedTheme)
-
-  // Sync theme state with stored theme on mount
+  // Apply theme to DOM and persist - only runs when theme actually changes
   useEffect(() => {
-    setUIThemeState(storedTheme)
-  }, [storedTheme])
-
-  useEffect(() => {
-    // Apply UI theme to document using data-ui-theme attribute
     const root = document.documentElement
     root.setAttribute("data-ui-theme", uiTheme)
-
-    // Persist to localStorage
     localStorage.setItem(UI_THEME_STORAGE_KEY, uiTheme)
   }, [uiTheme])
 
