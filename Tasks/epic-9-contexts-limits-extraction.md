@@ -12,7 +12,7 @@ Expand ThoughtFolio from global 10-thought limit to contextual organization with
 - [x] Database migration complete (contexts table, gems columns, triggers)
 - [x] Types updated
 - [x] API routes created
-- [ ] UI not updated
+- [x] UI updated (Context Settings)
 - [ ] URL extraction not implemented
 
 ## Tasks
@@ -54,12 +54,12 @@ Expand ThoughtFolio from global 10-thought limit to contextual organization with
 ### Phase 2: Settings UI
 
 #### 5.0 Context Management UI (traces to: US-1)
-- [ ] 5.1 Create `components/settings/ContextSettings.tsx`
+- [x] 5.1 Create `components/settings/ContextSettings.tsx`
   - List contexts with counts
   - Add/edit/delete actions
-- [ ] 5.2 Create `components/settings/ContextForm.tsx`
-- [ ] 5.3 Add color picker (preset colors)
-- [ ] 5.4 Integrate into `app/settings/page.tsx`
+- [x] 5.2 Create `components/settings/ContextForm.tsx`
+- [x] 5.3 Add color picker (preset colors)
+- [x] 5.4 Integrate into `app/settings/page.tsx`
 - [ ] 5.5 Test CRUD in UI
 
 ### Phase 3: Thought UI Updates
