@@ -175,7 +175,7 @@ export default function CheckinPage() {
       }
 
       showSuccess("Gem released", "Making room for new wisdom.")
-      router.push("/gems")
+      router.push("/thoughts")
     } catch (err) {
       showError(err, "Failed to release gem")
     }
@@ -300,12 +300,12 @@ export default function CheckinPage() {
                   </p>
                 )}
                 <div className="flex gap-3 justify-center mt-8">
-                  <Link href="/gems">
-                    <Button variant="outline">View Gems</Button>
+                  <Link href="/thoughts">
+                    <Button variant="outline">View Thoughts</Button>
                   </Link>
                   {newApplicationCount >= 5 && (
-                    <Link href={`/gems/${gem.id}`}>
-                      <Button>Graduate Gem</Button>
+                    <Link href={`/thoughts/${gem.id}`}>
+                      <Button>Graduate Thought</Button>
                     </Link>
                   )}
                 </div>
@@ -322,8 +322,8 @@ export default function CheckinPage() {
                 <p className="text-muted-foreground mb-8">
                   Don&apos;t worry, we&apos;ll remind you again.
                 </p>
-                <Link href="/gems">
-                  <Button>View Gems</Button>
+                <Link href="/thoughts">
+                  <Button>View Thoughts</Button>
                 </Link>
               </CardContent>
             </Card>

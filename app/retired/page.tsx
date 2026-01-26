@@ -141,7 +141,7 @@ export default function RetiredPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <Link href="/gems">
+              <Link href="/thoughts">
                 <Button variant="ghost" size="sm" className="gap-2">
                   <ArrowLeft className="h-4 w-4" />
                   Back to Thoughts
@@ -180,7 +180,7 @@ export default function RetiredPage() {
               <p className="text-muted-foreground mb-6 max-w-sm">
                 When you retire thoughts, they'll appear here for reference.
               </p>
-              <Link href="/gems">
+              <Link href="/thoughts">
                 <Button variant="outline" className="gap-2">
                   <ArrowLeft className="h-4 w-4" />
                   Back to Thoughts
