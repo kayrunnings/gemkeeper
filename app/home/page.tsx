@@ -13,6 +13,7 @@ import { DailyThoughtCard } from "@/components/home/DailyThoughtCard"
 import { ActivityStatsCard } from "@/components/home/ActivityStatsCard"
 import { QuickActionsCard } from "@/components/home/QuickActionsCard"
 import { UpcomingMomentsCard } from "@/components/home/UpcomingMomentsCard"
+import { DiscoverCard } from "@/components/discover"
 import { useToast } from "@/components/error-toast"
 import { Home as HomeIcon } from "lucide-react"
 import type { Moment } from "@/types/moments"
@@ -147,6 +148,9 @@ export default function HomePage() {
         <div className="grid gap-6 md:grid-cols-2">
           {/* Today's Thought - Full width */}
           <DailyThoughtCard thought={dailyThought} contexts={contexts} className="md:col-span-2" />
+
+          {/* Discover Something New - Full width */}
+          <DiscoverCard contexts={contexts} className="md:col-span-2" />
 
           {/* Quick Actions */}
           <QuickActionsCard />
