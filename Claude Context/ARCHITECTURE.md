@@ -34,6 +34,11 @@ gemkeeper/
 │   ├── api/                      # API routes
 │   │   ├── ai/extract/           # AI extraction endpoint
 │   │   ├── contexts/             # Context CRUD endpoints
+│   │   ├── discover/             # Discovery endpoints
+│   │   │   ├── route.ts          # Generate discoveries
+│   │   │   ├── save/             # Save discovery as thought
+│   │   │   ├── skip/             # Skip discovery
+│   │   │   └── usage/            # Get usage limits
 │   │   ├── extract/url/          # URL extraction endpoint
 │   │   ├── gems/bulk/            # Bulk thought creation
 │   │   ├── schedules/            # Thought schedule endpoints
@@ -62,6 +67,13 @@ gemkeeper/
 │   ├── ui/                       # shadcn/ui components
 │   ├── gems/                     # Thought-related components
 │   ├── contexts/                 # Context management components
+│   ├── discover/                 # Discovery components
+│   │   ├── DiscoverCard.tsx      # Dashboard entry point
+│   │   ├── ContextChip.tsx       # Context selector chip
+│   │   ├── DiscoveryGrid.tsx     # 2x2 grid of discoveries
+│   │   ├── DiscoveryCard.tsx     # Individual discovery card
+│   │   ├── DiscoveryDetail.tsx   # Expanded discovery view
+│   │   └── SaveDiscoveryModal.tsx # Save flow modal
 │   ├── schedules/                # Schedule components
 │   ├── moments/                  # Moment components
 │   ├── settings/                 # Settings components
@@ -76,9 +88,11 @@ gemkeeper/
 │   ├── types/                    # Type definitions
 │   │   ├── thought.ts            # Thought types
 │   │   ├── context.ts            # Context types
+│   │   ├── discovery.ts          # Discovery types
 │   │   └── ...                   # Other types
 │   ├── contexts.ts               # Context service functions
 │   ├── thoughts.ts               # Thought service functions
+│   ├── discovery.ts              # Discovery service functions
 │   ├── schedules.ts              # Schedule service functions
 │   ├── moments.ts                # Moment service functions
 │   ├── calendar.ts               # Calendar service functions
@@ -144,11 +158,23 @@ gemkeeper/
 │  moment_gems    │       │ calendar_connections│                 │
 ├─────────────────┤       ├─────────────────────┤                 │
 │ id (PK)         │       │ id (PK)             │                 │
-│ moment_id (FK)  │       │ user_id (FK)        │◄────────────────┘
-│ gem_id (FK)     │       │ provider            │
-│ relevance_score │       │ access_token        │
-│ ...             │       │ ...                 │
-└─────────────────┘       └─────────────────────┘
+│ moment_id (FK)  │       │ user_id (FK)        │◄────────────────┤
+│ gem_id (FK)     │       │ provider            │                 │
+│ relevance_score │       │ access_token        │                 │
+│ ...             │       │ ...                 │                 │
+└─────────────────┘       └─────────────────────┘                 │
+                                                                  │
+┌─────────────────┐       ┌─────────────────────┐                 │
+│  discoveries    │       │  discovery_usage    │                 │
+├─────────────────┤       ├─────────────────────┤                 │
+│ id (PK)         │       │ id (PK)             │                 │
+│ user_id (FK)    │◄──────│ user_id (FK)        │◄────────────────┘
+│ session_type    │       │ usage_date          │
+│ thought_content │       │ curated_count       │
+│ source_url      │       │ directed_count      │
+│ status          │       └─────────────────────┘
+│ ...             │
+└─────────────────┘
 ```
 
 ### Core Tables
@@ -190,7 +216,7 @@ User-defined life areas for organizing thoughts.
 **Default contexts:** Meetings, Feedback, Conflict, Focus, Health, Relationships, Parenting, Other
 
 #### `gems` (Thoughts)
-Core feature table for wisdom/insights. Note: Database table is named `gems` for historical reasons, UI shows "thoughts".
+Core feature table for knowledge/insights. Note: Database table is named `gems` for historical reasons, UI shows "thoughts".
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -346,6 +372,53 @@ Cached extraction results for deduplication.
 | tokens_used | INTEGER | Tokens consumed |
 | created_at | TIMESTAMPTZ | |
 
+#### `discoveries`
+AI-generated discovery suggestions for users.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| user_id | UUID | FK → auth.users |
+| session_type | VARCHAR(20) | 'curated' or 'directed' |
+| query | TEXT | User's search query (null for curated) |
+| context_id | UUID | FK → contexts (null for directed) |
+| thought_content | TEXT | Extracted insight |
+| source_title | TEXT | Article/video title |
+| source_url | TEXT | URL to source |
+| source_type | VARCHAR(20) | article/video/research/blog |
+| article_summary | TEXT | 2-3 sentence summary |
+| relevance_reason | TEXT | Why relevant to user |
+| content_type | VARCHAR(20) | trending/evergreen |
+| suggested_context_id | UUID | FK → contexts |
+| status | VARCHAR(20) | pending/saved/skipped |
+| saved_gem_id | UUID | FK → gems (if saved) |
+| created_at | TIMESTAMPTZ | |
+| updated_at | TIMESTAMPTZ | |
+
+#### `discovery_usage`
+Daily rate limiting for discovery feature.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| user_id | UUID | FK → auth.users |
+| usage_date | DATE | Date of usage |
+| curated_count | INTEGER | Curated sessions today (max 1) |
+| directed_count | INTEGER | Directed sessions today (max 1) |
+| created_at | TIMESTAMPTZ | |
+| updated_at | TIMESTAMPTZ | |
+
+#### `discovery_skips`
+Track skipped content to avoid re-suggesting.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| user_id | UUID | FK → auth.users |
+| content_hash | VARCHAR(64) | SHA-256 of source_url |
+| source_url | TEXT | Original URL |
+| skipped_at | TIMESTAMPTZ | |
+
 ---
 
 ## 5. API Routes
@@ -499,6 +572,67 @@ OAuth callback for Google Calendar.
 #### POST `/api/calendar/sync`
 Sync calendar events.
 
+### Discovery
+
+#### POST `/api/discover`
+Generate discoveries for user.
+
+**Request:**
+```typescript
+{
+  mode: 'curated' | 'directed';
+  query?: string;           // For directed mode
+  context_id?: string;      // For context-specific curated
+}
+```
+
+**Response:**
+```typescript
+{
+  discoveries: Discovery[];
+  session_type: 'curated' | 'directed';
+  remaining_curated: number;
+  remaining_directed: number;
+}
+```
+
+#### POST `/api/discover/save`
+Save a discovery as a thought.
+
+**Request:**
+```typescript
+{
+  discovery_id: string;
+  thought_content: string;      // May be edited
+  context_id: string;
+  is_on_active_list?: boolean;
+  save_article_as_note?: boolean;
+}
+```
+
+#### POST `/api/discover/skip`
+Skip a discovery.
+
+**Request:**
+```typescript
+{
+  discovery_id: string;
+}
+```
+
+#### GET `/api/discover/usage`
+Get user's discovery usage for today.
+
+**Response:**
+```typescript
+{
+  curated_used: boolean;
+  directed_used: boolean;
+  curated_remaining: number;
+  directed_remaining: number;
+}
+```
+
 ---
 
 ## 6. Key Components
@@ -533,6 +667,16 @@ Sync calendar events.
 | Moment Entry | `components/moments/MomentEntryModal.tsx` | Quick creation |
 | Prep Card | `components/moments/PrepCard.tsx` | Matched thoughts display |
 
+### Discovery Components
+| Component | File | Purpose |
+|-----------|------|---------|
+| Discover Card | `components/discover/DiscoverCard.tsx` | Dashboard entry point |
+| Context Chip | `components/discover/ContextChip.tsx` | Context selector |
+| Discovery Grid | `components/discover/DiscoveryGrid.tsx` | 2x2 grid view |
+| Discovery Card | `components/discover/DiscoveryCard.tsx` | Individual card |
+| Discovery Detail | `components/discover/DiscoveryDetail.tsx` | Expanded view |
+| Save Modal | `components/discover/SaveDiscoveryModal.tsx` | Save flow |
+
 ---
 
 ## 7. Services & Libraries
@@ -565,6 +709,20 @@ getAllThoughtsForMoments(): Promise<Thought[]>  // ALL thoughts with status IN (
 getRetiredThoughts(): Promise<Thought[]> // status = 'retired'
 ```
 
+### Discovery Service (`lib/discovery.ts`)
+```typescript
+generateDiscoveries(userId: string, mode: 'curated' | 'directed', query?: string, contextId?: string): Promise<Discovery[]>
+saveDiscovery(discoveryId: string, input: SaveDiscoveryInput): Promise<Thought>
+skipDiscovery(discoveryId: string): Promise<void>
+getDiscoveryUsage(userId: string): Promise<DiscoveryUsage>
+getContextWeights(userId: string): Promise<ContextWeight[]>  // Weighted by thought count
+checkContentSkipped(userId: string, url: string): Promise<boolean>
+createDiscoveries(userId: string, discoveries: Discovery[]): Promise<Discovery[]>
+updateDiscoveryStatus(id: string, status: string, savedGemId?: string): Promise<void>
+addSkippedContent(userId: string, url: string): Promise<void>
+incrementUsage(userId: string, sessionType: 'curated' | 'directed'): Promise<void>
+```
+
 ### URL Extractor Service (`lib/url-extractor.ts`)
 ```typescript
 detectUrlType(url: string): 'article' | 'youtube' | 'unknown'
@@ -578,6 +736,7 @@ extractThoughtsFromContent(content: string, source?: string): Promise<Extraction
 extractThoughtsFromMultimedia(text: string, media: MediaInput[]): Promise<ExtractionResult>
 parseScheduleNLP(text: string): Promise<NLPScheduleResult>
 matchThoughtsToMoment(description: string, thoughts: Thought[]): Promise<MatchingResponse>
+generateDiscoveries(mode: 'curated' | 'directed', contexts: Context[], existingThoughts: Thought[], query?: string): Promise<Discovery[]>
 ```
 
 ---
@@ -635,6 +794,26 @@ matchThoughtsToMoment(description: string, thoughts: Thought[]): Promise<Matchin
 1. User clicks "Delete" on thought detail or Retired page
 2. Confirm action with warning "This cannot be undone"
 3. Hard delete row from database
+```
+
+### Discovery Flow
+```
+1. User opens Dashboard, sees "Discover Something New!" card
+2. User chooses path:
+   a. Types topic → directed mode
+   b. Taps context chip → curated mode (single context)
+   c. Taps "Surprise Me" → curated mode (multi-context)
+3. Check daily usage limits
+4. If curated: get context rotation (weighted by thought count)
+5. Call Gemini with grounding to search web
+6. Gemini returns 4 discoveries with metadata
+7. Filter out previously skipped content (by URL hash)
+8. Store discoveries in database
+9. Return grid of 4 cards
+10. User browses, expands cards
+11. On save: create thought + optional note, link discovery
+12. On skip: mark discovery skipped, add to skip list
+13. Update usage counters
 ```
 
 ---
