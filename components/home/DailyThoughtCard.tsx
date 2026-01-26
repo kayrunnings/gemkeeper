@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { Thought, CONTEXT_TAG_LABELS, ContextTag } from "@/lib/types/thought"
+import type { ContextWithCount } from "@/lib/types/context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -10,6 +11,7 @@ import { cn } from "@/lib/utils"
 
 interface DailyThoughtCardProps {
   thought: Thought | null
+  contexts?: ContextWithCount[]
   className?: string
 }
 
@@ -24,7 +26,23 @@ const contextTagVariant: Record<ContextTag, string> = {
   other: "other",
 }
 
-export function DailyThoughtCard({ thought, className }: DailyThoughtCardProps) {
+export function DailyThoughtCard({ thought, contexts = [], className }: DailyThoughtCardProps) {
+  // Look up context by ID or by slug matching context_tag
+  const getContext = () => {
+    if (!thought) return null
+    // First try to find by context_id
+    if (thought.context_id) {
+      return contexts.find((c) => c.id === thought.context_id) || null
+    }
+    // Fall back to matching context_tag to slug
+    if (thought.context_tag) {
+      return contexts.find((c) => c.slug === thought.context_tag) || null
+    }
+    return null
+  }
+
+  const context = getContext()
+
   return (
     <Card className={cn("overflow-hidden", className)}>
       <div className="h-1 bg-gradient-to-r from-amber-400 to-orange-500" />
@@ -47,11 +65,25 @@ export function DailyThoughtCard({ thought, className }: DailyThoughtCardProps) 
       <CardContent>
         {thought ? (
           <div className="space-y-3">
-            <Badge variant={contextTagVariant[thought.context_tag] as "meetings" | "feedback" | "conflict" | "focus" | "health" | "relationships" | "parenting" | "other"}>
-              {thought.context_tag === "other" && thought.custom_context
-                ? thought.custom_context
-                : CONTEXT_TAG_LABELS[thought.context_tag]}
-            </Badge>
+            {/* Context badge - use context color if available */}
+            {context ? (
+              <Badge
+                variant="outline"
+                className="border-2"
+                style={{
+                  borderColor: context.color || "#6B7280",
+                  color: context.color || "#6B7280",
+                }}
+              >
+                {context.name}
+              </Badge>
+            ) : (
+              <Badge variant={contextTagVariant[thought.context_tag] as "meetings" | "feedback" | "conflict" | "focus" | "health" | "relationships" | "parenting" | "other"}>
+                {thought.context_tag === "other" && thought.custom_context
+                  ? thought.custom_context
+                  : CONTEXT_TAG_LABELS[thought.context_tag]}
+              </Badge>
+            )}
             <p className="text-lg leading-relaxed font-medium line-clamp-3">
               {thought.content}
             </p>

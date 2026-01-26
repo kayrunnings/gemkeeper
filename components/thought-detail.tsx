@@ -123,13 +123,20 @@ export function ThoughtDetail({ thought, onThoughtUpdated, onThoughtRetired, onT
     }
   }
 
-  // Get context by ID for displaying colored badges
-  const getContextById = (contextId: string | null) => {
-    if (!contextId) return null
-    return contexts.find((c) => c.id === contextId)
+  // Get context for thought - first by ID, then by matching context_tag to slug
+  const getContextForThought = () => {
+    // First try to find by context_id
+    if (thought.context_id) {
+      return contexts.find((c) => c.id === thought.context_id) || null
+    }
+    // Fall back to matching context_tag to slug
+    if (thought.context_tag) {
+      return contexts.find((c) => c.slug === thought.context_tag) || null
+    }
+    return null
   }
 
-  const context = getContextById(thought.context_id)
+  const context = getContextForThought()
   const activeScheduleCount = schedules.filter((s) => s.is_active).length
 
   const formatDate = (dateString: string) => {

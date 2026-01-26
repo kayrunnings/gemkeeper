@@ -192,10 +192,17 @@ export default function ThoughtsPage() {
     })
   }, [thoughts, activeFilter])
 
-  // Get context by ID for displaying colored badges
-  const getContextById = (contextId: string | null) => {
-    if (!contextId) return null
-    return contexts.find((c) => c.id === contextId)
+  // Get context for a thought - first by ID, then by matching context_tag to slug
+  const getContextForThought = (thought: Thought) => {
+    // First try to find by context_id
+    if (thought.context_id) {
+      return contexts.find((c) => c.id === thought.context_id) || null
+    }
+    // Fall back to matching context_tag to slug
+    if (thought.context_tag) {
+      return contexts.find((c) => c.slug === thought.context_tag) || null
+    }
+    return null
   }
 
   const formatRelativeDate = (dateString: string) => {
@@ -354,7 +361,7 @@ export default function ThoughtsPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {filteredThoughts.map((thought) => {
-              const context = getContextById(thought.context_id)
+              const context = getContextForThought(thought)
               return (
                 <Link key={thought.id} href={`/thoughts/${thought.id}`}>
                   <Card className="group relative cursor-pointer card-hover h-full">

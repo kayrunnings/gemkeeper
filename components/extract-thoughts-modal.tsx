@@ -23,6 +23,8 @@ import {
   Image as ImageIcon,
   FileAudio,
   FileVideo,
+  Link as LinkIcon,
+  FileText,
 } from "lucide-react"
 import { ExtractedThoughtCard, ExtractedThought } from "./extracted-thought-card"
 import { MAX_ACTIVE_THOUGHTS } from "@/lib/types/thought"
@@ -38,6 +40,7 @@ interface ExtractThoughtsModalProps {
 }
 
 type Step = "input" | "loading" | "review" | "success"
+type InputMode = "text" | "url"
 
 interface MediaFile {
   file: File
@@ -61,7 +64,10 @@ export function ExtractThoughtsModal({
   hasAIConsent,
 }: ExtractThoughtsModalProps) {
   const [step, setStep] = useState<Step>("input")
+  const [inputMode, setInputMode] = useState<InputMode>("text")
   const [content, setContent] = useState("")
+  const [urlInput, setUrlInput] = useState("")
+  const [isExtractingUrl, setIsExtractingUrl] = useState(false)
   const [source, setSource] = useState("")
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
   const [extractedThoughts, setExtractedThoughts] = useState<ExtractedThought[]>([])
@@ -81,7 +87,10 @@ export function ExtractThoughtsModal({
   useEffect(() => {
     if (isOpen) {
       setStep("input")
+      setInputMode("text")
       setContent("")
+      setUrlInput("")
+      setIsExtractingUrl(false)
       setSource("")
       setMediaFiles([])
       setExtractedThoughts([])
@@ -98,6 +107,60 @@ export function ExtractThoughtsModal({
       })
     }
   }, [isOpen, hasAIConsent]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Extract content from URL
+  const handleExtractFromUrl = async () => {
+    if (!urlInput.trim()) {
+      setError("Please enter a URL")
+      return
+    }
+
+    // Validate URL format
+    try {
+      new URL(urlInput)
+    } catch {
+      setError("Please enter a valid URL (e.g., https://example.com)")
+      return
+    }
+
+    setIsExtractingUrl(true)
+    setError(null)
+
+    try {
+      const response = await fetch("/api/extract/url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: urlInput }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        // Show error with fallback message
+        setError(data.error || "Failed to extract content")
+        if (data.fallbackMessage) {
+          // Switch to text mode so user can paste manually
+          setInputMode("text")
+        }
+        setIsExtractingUrl(false)
+        return
+      }
+
+      if (data.success && data.content) {
+        // Populate content and source from extracted data
+        setContent(data.content.text || "")
+        setSource(data.content.title || data.content.siteName || urlInput)
+        setInputMode("text") // Switch to text mode to show the extracted content
+        setError(null)
+      } else {
+        setError("No content could be extracted from this URL")
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to extract content from URL")
+    } finally {
+      setIsExtractingUrl(false)
+    }
+  }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -325,77 +388,171 @@ export function ExtractThoughtsModal({
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="content">
-                    Paste article, book notes, or transcript...
-                  </Label>
-                  <Textarea
-                    id="content"
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="Paste your content here..."
-                    className="min-h-[180px] resize-none"
-                    maxLength={10000}
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{content.length} / 10,000 characters</span>
-                    {content.length > 0 && content.length < 100 && (
-                      <span className="text-warning">
-                        Minimum 100 characters required
-                      </span>
-                    )}
-                  </div>
+                {/* Input Mode Tabs */}
+                <div className="flex gap-2 border-b pb-2">
+                  <button
+                    onClick={() => setInputMode("text")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      inputMode === "text"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    <FileText className="h-4 w-4" />
+                    Paste Text
+                  </button>
+                  <button
+                    onClick={() => setInputMode("url")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      inputMode === "url"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    <LinkIcon className="h-4 w-4" />
+                    From URL
+                  </button>
                 </div>
 
-                {/* Media Upload */}
-                <div className="space-y-2">
-                  <Label>Or upload media (images, audio, video)</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {mediaFiles.map((mf, i) => (
-                      <div
-                        key={i}
-                        className="relative group border rounded-xl p-2 flex items-center gap-2 bg-secondary/50"
-                      >
-                        {mf.preview ? (
-                          <img
-                            src={mf.preview}
-                            alt=""
-                            className="w-10 h-10 object-cover rounded-lg"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
-                            {getFileIcon(mf.file.type)}
-                          </div>
-                        )}
-                        <span className="text-xs text-muted-foreground max-w-[100px] truncate">
-                          {mf.file.name}
-                        </span>
-                        <button
-                          onClick={() => removeFile(i)}
-                          className="absolute -top-1 -right-1 bg-destructive text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                    {mediaFiles.length < 5 && (
-                      <label className="border-2 border-dashed rounded-xl p-4 cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-colors flex items-center gap-2 text-sm text-muted-foreground">
-                        <Upload className="h-4 w-4" />
-                        Add media
-                        <input
-                          type="file"
-                          accept="image/*,audio/*,video/*"
-                          multiple
-                          onChange={handleFileUpload}
-                          className="hidden"
+                {/* URL Input Mode */}
+                {inputMode === "url" && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="url-input">
+                        Article or YouTube URL
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="url-input"
+                          value={urlInput}
+                          onChange={(e) => setUrlInput(e.target.value)}
+                          placeholder="https://example.com/article or youtube.com/watch?v=..."
+                          className="flex-1"
+                          disabled={isExtractingUrl}
                         />
-                      </label>
+                        <Button
+                          onClick={handleExtractFromUrl}
+                          disabled={!urlInput.trim() || isExtractingUrl}
+                          variant="outline"
+                          className="gap-2"
+                        >
+                          {isExtractingUrl ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Extracting...
+                            </>
+                          ) : (
+                            <>
+                              <LinkIcon className="h-4 w-4" />
+                              Extract
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Supports articles (Substack, Medium, blogs) and YouTube videos with transcripts.
+                      </p>
+                    </div>
+
+                    {/* Show extracted content preview if available */}
+                    {content && (
+                      <div className="space-y-2 p-3 rounded-xl bg-success/10 border border-success/20">
+                        <div className="flex items-center gap-2 text-success">
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span className="text-sm font-medium">Content extracted successfully</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {content.length} characters extracted from {source || urlInput}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setInputMode("text")}
+                          className="text-xs"
+                        >
+                          View/edit extracted text
+                        </Button>
+                      </div>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Max 5 files, 10MB each. Images, audio, and video supported.
-                  </p>
-                </div>
+                )}
+
+                {/* Text Input Mode */}
+                {inputMode === "text" && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="content">
+                        Paste article, book notes, or transcript...
+                      </Label>
+                      <Textarea
+                        id="content"
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        placeholder="Paste your content here..."
+                        className="min-h-[180px] resize-none"
+                        maxLength={10000}
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{content.length} / 10,000 characters</span>
+                        {content.length > 0 && content.length < 100 && (
+                          <span className="text-warning">
+                            Minimum 100 characters required
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Media Upload */}
+                    <div className="space-y-2">
+                      <Label>Or upload media (images, audio, video)</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {mediaFiles.map((mf, i) => (
+                          <div
+                            key={i}
+                            className="relative group border rounded-xl p-2 flex items-center gap-2 bg-secondary/50"
+                          >
+                            {mf.preview ? (
+                              <img
+                                src={mf.preview}
+                                alt=""
+                                className="w-10 h-10 object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
+                                {getFileIcon(mf.file.type)}
+                              </div>
+                            )}
+                            <span className="text-xs text-muted-foreground max-w-[100px] truncate">
+                              {mf.file.name}
+                            </span>
+                            <button
+                              onClick={() => removeFile(i)}
+                              className="absolute -top-1 -right-1 bg-destructive text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                        {mediaFiles.length < 5 && (
+                          <label className="border-2 border-dashed rounded-xl p-4 cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-colors flex items-center gap-2 text-sm text-muted-foreground">
+                            <Upload className="h-4 w-4" />
+                            Add media
+                            <input
+                              type="file"
+                              accept="image/*,audio/*,video/*"
+                              multiple
+                              onChange={handleFileUpload}
+                              className="hidden"
+                            />
+                          </label>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Max 5 files, 10MB each. Images, audio, and video supported.
+                      </p>
+                    </div>
+                  </>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="source">Source (optional)</Label>
