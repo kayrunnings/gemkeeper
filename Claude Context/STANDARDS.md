@@ -27,7 +27,7 @@ This document defines coding conventions, patterns, and practices for the Though
 
 ```typescript
 // ✅ Good: Explicit types
-interface Gem {
+interface Thought {
   id: string;
   content: string;
   source: string;
@@ -37,7 +37,7 @@ interface Gem {
 }
 
 // ❌ Bad: Any types
-const gem: any = fetchGem();
+const thought: any = fetchThought();
 ```
 
 ### Avoid `any`
@@ -53,9 +53,10 @@ Export types from a central location:
 
 ```typescript
 // types/index.ts
-export type { Gem, GemNote, DailyPrompt } from './gems';
+export type { Thought, ThoughtNote, DailyPrompt } from './thoughts';
 export type { User, Profile } from './users';
-export type { Moment, GemSchedule } from './scheduling';
+export type { Moment, ThoughtSchedule } from './scheduling';
+export type { Discovery, DiscoveryUsage } from './discovery';
 ```
 
 ---
@@ -67,11 +68,15 @@ export type { Moment, GemSchedule } from './scheduling';
 ```
 components/
 ├── ui/                    # shadcn/ui components
-├── gems/
+├── gems/                  # Thought-related components (legacy name)
 │   ├── GemCard.tsx
 │   ├── GemList.tsx
 │   ├── GemForm.tsx
 │   └── index.ts          # Barrel export
+├── discover/             # Discovery components
+│   ├── DiscoverCard.tsx
+│   ├── DiscoveryGrid.tsx
+│   └── index.ts
 ├── prompts/
 │   ├── DailyPrompt.tsx
 │   └── PromptHistory.tsx
@@ -87,11 +92,11 @@ Keep components focused. If a component exceeds ~150 lines, consider splitting:
 
 ```typescript
 // ✅ Good: Focused components
-<GemCard gem={gem} />
-<GemActions gemId={gem.id} onArchive={handleArchive} />
+<ThoughtCard thought={thought} />
+<ThoughtActions thoughtId={thought.id} onArchive={handleArchive} />
 
 // ❌ Bad: Monolithic component with everything
-<GemCardWithActionsAndNotesAndScheduling gem={gem} ... />
+<ThoughtCardWithActionsAndNotesAndScheduling thought={thought} ... />
 ```
 
 ### Props Interface
@@ -99,14 +104,14 @@ Keep components focused. If a component exceeds ~150 lines, consider splitting:
 Define props interfaces explicitly:
 
 ```typescript
-interface GemCardProps {
-  gem: Gem;
-  onSelect?: (gem: Gem) => void;
+interface ThoughtCardProps {
+  thought: Thought;
+  onSelect?: (thought: Thought) => void;
   showActions?: boolean;
   className?: string;
 }
 
-export function GemCard({ gem, onSelect, showActions = true, className }: GemCardProps) {
+export function ThoughtCard({ thought, onSelect, showActions = true, className }: ThoughtCardProps) {
   // ...
 }
 ```
@@ -209,8 +214,8 @@ const { data, error } = await supabase
   .eq('user_id', userId);
 
 if (error) {
-  console.error('Failed to fetch gems:', error);
-  throw new Error('Failed to load your gems');
+  console.error('Failed to fetch thoughts:', error);
+  throw new Error('Failed to load your thoughts');
 }
 
 return data;
@@ -281,11 +286,11 @@ Show friendly messages, log technical details:
 
 ```typescript
 try {
-  await saveGem(gemData);
+  await saveThought(thoughtData);
 } catch (error) {
-  console.error('Failed to save gem:', error);
+  console.error('Failed to save thought:', error);
   toast({
-    title: "Couldn't save your gem",
+    title: "Couldn't save your thought",
     description: "Please try again. If this keeps happening, contact support.",
     variant: "destructive",
   });
@@ -297,10 +302,10 @@ try {
 Use error boundaries for component-level failures:
 
 ```typescript
-// app/gems/error.tsx
+// app/thoughts/error.tsx
 'use client';
 
-export default function GemsError({
+export default function ThoughtsError({
   error,
   reset,
 }: {
@@ -309,7 +314,7 @@ export default function GemsError({
 }) {
   return (
     <div className="flex flex-col items-center gap-4 p-8">
-      <h2>Something went wrong loading your gems</h2>
+      <h2>Something went wrong loading your thoughts</h2>
       <Button onClick={reset}>Try again</Button>
     </div>
   );
@@ -323,7 +328,7 @@ export default function GemsError({
 ### Philosophy
 
 Test behavior, not implementation. Focus on:
-- Critical user flows (auth, gem capture, scheduling)
+- Critical user flows (auth, thought capture, scheduling)
 - Complex logic (AI matching, date/time handling)
 - Edge cases that have caused bugs before
 
@@ -342,7 +347,7 @@ Don't aim for 100% coverage — aim for confidence in the code that matters.
 
 **Always test:**
 - Authentication flows
-- Data mutations (create, update, delete gems)
+- Data mutations (create, update, delete thoughts)
 - AI integration responses and error handling
 - Form validation
 - Permission/authorization logic
@@ -374,11 +379,11 @@ lib/
 
 ```typescript
 // Describe what the component/function does
-describe('GemCard', () => {
+describe('ThoughtCard', () => {
   // Use "should" + expected behavior
-  it('should display gem content and source', () => {});
+  it('should display thought content and source', () => {});
   it('should call onSelect when clicked', () => {});
-  it('should show archive button for active gems', () => {});
+  it('should show archive button for active thoughts', () => {});
 });
 
 describe('formatRelativeDate', () => {
@@ -396,7 +401,7 @@ jest.mock('@/lib/supabase', () => ({
     from: jest.fn(() => ({
       select: jest.fn(() => ({
         eq: jest.fn(() => ({
-          data: mockGems,
+          data: mockThoughts,
           error: null,
         })),
       })),
@@ -410,14 +415,14 @@ jest.mock('@/lib/supabase', () => ({
 ```typescript
 // Mock Gemini API for predictable tests
 jest.mock('@/lib/gemini', () => ({
-  extractGems: jest.fn(() => Promise.resolve({
-    gems: [
+  extractThoughts: jest.fn(() => Promise.resolve({
+    thoughts: [
       { content: 'Test insight', confidence: 0.9 },
     ],
   })),
-  matchGemsToMoment: jest.fn(() => Promise.resolve({
+  matchThoughtsToMoment: jest.fn(() => Promise.resolve({
     matches: [
-      { gemId: '123', relevance: 'High', reason: 'Test reason' },
+      { thoughtId: '123', relevance: 'High', reason: 'Test reason' },
     ],
   })),
 }));
@@ -433,7 +438,7 @@ npm test
 npm test -- --watch
 
 # Run specific test file
-npm test -- GemCard.test.tsx
+npm test -- ThoughtCard.test.tsx
 
 # Run with coverage
 npm test -- --coverage
@@ -467,6 +472,7 @@ Tests should run automatically on PR creation. If CI is set up:
 - ❌ Use `useEffect` for data fetching (use Server Components)
 - ❌ Create components larger than 150 lines without splitting
 - ❌ Skip TypeScript strict mode errors
+- ❌ Use "wisdom" terminology (use "knowledge" or "thoughts")
 
 ### Do
 
@@ -476,6 +482,7 @@ Tests should run automatically on PR creation. If CI is set up:
 - ✅ Keep components focused and composable
 - ✅ Document non-obvious decisions in code comments
 - ✅ Test changes in the live app before marking complete
+- ✅ Use "thoughts" and "knowledge" terminology consistently
 
 ---
 
@@ -484,9 +491,9 @@ Tests should run automatically on PR creation. If CI is set up:
 Follow conventional commits:
 
 ```
-feat: add gem scheduling UI
+feat: add thought scheduling UI
 fix: correct date formatting in daily prompts
-refactor: extract GemCard actions into separate component
+refactor: extract ThoughtCard actions into separate component
 docs: update README with deployment instructions
 chore: update dependencies
 ```
@@ -504,13 +511,13 @@ When creating PRs:
 
 Example:
 ```
-Title: feat: add individual gem scheduling
+Title: feat: add individual thought scheduling
 
 Description:
 Implements the scheduling UI from Epic 8. Users can now:
-- Set check-in time per gem
+- Set check-in time per thought
 - Select which days to receive reminders
-- Enable/disable scheduling per gem
+- Enable/disable scheduling per thought
 
 Testing:
 - Verified schedule saves to database
