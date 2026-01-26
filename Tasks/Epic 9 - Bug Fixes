@@ -1,0 +1,194 @@
+# Epic 9 - Bug Fixes
+
+## Overview
+
+Fix critical bugs discovered during production testing of Epic 9 features (PR #23).
+
+**Linear Epic:** KAY-73
+**Branch:** `fix/epic-9-bugs`
+
+## Current State
+
+- ✅ Phase 1-5 merged (PR #23)
+- ✅ Database migration complete (status constraint updated)
+- ❌ Context thought counts incorrect (KAY-74)
+- ❌ Context colors mismatch (KAY-75)
+- ❌ Active List toggle missing (KAY-76)
+- ❌ Active/Passive filter tabs missing (KAY-77)
+- ❌ URL extraction tab missing (KAY-78)
+- ❌ Retire modal confusing + Retired page missing (KAY-79)
+
+---
+
+## Status Model (Reference)
+
+**Status values:** `active`, `passive`, `retired`, `graduated`
+
+| Status | Meaning | Visible In |
+|--------|---------|------------|
+| `active` | Available thought | Thoughts page |
+| `passive` | Available but dormant | Thoughts page (filtered) |
+| `retired` | Archived, historical | Retired page |
+| `graduated` | Applied 5+ times | ThoughtBank |
+
+**Active List:** Separate boolean `is_on_active_list`. Controls daily prompt inclusion. Max 10 thoughts.
+
+**Deletion:** Hard delete (row removed from database).
+
+---
+
+## Tasks
+
+### 1.0 Fix Context Thought Counts (KAY-74)
+
+- [ ] 1.1 Debug `getContextsWithCounts` in `lib/contexts.ts`
+- [ ] 1.2 Verify JOIN between `gems` and `contexts` tables
+- [ ] 1.3 Ensure count only includes `status IN ('active', 'passive')` — exclude retired/graduated
+- [ ] 1.4 Test with existing data — counts should match Thoughts page
+
+**Relevant Files:**
+- `lib/contexts.ts`
+- `app/api/contexts/route.ts`
+
+---
+
+### 2.0 Fix Context Color on Thought Cards (KAY-75)
+
+- [ ] 2.1 Investigate: are thoughts using `context_id` (FK) or legacy `context_tag` (string)?
+- [ ] 2.2 If using `context_tag`, create data migration to populate `context_id` by matching context name
+- [ ] 2.3 Update thought queries to include context color via JOIN or relation
+- [ ] 2.4 Update `gem-card.tsx` to display context color from the joined data
+- [ ] 2.5 Remove hardcoded color mapping for `context_tag`
+- [ ] 2.6 Test color consistency: Settings color should match card badge color
+
+**Relevant Files:**
+- `components/gems/gem-card.tsx`
+- `lib/types/thought.ts`
+- `lib/thoughts.ts`
+- `app/api/gems/route.ts`
+
+---
+
+### 3.0 Add Active List Toggle (KAY-76)
+
+- [ ] 3.1 Add toggle button to `gem-card.tsx`
+  - Use star icon: filled = on Active List, outline = not on Active List
+  - Click toggles `is_on_active_list`
+- [ ] 3.2 Add "Add to Active List" / "Remove from Active List" button to `gem-detail.tsx`
+- [ ] 3.3 Verify API endpoint `PATCH /api/gems/[id]` accepts `is_on_active_list` boolean
+- [ ] 3.4 Enforce 10-thought limit client-side — show toast error if trying to add 11th
+- [ ] 3.5 Optimistic UI update on toggle
+- [ ] 3.6 Test: toggle on card, toggle on detail page, hit limit
+
+**Relevant Files:**
+- `components/gems/gem-card.tsx`
+- `components/gems/gem-detail.tsx`
+- `app/api/gems/[id]/route.ts`
+- `lib/thoughts.ts`
+
+---
+
+### 4.0 Add Filter Tabs to Thoughts Page (KAY-77)
+
+- [ ] 4.1 Add filter tabs to `app/gems/page.tsx`: "All" | "Active List" | "Passive"
+- [ ] 4.2 "All" = thoughts with `status IN ('active', 'passive')`
+- [ ] 4.3 "Active List" = thoughts with `is_on_active_list = true`
+- [ ] 4.4 "Passive" = thoughts with `is_on_active_list = false`
+- [ ] 4.5 Update header: "X of 10 active thoughts"
+- [ ] 4.6 Style active tab with orange highlight
+- [ ] 4.7 Default to "All" tab on page load
+
+**Relevant Files:**
+- `app/gems/page.tsx`
+
+---
+
+### 5.0 Add URL Extraction Tab (KAY-78)
+
+- [ ] 5.1 Update `extract-gems-modal.tsx` to have tabbed interface
+- [ ] 5.2 Tab 1: "Paste Text" (existing functionality)
+- [ ] 5.3 Tab 2: "From URL" (new)
+- [ ] 5.4 URL tab UI:
+  - URL input field with placeholder "https://..."
+  - "Extract" button
+  - Loading spinner during extraction
+- [ ] 5.5 Wire up to existing `/api/extract/url` endpoint
+- [ ] 5.6 On success: show extracted thoughts for review (same as paste text flow)
+- [ ] 5.7 On error: show message with fallback "Paste content manually instead"
+- [ ] 5.8 Test with article URL (Substack, Medium, blog)
+- [ ] 5.9 Test with YouTube URL
+
+**Relevant Files:**
+- `components/extract-gems-modal.tsx`
+
+---
+
+### 6.0 Fix Retire Modal & Add Retired Page (KAY-79)
+
+- [ ] 6.1 Update Retire modal in `gem-detail.tsx`:
+  - Option 1: "Retire" — sets `status = 'retired'`, sets `retired_at = now()`
+  - Option 2: "Delete" — hard deletes the row (confirm first)
+  - Remove "Archive" label/option
+- [ ] 6.2 Create `app/retired/page.tsx`:
+  - List thoughts with `status = 'retired'`
+  - Show retired date
+  - "Restore" button (sets `status = 'active'`, clears `retired_at`)
+  - "Delete Permanently" button (hard delete with confirmation)
+- [ ] 6.3 Add "Retired" link to sidebar navigation (below ThoughtBank or in Settings area)
+- [ ] 6.4 Style Retired page consistently with Thoughts page
+
+**Relevant Files:**
+- `components/gems/gem-detail.tsx`
+- `app/retired/page.tsx` (create)
+- `components/sidebar.tsx` or navigation component
+
+---
+
+### 7.0 Update Types and Queries
+
+- [ ] 7.1 Update `lib/types/thought.ts`:
+  - `status: 'active' | 'passive' | 'retired' | 'graduated'`
+- [ ] 7.2 Update thought queries to include context relation (for color)
+- [ ] 7.3 Ensure Thoughts page query filters: `status IN ('active', 'passive')`
+- [ ] 7.4 Ensure Moments/matching searches: `status IN ('active', 'passive')`
+- [ ] 7.5 Ensure Daily Prompts query: `is_on_active_list = true AND status IN ('active', 'passive')`
+
+**Relevant Files:**
+- `lib/types/thought.ts`
+- `lib/thoughts.ts`
+- `app/api/gems/route.ts`
+- Any file querying gems table
+
+---
+
+### 8.0 Testing & Verification
+
+- [ ] 8.1 Context counts match actual thoughts in each context
+- [ ] 8.2 Context colors consistent between Settings and cards
+- [ ] 8.3 Active List toggle works on cards and detail page
+- [ ] 8.4 10-thought Active List limit enforced with error toast
+- [ ] 8.5 Filter tabs work: All / Active List / Passive
+- [ ] 8.6 URL extraction works for articles
+- [ ] 8.7 URL extraction works for YouTube (with transcript)
+- [ ] 8.8 Retire flow: thought moves to Retired page
+- [ ] 8.9 Delete flow: thought removed from database
+- [ ] 8.10 Restore from Retired page works
+- [ ] 8.11 No regressions in existing features
+
+---
+
+## Acceptance Criteria
+
+- [ ] All Linear sub-issues (KAY-74 through KAY-79) resolved
+- [ ] All tasks above marked complete
+- [ ] Tests pass
+- [ ] PR approved and merged
+- [ ] Live app verified at thoughtfolio.vercel.app
+
+---
+
+## Relevant Documentation
+
+- `Claude Context/ARCHITECTURE.md` — database schema
+- `Claude Context/PRD.md` — product requirements
+- `Claude Context/DECISIONS.md` — technical decisions
