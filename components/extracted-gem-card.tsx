@@ -1,16 +1,19 @@
 "use client"
 
 import { useState } from "react"
-import { ContextTag, CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS } from "@/lib/types/gem"
-import { Badge } from "@/components/ui/badge"
+import { ContextTag } from "@/lib/types/gem"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Check, ChevronDown, ChevronUp, Pencil, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ContextDropdown, useContexts } from "@/components/contexts/ContextDropdown"
+import type { ContextWithCount } from "@/lib/types/context"
 
 export interface ExtractedGem {
   content: string
   context_tag: ContextTag
+  // New: optional context_id for new context system
+  context_id?: string
   source_quote?: string
 }
 
@@ -30,7 +33,15 @@ export function ExtractedGemCard({
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState(gem.content)
   const [showQuote, setShowQuote] = useState(false)
-  const [showTagSelect, setShowTagSelect] = useState(false)
+  const { contexts } = useContexts()
+
+  // Get current context_id, or find matching context by slug if not set
+  const getCurrentContextId = (): string | null => {
+    if (gem.context_id) return gem.context_id
+    // Try to find a context matching the context_tag (slug matches tag for defaults)
+    const matchingContext = contexts.find((c) => c.slug === gem.context_tag)
+    return matchingContext?.id || null
+  }
 
   const handleSaveEdit = () => {
     if (editedContent.trim()) {
@@ -44,9 +55,13 @@ export function ExtractedGemCard({
     setIsEditing(false)
   }
 
-  const handleContextTagChange = (value: ContextTag) => {
-    onUpdate({ ...gem, context_tag: value })
-    setShowTagSelect(false)
+  const handleContextChange = (contextId: string, context: ContextWithCount) => {
+    // Update both context_id and context_tag (for backwards compat)
+    onUpdate({
+      ...gem,
+      context_id: contextId,
+      context_tag: context.slug as ContextTag,
+    })
   }
 
   const truncateContent = (content: string, maxLength: number = 120) => {
@@ -79,51 +94,14 @@ export function ExtractedGemCard({
 
         {/* Content */}
         <div className="flex-1 min-w-0 space-y-2">
-          {/* Context tag */}
-          <div className="relative">
-            <button
-              onClick={() => setShowTagSelect(!showTagSelect)}
-              className="focus:outline-none"
-            >
-              <Badge
-                variant="outline"
-                className={cn(
-                  "text-xs cursor-pointer hover:opacity-80",
-                  CONTEXT_TAG_COLORS[gem.context_tag]
-                )}
-              >
-                {CONTEXT_TAG_LABELS[gem.context_tag]}
-                <ChevronDown className="h-3 w-3 ml-1" />
-              </Badge>
-            </button>
-            {showTagSelect && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setShowTagSelect(false)}
-                />
-                <div className="absolute top-full left-0 mt-1 z-20 bg-white border rounded-md shadow-lg py-1 min-w-[140px]">
-                  {Object.entries(CONTEXT_TAG_LABELS).map(([value, label]) => (
-                    <button
-                      key={value}
-                      onClick={() => handleContextTagChange(value as ContextTag)}
-                      className={cn(
-                        "w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 flex items-center gap-2",
-                        gem.context_tag === value && "bg-gray-50"
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "w-2 h-2 rounded-full",
-                          CONTEXT_TAG_COLORS[value as ContextTag].replace("text-", "bg-").split(" ")[0]
-                        )}
-                      />
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+          {/* Context selector */}
+          <div className="w-fit">
+            <ContextDropdown
+              value={getCurrentContextId()}
+              onChange={handleContextChange}
+              showCount={false}
+              className="h-7 text-xs"
+            />
           </div>
 
           {/* Gem content */}

@@ -4,10 +4,9 @@ import { useState } from "react"
 import {
   Gem,
   CreateGemInput,
-  ContextTag,
-  CONTEXT_TAG_LABELS,
   MAX_ACTIVE_GEMS,
 } from "@/lib/types/gem"
+import type { ContextWithCount } from "@/lib/types/context"
 import {
   Dialog,
   DialogContent,
@@ -19,26 +18,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { ChevronDown, AlertCircle, Loader2 } from "lucide-react"
+import { AlertCircle, Loader2 } from "lucide-react"
 import { createGem } from "@/app/gems/actions"
 import { cn } from "@/lib/utils"
-
-const CONTEXT_TAGS: ContextTag[] = [
-  "meetings",
-  "feedback",
-  "conflict",
-  "focus",
-  "health",
-  "relationships",
-  "parenting",
-  "other",
-]
+import { ContextDropdown } from "@/components/contexts/ContextDropdown"
 
 const MAX_CONTENT_LENGTH = 500
 
@@ -53,29 +36,35 @@ export function GemForm({ isOpen, onClose, onGemCreated, currentGemCount }: GemF
   const [content, setContent] = useState("")
   const [source, setSource] = useState("")
   const [sourceUrl, setSourceUrl] = useState("")
-  const [contextTag, setContextTag] = useState<ContextTag | null>(null)
-  const [customContext, setCustomContext] = useState("")
+  const [contextId, setContextId] = useState<string | null>(null)
+  const [selectedContext, setSelectedContext] = useState<ContextWithCount | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const isAtLimit = currentGemCount >= MAX_ACTIVE_GEMS
   const contentLength = content.length
   const isContentTooLong = contentLength > MAX_CONTENT_LENGTH
+  const isContextAtLimit = selectedContext ? selectedContext.thought_count >= selectedContext.thought_limit : false
   const canSubmit =
     content.trim() &&
-    contextTag &&
+    contextId &&
     !isContentTooLong &&
     !isAtLimit &&
-    !isSubmitting &&
-    (contextTag !== "other" || customContext.trim())
+    !isContextAtLimit &&
+    !isSubmitting
 
   const resetForm = () => {
     setContent("")
     setSource("")
     setSourceUrl("")
-    setContextTag(null)
-    setCustomContext("")
+    setContextId(null)
+    setSelectedContext(null)
     setError(null)
+  }
+
+  const handleContextChange = (id: string, context: ContextWithCount) => {
+    setContextId(id)
+    setSelectedContext(context)
   }
 
   const handleClose = () => {
@@ -84,19 +73,18 @@ export function GemForm({ isOpen, onClose, onGemCreated, currentGemCount }: GemF
   }
 
   const handleSubmit = async () => {
-    if (!canSubmit || !contextTag) return
+    if (!canSubmit || !contextId) return
 
     setIsSubmitting(true)
     setError(null)
 
     const input: CreateGemInput = {
       content: content.trim(),
-      context_tag: contextTag,
+      context_id: contextId,
+      // Set context_tag based on selected context slug for backwards compat
+      context_tag: selectedContext?.slug as CreateGemInput["context_tag"] || "other",
       ...(source.trim() && { source: source.trim() }),
       ...(sourceUrl.trim() && { source_url: sourceUrl.trim() }),
-      ...(contextTag === "other" && customContext.trim() && {
-        custom_context: customContext.trim(),
-      }),
     }
 
     const result = await createGem(input)
@@ -171,55 +159,26 @@ export function GemForm({ isOpen, onClose, onGemCreated, currentGemCount }: GemF
             </p>
           </div>
 
-          {/* Context tag */}
+          {/* Context */}
           <div className="space-y-2">
             <Label>
-              Context Tag <span className="text-destructive">*</span>
+              Context <span className="text-destructive">*</span>
             </Label>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between"
-                  disabled={isAtLimit}
-                >
-                  {contextTag ? CONTEXT_TAG_LABELS[contextTag] : "Select a context..."}
-                  <ChevronDown className="h-4 w-4 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-full min-w-[200px]">
-                {CONTEXT_TAGS.map((tag) => (
-                  <DropdownMenuItem
-                    key={tag}
-                    onClick={() => setContextTag(tag)}
-                    className={cn(contextTag === tag && "bg-muted")}
-                  >
-                    {CONTEXT_TAG_LABELS[tag]}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ContextDropdown
+              value={contextId}
+              onChange={handleContextChange}
+              disabled={isAtLimit}
+              showCount={true}
+            />
+            {isContextAtLimit && selectedContext && (
+              <p className="text-xs text-destructive">
+                {selectedContext.name} is full ({selectedContext.thought_count}/{selectedContext.thought_limit})
+              </p>
+            )}
             <p className="text-xs text-muted-foreground">
-              When would you want to be reminded of this gem?
+              Choose which life area this thought belongs to
             </p>
           </div>
-
-          {/* Custom context (shown when "other" is selected) */}
-          {contextTag === "other" && (
-            <div className="space-y-2">
-              <Label htmlFor="custom-context">
-                Custom Context <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="custom-context"
-                placeholder="Describe when this gem applies..."
-                value={customContext}
-                onChange={(e) => setCustomContext(e.target.value)}
-                maxLength={50}
-                disabled={isAtLimit}
-              />
-            </div>
-          )}
 
           {/* Source (optional) */}
           <div className="space-y-2">

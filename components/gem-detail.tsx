@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Gem, CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS } from "@/lib/types/gem"
+import { MAX_ACTIVE_LIST } from "@/lib/types/thought"
+import type { ContextWithCount } from "@/lib/types/context"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -17,6 +19,8 @@ import {
   Plus,
   ChevronDown,
   ChevronUp,
+  Star,
+  StarOff,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { GemEditForm } from "@/components/gem-edit-form"
@@ -24,7 +28,10 @@ import { RetireGemDialog } from "@/components/retire-gem-dialog"
 import { GraduateGemDialog } from "@/components/graduate-gem-dialog"
 import { SchedulePicker } from "@/components/schedules/SchedulePicker"
 import { getGemSchedules, getNextTriggerForGem } from "@/lib/schedules"
+import { toggleActiveList, getActiveListCount } from "@/lib/thoughts"
+import { getContexts } from "@/lib/contexts"
 import type { GemSchedule } from "@/types/schedules"
+import { useToast } from "@/components/error-toast"
 
 interface GemDetailProps {
   gem: Gem
@@ -41,6 +48,10 @@ export function GemDetail({ gem, onGemUpdated, onGemRetired, onGemGraduated }: G
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(true)
   const [schedules, setSchedules] = useState<GemSchedule[]>([])
   const [nextTrigger, setNextTrigger] = useState<Date | null>(null)
+  const [contexts, setContexts] = useState<ContextWithCount[]>([])
+  const [activeListCount, setActiveListCount] = useState(0)
+  const [isTogglingActive, setIsTogglingActive] = useState(false)
+  const { showError, showSuccess } = useToast()
 
   // Load schedules
   useEffect(() => {
@@ -55,6 +66,46 @@ export function GemDetail({ gem, onGemUpdated, onGemRetired, onGemGraduated }: G
     }
     loadSchedules()
   }, [gem.id])
+
+  // Load contexts and active list count
+  useEffect(() => {
+    async function loadContextsAndActive() {
+      const { contexts: contextData } = await getContexts()
+      setContexts(contextData)
+
+      const { count } = await getActiveListCount()
+      setActiveListCount(count)
+    }
+    loadContextsAndActive()
+  }, [])
+
+  // Get context for this gem
+  const gemContext = gem.context_id ? contexts.find((c) => c.id === gem.context_id) : null
+  const isActiveListFull = activeListCount >= MAX_ACTIVE_LIST
+
+  // Toggle Active List
+  const handleToggleActiveList = async () => {
+    setIsTogglingActive(true)
+    const { thought, error } = await toggleActiveList(gem.id)
+    if (error) {
+      showError(error)
+      setIsTogglingActive(false)
+      return
+    }
+
+    if (thought) {
+      onGemUpdated({ ...gem, is_on_active_list: thought.is_on_active_list })
+      const { count } = await getActiveListCount()
+      setActiveListCount(count)
+
+      if (thought.is_on_active_list) {
+        showSuccess("Added to Active List", "This thought will appear in daily prompts")
+      } else {
+        showSuccess("Removed from Active List", "This thought is now passive")
+      }
+    }
+    setIsTogglingActive(false)
+  }
 
   const handleScheduleCreate = (schedule: GemSchedule) => {
     setSchedules((prev) => [...prev, schedule])
@@ -95,17 +146,40 @@ export function GemDetail({ gem, onGemUpdated, onGemRetired, onGemGraduated }: G
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-sm",
-                CONTEXT_TAG_COLORS[gem.context_tag]
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Active badge */}
+              {gem.is_on_active_list && (
+                <Badge variant="default" className="bg-amber-500 text-white hover:bg-amber-600">
+                  <Star className="h-3 w-3 mr-1" />
+                  Active
+                </Badge>
               )}
-            >
-              {gem.context_tag === "other" && gem.custom_context
-                ? gem.custom_context
-                : CONTEXT_TAG_LABELS[gem.context_tag]}
-            </Badge>
+              {/* Context badge - use new context if available, fall back to context_tag */}
+              {gemContext ? (
+                <Badge
+                  variant="outline"
+                  className="border-2"
+                  style={{
+                    borderColor: gemContext.color || "#6B7280",
+                    color: gemContext.color || "#6B7280",
+                  }}
+                >
+                  {gemContext.name}
+                </Badge>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-sm",
+                    CONTEXT_TAG_COLORS[gem.context_tag]
+                  )}
+                >
+                  {gem.context_tag === "other" && gem.custom_context
+                    ? gem.custom_context
+                    : CONTEXT_TAG_LABELS[gem.context_tag]}
+                </Badge>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -162,6 +236,33 @@ export function GemDetail({ gem, onGemUpdated, onGemRetired, onGemGraduated }: G
 
           {/* Actions */}
           <div className="flex flex-wrap gap-3">
+            {/* Active toggle button */}
+            <Button
+              variant={gem.is_on_active_list ? "outline" : "default"}
+              onClick={handleToggleActiveList}
+              disabled={isTogglingActive || (!gem.is_on_active_list && isActiveListFull)}
+              className={cn(
+                "gap-2",
+                gem.is_on_active_list ? "" : "bg-amber-500 hover:bg-amber-600"
+              )}
+              title={
+                !gem.is_on_active_list && isActiveListFull
+                  ? `Active List is full (${MAX_ACTIVE_LIST}/${MAX_ACTIVE_LIST})`
+                  : undefined
+              }
+            >
+              {gem.is_on_active_list ? (
+                <>
+                  <StarOff className="h-4 w-4" />
+                  Remove from Active
+                </>
+              ) : (
+                <>
+                  <Star className="h-4 w-4" />
+                  Add to Active
+                </>
+              )}
+            </Button>
             <Button
               variant="outline"
               onClick={() => setIsEditOpen(true)}
@@ -189,6 +290,22 @@ export function GemDetail({ gem, onGemUpdated, onGemRetired, onGemGraduated }: G
               Graduate
             </Button>
           </div>
+
+          {/* Active List status */}
+          {!gem.is_on_active_list && (
+            <p className="text-sm text-muted-foreground">
+              {isActiveListFull ? (
+                <>
+                  <span className="text-warning">Active List is full ({MAX_ACTIVE_LIST}/{MAX_ACTIVE_LIST}).</span>
+                  {" "}Remove a thought from Active to add this one.
+                </>
+              ) : (
+                <>
+                  This thought is <strong>passive</strong>. Add it to your Active List to receive daily prompts.
+                </>
+              )}
+            </p>
+          )}
 
           {!canGraduate && (
             <p className="text-sm text-muted-foreground">

@@ -2,10 +2,12 @@
 
 ## 1. Overview
 
-**GemKeeper** is a "thoughts that find you" application that helps users capture, remember, and apply insights from books, podcasts, videos, and life experiences. The app enforces intentionality by limiting users to 10 active "gems" at a time.
+**GemKeeper** is a "thoughts that find you" application that helps users capture, remember, and apply insights from books, podcasts, videos, and life experiences. The app organizes gems into custom contexts and uses an **Active List** (limited to 10 gems) to focus daily practice.
 
 ### Key Features
-- **Gem Collection**: Capture insights manually or via AI extraction
+- **Gem Collection**: Capture insights manually, via AI extraction, or from URLs
+- **Custom Contexts**: Organize gems by context (meetings, feedback, focus, etc.) with custom contexts
+- **Active List**: 10-gem limit for focused daily practice; passive gems still searchable via Moments
 - **Individual Gem Schedules**: Custom check-in times per gem (cron-like flexibility)
 - **Moments**: On-demand situational gem surfacing with AI matching
 - **Calendar Integration**: Auto-create moments from upcoming calendar events
@@ -41,6 +43,10 @@ gemkeeper/
 │   │   ├── gems/bulk/            # Bulk gem creation endpoint
 │   │   ├── schedules/            # Gem schedule endpoints
 │   │   │   └── parse/            # NLP schedule parsing
+│   │   ├── contexts/             # Context CRUD endpoints
+│   │   │   └── [id]/             # Single context operations
+│   │   ├── extract/              # URL extraction endpoint
+│   │   │   └── url/              # Article/YouTube extraction
 │   │   ├── moments/              # Moment endpoints
 │   │   │   └── match/            # AI gem matching
 │   │   └── auth/                 # OAuth callbacks
@@ -79,7 +85,11 @@ gemkeeper/
 │   │   ├── PrepCard.tsx          # Moment prep card display
 │   │   └── RecentMoments.tsx     # Recent moments section
 │   ├── settings/                 # Settings components
-│   │   └── CalendarSettings.tsx  # Calendar connection UI
+│   │   ├── CalendarSettings.tsx  # Calendar connection UI
+│   │   ├── ContextSettings.tsx   # Context management UI
+│   │   └── ContextForm.tsx       # Add/edit context form
+│   ├── contexts/                 # Context components
+│   │   └── ContextDropdown.tsx   # Context selector dropdown
 │   ├── extract-gems-modal.tsx    # AI extraction UI
 │   ├── extracted-gem-card.tsx    # Review extracted gems
 │   ├── graduate-gem-dialog.tsx   # Graduation confirmation
@@ -100,6 +110,9 @@ gemkeeper/
 │   │   └── gem.ts                # Gem-related types
 │   ├── types.ts                  # General types
 │   ├── gems.ts                   # Gem service functions
+│   ├── thoughts.ts               # Thought service (Active List)
+│   ├── contexts.ts               # Context service functions
+│   ├── url-extractor.ts          # URL content extraction
 │   ├── schedules.ts              # Schedule service functions
 │   ├── moments.ts                # Moment service functions
 │   ├── calendar.ts               # Calendar service functions
@@ -375,8 +388,10 @@ Core feature table for wisdom gems.
 | `content` | TEXT | NOT NULL, max 200 chars | Gem text |
 | `source` | TEXT | | Book/podcast/article name |
 | `source_url` | TEXT | | URL to source |
-| `context_tag` | ENUM | | Category tag |
+| `context_tag` | ENUM | | Category tag (legacy) |
 | `custom_context` | TEXT | | Custom tag (when other) |
+| `context_id` | UUID | FK → contexts | New context system |
+| `is_on_active_list` | BOOLEAN | DEFAULT false | Active List membership |
 | `status` | ENUM | DEFAULT 'active' | active/retired/graduated |
 | `application_count` | INTEGER | DEFAULT 0 | Times applied |
 | `skip_count` | INTEGER | DEFAULT 0 | Times skipped |
@@ -394,6 +409,31 @@ Core feature table for wisdom gems.
 **Indexes**: `user_id`, `status`, `created_at`
 
 **RLS**: Users can only CRUD their own gems.
+
+---
+
+#### `contexts`
+Custom contexts for organizing gems.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PK | Context ID |
+| `user_id` | UUID | FK → auth.users, NOT NULL | Owner |
+| `name` | TEXT | NOT NULL, max 50 chars | Display name |
+| `slug` | TEXT | NOT NULL | URL-safe identifier |
+| `color` | TEXT | | Hex color for UI |
+| `icon` | TEXT | | Icon identifier |
+| `is_default` | BOOLEAN | DEFAULT false | System context (can't delete) |
+| `thought_limit` | INTEGER | DEFAULT 20 | Max gems in this context |
+| `sort_order` | INTEGER | DEFAULT 0 | Display order |
+| `created_at` | TIMESTAMPTZ | DEFAULT now() | |
+| `updated_at` | TIMESTAMPTZ | DEFAULT now() | |
+
+**Default Contexts**: `meetings`, `feedback`, `conflict`, `focus`, `health`, `relationships`, `parenting`, `other`
+
+**Unique Constraint**: `(user_id, slug)`, `(user_id, name)`
+
+**RLS**: Users can only manage their own contexts.
 
 ---
 
@@ -800,6 +840,85 @@ OAuth callback for Google Calendar connection.
 
 ---
 
+### Context Management
+
+#### GET `/api/contexts`
+
+Get all contexts for the current user with thought counts.
+
+**Response**:
+```typescript
+{
+  contexts: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    color: string | null;
+    is_default: boolean;
+    thought_limit: number;
+    thought_count: number;
+  }>;
+}
+```
+
+#### POST `/api/contexts`
+
+Create a new custom context.
+
+**Request Body**:
+```typescript
+{
+  name: string;         // max 50 chars
+  color?: string;       // hex color
+  thought_limit?: number; // default 20, min 5, max 100
+}
+```
+
+#### PUT `/api/contexts/[id]`
+
+Update a context's name, color, or thought limit.
+
+#### DELETE `/api/contexts/[id]`
+
+Delete a custom context (moves gems to "Other"). Cannot delete default contexts.
+
+---
+
+### URL Extraction
+
+#### POST `/api/extract/url`
+
+Extract content from a URL (articles or YouTube videos).
+
+**Request Body**:
+```typescript
+{
+  url: string;  // Article URL or YouTube URL
+}
+```
+
+**Response**:
+```typescript
+{
+  success: boolean;
+  content: {
+    title: string;
+    text: string;
+    byline?: string;
+    siteName?: string;
+    excerpt?: string;
+    url: string;
+    type: 'article' | 'youtube';
+  };
+}
+```
+
+**Supported Sources**:
+- Articles: Substack, Medium, dev.to, blogs (via Readability)
+- YouTube: Videos with transcripts available
+
+---
+
 ## 6. Key Components
 
 ### Layout Components
@@ -925,6 +1044,49 @@ export async function createClient() {
 
 **Check-in**:
 - `logCheckin(gemId, type, response, note?)` - Record check-in
+
+### Thought Service (`lib/thoughts.ts`)
+
+**Active List Management**:
+- `toggleActiveList(thoughtId)` - Add/remove from Active List
+- `getActiveListCount()` - Count of Active List gems (max 10)
+- `createMultipleThoughts(thoughts[])` - Bulk create with context_id
+
+**Queries**:
+- `getActiveListThoughts()` - Gems on Active List (for daily prompts)
+- `getAllThoughtsForMoments()` - All gems for Moments search
+
+### Context Service (`lib/contexts.ts`)
+
+**CRUD Operations**:
+- `getContexts()` - List contexts with thought counts
+- `getContextBySlug(slug)` - Single context by slug
+- `createContext(input)` - Create custom context
+- `updateContext(id, input)` - Update name/color/limit
+- `deleteContext(id)` - Delete custom (moves gems to "Other")
+- `getContextThoughtCount(contextId)` - Count gems in context
+
+**Validation**:
+- Unique names per user
+- Max 50 character names
+- Cannot delete default contexts
+
+### URL Extractor (`lib/url-extractor.ts`)
+
+**Detection**:
+- `detectUrlType(url)` - Returns 'article' | 'youtube' | 'unknown'
+- `extractYouTubeVideoId(url)` - Parse video ID from various formats
+
+**Extraction**:
+- `extractArticleContent(url, timeout)` - Fetch + Readability parsing
+- `extractYouTubeTranscript(url)` - Get video transcript + title
+- `extractFromUrl(url, timeout)` - Unified extraction function
+
+**Features**:
+- 10 second timeout
+- Paywall detection
+- oEmbed for YouTube titles
+- Graceful error handling
 
 ### Schedule Service (`lib/schedules.ts`)
 
@@ -1351,8 +1513,10 @@ interface Gem {
   content: string;
   source: string | null;
   source_url: string | null;
-  context_tag: ContextTag;
+  context_tag: ContextTag;      // legacy
   custom_context: string | null;
+  context_id: string | null;    // new context system
+  is_on_active_list: boolean;   // Active List membership
   status: GemStatus;
   application_count: number;
   skip_count: number;
@@ -1373,6 +1537,41 @@ interface CreateGemInput {
 }
 
 const MAX_ACTIVE_GEMS = 10;
+const MAX_ACTIVE_LIST = 10;  // Active List limit
+```
+
+### Context Types (`lib/types/context.ts`)
+
+```typescript
+interface Context {
+  id: string;
+  user_id: string;
+  name: string;
+  slug: string;
+  color: string | null;
+  icon: string | null;
+  is_default: boolean;
+  thought_limit: number;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ContextWithCount extends Context {
+  thought_count: number;
+}
+
+interface CreateContextInput {
+  name: string;
+  color?: string;
+  icon?: string;
+  thought_limit?: number;
+}
+
+const DEFAULT_CONTEXT_SLUGS = [
+  "meetings", "feedback", "conflict", "focus",
+  "health", "relationships", "parenting", "other"
+];
 ```
 
 ### Schedule Types (`types/schedules.ts`)
@@ -1566,6 +1765,7 @@ interface NoteAttachment {
 {
   "dependencies": {
     "@google/generative-ai": "^0.x",
+    "@mozilla/readability": "^0.x",     // Article content extraction
     "@radix-ui/react-*": "various",
     "@supabase/ssr": "^0.x",
     "@supabase/supabase-js": "^2.x",
@@ -1573,12 +1773,14 @@ interface NoteAttachment {
     "clsx": "^2.x",
     "cron-parser": "^4.x",
     "googleapis": "^130.x",
+    "jsdom": "^25.x",                   // DOM parsing for Readability
     "lucide-react": "^0.x",
     "next": "^16.x",
     "react": "^19.x",
     "react-dom": "^19.x",
     "tailwind-merge": "^2.x",
-    "tailwindcss-animate": "^1.x"
+    "tailwindcss-animate": "^1.x",
+    "youtube-transcript": "^1.x"        // YouTube transcript extraction
   }
 }
 ```
