@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/server"
 import { createHash } from "crypto"
 import type {
   Discovery,
@@ -38,7 +38,7 @@ export async function getDiscoveryUsage(userId: string): Promise<{
   usage: DiscoveryUsage
   error: string | null
 }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const today = getStartOfDay()
 
   const { data, error } = await supabase
@@ -82,7 +82,7 @@ export async function getContextWeights(userId: string): Promise<{
   weights: ContextWeight[]
   error: string | null
 }> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Get all contexts with their thought counts
   const { data: contexts, error: contextError } = await supabase
@@ -144,7 +144,7 @@ export async function checkContentSkipped(
   userId: string,
   url: string
 ): Promise<{ skipped: boolean; error: string | null }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const urlHash = hashUrl(url)
 
   const { data, error } = await supabase
@@ -172,7 +172,7 @@ export async function createDiscoveries(
   discoveries: GeneratedDiscovery[],
   contexts: Context[]
 ): Promise<{ discoveries: Discovery[]; error: string | null }> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Build a slug-to-context map for matching suggested context
   const slugToContext = new Map<string, Context>()
@@ -233,7 +233,7 @@ export async function updateDiscoveryStatus(
   status: DiscoveryStatus,
   savedGemId?: string
 ): Promise<{ error: string | null }> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const updateData: Record<string, unknown> = {
     status,
@@ -264,7 +264,7 @@ export async function addSkippedContent(
   userId: string,
   url: string
 ): Promise<{ error: string | null }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const urlHash = hashUrl(url)
 
   const { error } = await supabase.from("discovery_skips").insert({
@@ -292,7 +292,7 @@ export async function incrementUsage(
   userId: string,
   sessionType: DiscoverySessionType
 ): Promise<{ error: string | null }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const today = getStartOfDay()
 
   // Try to get existing record
@@ -344,7 +344,7 @@ export async function getDiscoveryById(
   discoveryId: string,
   userId: string
 ): Promise<{ discovery: Discovery | null; error: string | null }> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from("discoveries")
@@ -371,7 +371,7 @@ export async function getThoughtsForContext(
   contextId: string,
   limit: number = 10
 ): Promise<{ thoughts: string[]; error: string | null }> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from("gems")
@@ -399,7 +399,7 @@ export async function getSampleThoughts(
   userId: string,
   limit: number = 20
 ): Promise<{ thoughts: Array<{ content: string; context_name?: string }>; error: string | null }> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Get thoughts with their contexts
   const { data, error } = await supabase
@@ -446,7 +446,7 @@ export async function getBootstrapStatus(userId: string): Promise<{
   thoughtCount: number
   error: string | null
 }> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Get context count
   const { count: contextCount, error: contextError } = await supabase
