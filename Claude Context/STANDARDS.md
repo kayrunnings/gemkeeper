@@ -183,6 +183,46 @@ className="p-4 md:p-6 lg:p-8"
 className="flex flex-row md:flex-col"
 ```
 
+### Glassmorphism UI Patterns
+
+The app uses a glassmorphism design system. Follow these patterns for consistency:
+
+```typescript
+// ✅ Good: Cards with glassmorphism
+className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl shadow-lg"
+
+// ✅ Good: Dropdowns (solid background for legibility)
+className="bg-popover border border-border rounded-md shadow-md"
+
+// ✅ Good: Hover states with transitions
+className="transition-all duration-200 hover:bg-accent/50"
+
+// ✅ Good: Dialog/modal overlays
+className="bg-background/95 backdrop-blur-sm"
+
+// ❌ Bad: Full transparency on interactive elements
+className="bg-transparent" // Hard to read, poor UX
+
+// ❌ Bad: Glassmorphism on dropdowns
+className="bg-popover/50 backdrop-blur" // Causes legibility issues
+```
+
+**Key Lesson:** Dropdowns, menus, and popovers need solid backgrounds (`bg-popover`) for readability. Only use transparency on cards and containers.
+
+### Theme Support
+
+Components should work in both light and dark mode:
+
+```typescript
+// ✅ Good: Uses semantic tokens that adapt
+className="bg-card text-card-foreground"
+className="border-border"
+
+// ❌ Bad: Hardcoded colors that don't adapt
+className="bg-white text-black"
+className="border-gray-200"
+```
+
 ---
 
 ## Data Fetching

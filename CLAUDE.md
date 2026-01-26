@@ -1,167 +1,129 @@
-# Notekeeper - Project Instructions for Claude Code
+# ThoughtFolio (GemKeeper) - Claude Code Instructions
+
+> **Tagline:** Thoughts that find you
+
+## Quick Start
+
+This is **ThoughtFolio** (codebase: GemKeeper), a knowledge accountability partner app. For full documentation, see the `Claude Context/` folder.
+
+| Resource | Location |
+|----------|----------|
+| Full Documentation | `Claude Context/` folder |
+| Architecture | `Claude Context/ARCHITECTURE.md` |
+| Decisions Log | `Claude Context/DECISIONS.md` |
+| Code Standards | `Claude Context/STANDARDS.md` |
+| Product Brief | `Claude Context/PRODUCT-BRIEF.md` |
+| PRD | `Claude Context/PRD.md` |
 
 ## Project Overview
 
-Notekeeper is a personal notes application with authentication, tags, search, and favorites.
+ThoughtFolio helps users capture insights from books, podcasts, articles, and life experiences, then proactively surfaces them for daily application.
 
-- **Live URL:** https://notekeeper-neon.vercel.app
-- **GitHub:** https://github.com/kayrunnings/notekeeper
-- **Linear Project:** Notekeeper (in Kay's Personal Playground workspace)
+- **Live URL:** https://gemkeeper.vercel.app
+- **GitHub:** https://github.com/kayrunnings/gemkeeper
+- **Linear:** Kay's Personal Playground workspace
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Framework | Next.js 14+ (App Router) |
-| Language | TypeScript |
-| Styling | Tailwind CSS |
-| UI Components | shadcn/ui |
-| Database | Supabase (PostgreSQL) |
-| Auth | Supabase Auth |
-| Hosting | Vercel |
+| Layer | Technology | Version |
+|-------|------------|---------|
+| Framework | Next.js (App Router) | 16.1.4 |
+| Language | TypeScript | 5.x |
+| Styling | Tailwind CSS | 4.x |
+| UI Components | shadcn/ui + Radix | Latest |
+| Database | Supabase (PostgreSQL) | Latest |
+| Auth | Supabase Auth | Latest |
+| AI | Google Gemini API | 2.0 Flash |
+| Hosting | Vercel | Latest |
+
+## Key Features (All Implemented)
+
+1. **Thoughts/Gems** - Capture and organize knowledge with contexts
+2. **Active List** - Curated 10 thoughts for daily prompts
+3. **Contexts** - Life areas for organizing (8 defaults + custom)
+4. **Daily Prompts** - Morning thought surfacing from Active List
+5. **Check-ins** - Evening reflection and application tracking
+6. **Moments** - On-demand AI matching for upcoming situations
+7. **Calendar Integration** - Google Calendar for context-aware suggestions
+8. **Discovery** - AI-powered content discovery from the web
+9. **Graduation** - Trophy case for mastered thoughts (5+ applications)
 
 ## Project Structure
 
 ```
-notekeeper/
+gemkeeper/
 ├── app/                    # Next.js App Router pages
-│   ├── dashboard/          # Main app after login
-│   ├── folders/            # Folder-related server actions
-│   │   └── actions.ts      # Folder CRUD operations
-│   ├── auth/               # Auth pages (login, signup)
-│   └── layout.tsx          # Root layout
+│   ├── api/                # API routes (contexts, discover, moments, etc.)
+│   ├── home/               # Dashboard
+│   ├── thoughts/           # Thought management
+│   ├── moments/            # Situational matching
+│   ├── daily/              # Morning prompt
+│   ├── checkin/            # Evening check-in
+│   ├── settings/           # User preferences
+│   ├── retired/            # Archived thoughts
+│   ├── trophy-case/        # Graduated thoughts
+│   └── ...
 ├── components/             # React components
-│   └── ui/                 # shadcn/ui components
-├── lib/                    # Utilities and helpers
-│   ├── supabase/           # Supabase client setup
-│   │   ├── client.ts       # Browser client
-│   │   └── server.ts       # Server client
-│   └── types.ts            # TypeScript interfaces
-├── public/                 # Static assets
-└── middleware.ts           # Auth middleware
+│   ├── ui/                 # shadcn/ui base components
+│   ├── discover/           # Discovery feature
+│   ├── moments/            # Moment components
+│   ├── schedules/          # Scheduling UI
+│   ├── contexts/           # Context management
+│   └── ...
+├── lib/                    # Services and utilities
+│   ├── ai/                 # Gemini integration
+│   ├── types/              # TypeScript definitions
+│   ├── supabase/           # Database clients
+│   └── [services]          # Feature services
+├── Claude Context/         # Full documentation
+└── __tests__/              # Jest tests
 ```
 
-## Key Patterns
+## Database Tables
 
-### Server Actions
-- Located in `app/[feature]/actions.ts`
-- Use `"use server"` directive
-- Always check authentication first
-- Return `{ data, error }` objects (don't throw)
-- Call `revalidatePath("/dashboard")` after mutations
+Core tables (all with RLS):
+- `profiles` - User settings
+- `gems` - Thoughts/knowledge (UI shows "thoughts")
+- `contexts` - Life areas for organization
+- `moments` - Situational instances
+- `gem_schedules` - Individual check-in schedules
+- `calendar_connections` - OAuth calendar integrations
+- `discoveries` - AI-generated content suggestions
+- `discovery_usage` - Daily limits tracking
 
-### Database Access
-```typescript
-const supabase = await createClient()
-const { data: { user } } = await supabase.auth.getUser()
-if (!user) {
-  return { error: "Not authenticated", data: null }
-}
-// Always filter by user_id for security
+## Working with Claude Code
+
+### Before Starting
+1. Read `Claude Context/CLAUDE.md` for full context
+2. Check `Claude Context/DECISIONS.md` before proposing new approaches
+3. Follow patterns in `Claude Context/STANDARDS.md`
+
+### Key Patterns
+- Use Server Components by default, `"use client"` only when needed
+- Handle errors gracefully with user-friendly messages
+- Always verify `user_id` ownership in database queries
+- Use Tailwind CSS with semantic color tokens
+- Follow glassmorphism UI patterns for consistency
+
+### Commit Messages
+```
+feat: description (KAY-XX)
+fix: description
+refactor: description
 ```
 
-### Types
-- Defined in `lib/types.ts`
-- Main types: `Note`, `Folder`, `User`, `NoteInput`
-
-## Linear Integration
-
-Tasks are tracked in Linear under the **Notekeeper** project.
-
-### Task Format
-- **KAY-XX** is the issue identifier
-- Parent issues are user stories
-- Sub-issues are implementation tasks
-
-### When Starting a Task
-1. Note the KAY-XX identifier
-2. Create a branch: `claude/[short-description]-[random]`
-3. Reference the task in commit messages
-
-### Commit Message Format
-```
-feat: [description] (KAY-XX)
-
-- Detail 1
-- Detail 2
-```
-
-### When Completing a Task
-1. Create a PR with title: `feat: [description] (KAY-XX)`
-2. Include task acceptance criteria in PR description
-3. Request review before merging
-
-## Current Feature: Folders
-
-We're implementing folders/notebooks to organize notes.
-
-### Database Schema (Already Created)
-- `folders` table: id, user_id, name, created_at, updated_at
-- `notes.folder_id` column: references folders(id), ON DELETE SET NULL
-
-### Completed Tasks
-- ✅ KAY-10: Database schema
-- ✅ KAY-11: Folder service functions
-
-### Remaining Tasks
-- ⬜ KAY-12: Build folder sidebar component
-- ⬜ KAY-13: Add folder rename functionality
-- ⬜ KAY-14: Connect sidebar to notes list filtering
-- ⬜ KAY-15: Add "Move to folder" functionality on notes
-- ⬜ KAY-16: End-to-end testing
-
-## Coding Standards
-
-### TypeScript
-- Use strict types, avoid `any`
-- Define interfaces for all data shapes
-- Use `string | null` for optional foreign keys
-
-### React/Next.js
-- Use Server Components by default
-- Add `"use client"` only when needed (hooks, interactivity)
-- Use shadcn/ui components for consistency
-
-### Styling
-- Use Tailwind CSS classes
-- Follow existing color scheme
-- Mobile-first responsive design
-
-### Security
-- Always verify `user_id` ownership in queries
-- Use Supabase RLS as backup
-- Never expose sensitive data in client code
-
-## How to Work on Tasks
-
-When the user says "work on KAY-XX" or "next task":
-
-1. **Read the task** - Check Linear or ask for details
-2. **Explore first** - Look at existing code patterns
-3. **Plan the approach** - Explain what you'll do
-4. **Implement** - Write the code following patterns above
-5. **Test** - Verify it works (run dev server if possible)
-6. **Create PR** - With clear description referencing the task
-
-## Useful Commands
-
+### Useful Commands
 ```bash
-# Development
-npm run dev          # Start dev server on localhost:3000
+npm run dev          # Start dev server
 npm run build        # Build for production
 npm run lint         # Run ESLint
-
-# Git
-git checkout -b claude/feature-name
-git add .
-git commit -m "feat: description (KAY-XX)"
-git push -u origin HEAD
+npm test             # Run Jest tests
 ```
 
-## Questions?
+## Important Notes
 
-If unclear about:
-- **Project structure** → Explore the codebase first
-- **Task requirements** → Ask the user or check Linear
-- **Existing patterns** → Look at similar features already implemented
-- **Database schema** → Check `supabase-schema.sql` or Supabase dashboard
+- Database uses "gems" table but UI shows "thoughts"
+- Use "knowledge" and "thoughts" terminology, not "wisdom"
+- AI uses Google Gemini, not Anthropic
+- Glassmorphism UI with dark/light theme support
+- Verify changes in live app at gemkeeper.vercel.app

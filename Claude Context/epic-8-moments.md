@@ -4,7 +4,7 @@
 
 This epic adds personalized scheduling and on-demand moment matching to ThoughtFolio. Users can set custom check-in times per gem and describe upcoming situations to receive AI-matched relevant gems.
 
-**Status:** In Progress
+**Status:** COMPLETED (January 2026)
 **Linear:** Check "Kay's Personal Playground" workspace for detailed issues
 
 ---
@@ -89,12 +89,12 @@ CREATE TABLE calendar_event_cache (
 **As a user, I want to set a custom check-in time for each gem so I receive it when it's most relevant to my day.**
 
 **Acceptance Criteria:**
-- [ ] User can access scheduling from gem detail view
-- [ ] Time picker allows selecting check-in time
-- [ ] Day selector allows choosing specific days (M-Su)
-- [ ] Toggle to enable/disable scheduling
-- [ ] Settings persist to database
-- [ ] Scheduled gems surface at designated times (via daily prompt logic)
+- [x] User can access scheduling from gem detail view
+- [x] Time picker allows selecting check-in time
+- [x] Day selector allows choosing specific days (M-Su)
+- [x] Toggle to enable/disable scheduling
+- [x] Settings persist to database
+- [x] Scheduled gems surface at designated times (via daily prompt logic)
 
 **UI Notes:**
 - Add "Schedule" option to gem actions menu
@@ -108,11 +108,11 @@ CREATE TABLE calendar_event_cache (
 **As a user, I want to describe an upcoming situation so I can receive relevant gems to prepare for it.**
 
 **Acceptance Criteria:**
-- [ ] "New Moment" button accessible from main navigation
-- [ ] Text field for describing the situation
-- [ ] Optional date/time picker for when moment will occur
-- [ ] Submit triggers AI matching
-- [ ] Loading state while matching occurs
+- [x] "New Moment" button accessible from main navigation
+- [x] Text field for describing the situation
+- [x] Optional date/time picker for when moment will occur
+- [x] Submit triggers AI matching
+- [x] Loading state while matching occurs
 
 **UI Notes:**
 - Modal entry preferred for quick capture
@@ -125,10 +125,10 @@ CREATE TABLE calendar_event_cache (
 **As a user, I want to see which of my gems are relevant to my described moment with explanations for each match.**
 
 **Acceptance Criteria:**
-- [ ] AI receives: user's active gems, moment description
-- [ ] AI returns: ranked list of relevant gems with relevance explanation
-- [ ] Handle case where no gems match
-- [ ] Matching completes within 5 seconds
+- [x] AI receives: user's active gems, moment description
+- [x] AI returns: ranked list of relevant gems with relevance explanation
+- [x] Handle case where no gems match
+- [x] Matching completes within 5 seconds
 
 **Technical Notes:**
 - Use Google Gemini API
@@ -142,11 +142,11 @@ CREATE TABLE calendar_event_cache (
 **As a user, I want to see my matched gems in a "prep card" format that helps me prepare for my moment.**
 
 **Acceptance Criteria:**
-- [ ] Display matched gems with relevance explanations
-- [ ] Show moment description at top for context
-- [ ] Show scheduled time if set
-- [ ] Allow user to dismiss or save for later
-- [ ] Link to view full gem details
+- [x] Display matched gems with relevance explanations
+- [x] Show moment description at top for context
+- [x] Show scheduled time if set
+- [x] Allow user to dismiss or save for later
+- [x] Link to view full gem details
 
 **UI Notes:**
 - Card-based layout
@@ -160,10 +160,10 @@ CREATE TABLE calendar_event_cache (
 **As a user, I want to mark a moment as complete and optionally log a reflection.**
 
 **Acceptance Criteria:**
-- [ ] After scheduled time passes, prompt to mark complete
-- [ ] Optional text field for reflection
-- [ ] Reflection saved to moment record
-- [ ] Completed moments move to history view
+- [x] After scheduled time passes, prompt to mark complete
+- [x] Optional text field for reflection
+- [x] Reflection saved to moment record
+- [x] Completed moments move to history view
 
 ---
 
@@ -172,11 +172,11 @@ CREATE TABLE calendar_event_cache (
 **As a user, I want to connect my Google Calendar so ThoughtFolio can suggest relevant gems based on upcoming events.**
 
 **Acceptance Criteria:**
-- [ ] OAuth flow for Google Calendar
-- [ ] User can select which calendar to sync
-- [ ] Events synced to cache table
-- [ ] User can disconnect calendar
-- [ ] Clear privacy explanation before connecting
+- [x] OAuth flow for Google Calendar
+- [x] User can select which calendar to sync
+- [x] Events synced to cache table
+- [x] User can disconnect calendar
+- [x] Clear privacy explanation before connecting
 
 **Technical Notes:**
 - OAuth credentials in Vercel env vars
@@ -190,10 +190,10 @@ CREATE TABLE calendar_event_cache (
 **As a user, I want ThoughtFolio to automatically suggest creating moments based on my upcoming calendar events.**
 
 **Acceptance Criteria:**
-- [ ] System scans cached events for upcoming "significant" events
-- [ ] Suggests moments for events like: meetings, presentations, reviews
-- [ ] User can accept/dismiss suggestions
-- [ ] Suggestions appear in appropriate UI location (dashboard?)
+- [x] System scans cached events for upcoming "significant" events
+- [x] Suggests moments for events like: meetings, presentations, reviews
+- [x] User can accept/dismiss suggestions
+- [x] Suggestions appear in appropriate UI location (dashboard?)
 
 **Technical Notes:**
 - Define "significant" events (title keywords, duration, etc.)
@@ -216,19 +216,31 @@ Recommended sequence:
 
 ---
 
-## Open Questions
+## Open Questions (Resolved)
 
-- [ ] Where should "New Moment" button live? (FAB? Nav? Dashboard?)
-- [ ] How many moments can a user have active at once?
-- [ ] Should calendar suggestions be opt-in or default?
-- [ ] Notification strategy for scheduled gems (web-only for now, push later?)
+- [x] Where should "New Moment" button live? → FAB (floating action button) on mobile, sidebar on desktop
+- [x] How many moments can a user have active at once? → No hard limit
+- [x] Should calendar suggestions be opt-in or default? → Opt-in via Settings
+- [x] Notification strategy for scheduled gems → Web-only for now (push notifications deferred to mobile app)
 
 ---
 
 ## Definition of Done
 
-- [ ] All acceptance criteria met
-- [ ] Code follows STANDARDS.md
-- [ ] Changes tested in live app
-- [ ] Linear issues updated
-- [ ] Any new decisions logged in DECISIONS.md
+- [x] All acceptance criteria met
+- [x] Code follows STANDARDS.md
+- [x] Changes tested in live app
+- [x] Linear issues updated
+- [x] Any new decisions logged in DECISIONS.md
+
+---
+
+## Completion Notes
+
+Epic 8 was completed in January 2026. Key implementations:
+- Individual scheduling with cron expressions and NLP parsing
+- Moments feature with AI matching using Gemini API
+- Google Calendar OAuth integration with token refresh
+- Auto-moment creation from calendar events
+- Prep card display with relevance explanations
+- Moment history and completion tracking
