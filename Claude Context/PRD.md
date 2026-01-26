@@ -2,7 +2,7 @@
 
 ## Product Summary
 
-ThoughtFolio is a wisdom accountability partner that helps users capture insights from books, podcasts, articles, videos, and life experiences, then proactively surfaces them for daily application. It combines the capture capabilities of Readwise with contextual surfacing and accountability mechanisms that existing tools lack.
+ThoughtFolio is a knowledge accountability partner that helps users capture insights from books, podcasts, articles, videos, and life experiences, then proactively surfaces them for daily application. It combines the capture capabilities of Readwise with contextual surfacing and accountability mechanisms that existing tools lack.
 
 **Tagline:** Thoughts that find you
 
@@ -24,15 +24,15 @@ ThoughtFolio is a wisdom accountability partner that helps users capture insight
 - "I highlight books but never revisit the highlights"
 - "I have great insights but forget them when I need them"
 - "Note apps become graveyards of good intentions"
-- "I want wisdom to change my behavior, not just sit in a database"
+- "I want my knowledge to change my behavior, not just sit in a database"
 - "I have insights for different life areas but they all get mixed together"
 
 **Goals:**
 - Apply what they learn, not just consume
 - Remember insights at moments they're relevant
-- Organize wisdom by life domain
+- Organize knowledge by life domain
 - Build better habits through repeated exposure
-- Feel like captured wisdom is "working for them"
+- Feel like captured knowledge is "working for them"
 
 ---
 
@@ -42,7 +42,7 @@ ThoughtFolio is a wisdom accountability partner that helps users capture insight
 User-defined life areas for organizing thoughts. Eight defaults provided (Meetings, Feedback, Conflict, Focus, Health, Relationships, Parenting, Other). Users can create unlimited custom contexts. Each context has a configurable thought limit (default: 20, range: 5-100).
 
 ### Thoughts
-Captured insights/wisdom. Each thought belongs to one context. Thoughts have a status:
+Captured insights/knowledge. Each thought belongs to one context. Thoughts have a status:
 
 | Status | Description | Visible In |
 |--------|-------------|------------|
@@ -55,13 +55,13 @@ Captured insights/wisdom. Each thought belongs to one context. Thoughts have a s
 Curated subset of up to 10 thoughts (fixed limit) that appear in daily prompts. Controlled by `is_on_active_list` boolean, separate from status. Only thoughts with `status IN ('active', 'passive')` can be on the Active List. Represents "what I'm working on applying right now."
 
 ### Passive Thoughts
-Thoughts with `is_on_active_list = false`. Still searchable, still available for Moments, but excluded from daily prompts. This is the "wisdom library" — always there when needed.
+Thoughts with `is_on_active_list = false`. Still searchable, still available for Moments, but excluded from daily prompts. This is the "knowledge library" — always there when needed.
 
 ### Retired Thoughts
 Thoughts the user has archived. Kept for historical reference but excluded from Thoughts page, Moments, and daily prompts. Visible on dedicated Retired page. Can be restored to active status.
 
 ### Graduated Thoughts
-Thoughts applied 5+ times. Automatically moved to ThoughtBank as "mastered wisdom." Excluded from daily prompts but celebrated as achievements.
+Thoughts applied 5+ times. Automatically moved to ThoughtBank as "mastered knowledge." Excluded from daily prompts but celebrated as achievements.
 
 ### Moments
 User-described upcoming situations that trigger AI matching against ALL thoughts with `status IN ('active', 'passive')` across ALL contexts. Returns the most relevant thoughts with explanations.
@@ -103,7 +103,7 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 
 ### 2. Thought Capture
 
-**Description:** Users can capture wisdom from various sources.
+**Description:** Users can capture knowledge from various sources.
 
 **Methods:**
 - Manual text entry
@@ -227,7 +227,7 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 
 ### 6. AI Thought Extraction
 
-**Description:** Extract wisdom from user-provided content using AI.
+**Description:** Extract knowledge from user-provided content using AI.
 
 **Features:**
 - Paste text from books, articles, transcripts
@@ -348,6 +348,84 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 
 ---
 
+### 11. Discover Something New! (Epic 12)
+
+**Description:** AI-powered content discovery that finds relevant knowledge from the web based on user's contexts and interests, helping users expand their thought library with curated external content.
+
+**User Story:** As a user, I want ThoughtFolio to discover new insights for me based on my contexts and interests so I can expand my knowledge library without having to search manually.
+
+**Core Concept:**
+- Dashboard card offers three discovery paths: free-text search, context selection, or "Surprise Me"
+- Gemini searches the web for relevant articles/insights
+- Returns 4 discoveries per session as a browsable grid
+- User can save discoveries as thoughts (with source) or skip
+- Two daily sessions: 4 curated + 4 directed = 8 max discoveries per day
+
+**Functional Requirements:**
+
+| ID | Requirement | Testable Criteria |
+|----|-------------|-------------------|
+| FR-11.1 | Dashboard displays "Discover Something New!" card | Card visible on dashboard |
+| FR-11.2 | User can enter free-text topic for discovery | Text input accepts query, triggers search |
+| FR-11.3 | User can select context chip for focused discovery | Context chip triggers context-specific search |
+| FR-11.4 | User can click "Surprise Me" for curated mix | Button triggers multi-context discovery |
+| FR-11.5 | System returns 4 discoveries per session | Grid displays 4 cards |
+| FR-11.6 | Each discovery includes: thought, source, summary, relevance | All fields populated in response |
+| FR-11.7 | Discoveries labeled as "Trending" or "Evergreen" | Badge displayed on each card |
+| FR-11.8 | User can view expanded discovery detail | Click opens detail view |
+| FR-11.9 | User can save discovery as thought | Creates thought record with source |
+| FR-11.10 | User can edit thought text before saving | Text field is editable |
+| FR-11.11 | User can change suggested context before saving | Context dropdown available |
+| FR-11.12 | User can create new context during save | "Create context" option available |
+| FR-11.13 | User can optionally add to Active List on save | Checkbox available |
+| FR-11.14 | User can optionally save article as Note | Checkbox available |
+| FR-11.15 | User can skip discovery ("Not for me") | Card greys out, no penalty |
+| FR-11.16 | Skipped content tracked to avoid similar suggestions | Hash stored in database |
+| FR-11.17 | Curated session limit: 4 discoveries/day | Counter enforced server-side |
+| FR-11.18 | Directed session limit: 4 discoveries/day | Counter enforced server-side |
+| FR-11.19 | Limits reset at midnight user's timezone | Reset logic uses profile timezone |
+| FR-11.20 | Context rotation prioritizes sparse contexts | Algorithm weights by thought count |
+| FR-11.21 | 0-thought contexts occasionally included | Exploration slot in rotation |
+| FR-11.22 | Fresh discoveries generated daily | No persistence of unseen discoveries |
+| FR-11.23 | Empty state shown when both sessions used | Message with "come back tomorrow" |
+| FR-11.24 | Bootstrap state guides new users | Prompts to add contexts/thoughts |
+
+**Discovery Response Schema:**
+
+```typescript
+interface Discovery {
+  id: string;
+  thought_content: string;        // Extracted insight (≤200 chars)
+  source_title: string;           // Article/video name
+  source_url: string;             // Link to original
+  source_type: 'article' | 'video' | 'research' | 'blog';
+  article_summary: string;        // 2-3 sentence summary
+  relevance_reason: string;       // Why this for user's context
+  content_type: 'trending' | 'evergreen';
+  suggested_context_id: string;   // Best-fit context
+  suggested_context_name: string;
+}
+```
+
+**Acceptance Criteria:**
+- [ ] Dashboard shows "Discover Something New!" card
+- [ ] User can type any topic and get 4 relevant discoveries
+- [ ] User can tap context chip and get 4 discoveries for that context
+- [ ] User can tap "Surprise Me" and get 4 curated discoveries
+- [ ] Grid displays 4 discovery cards with preview info
+- [ ] Tapping card opens expanded view with full detail
+- [ ] User can save discovery with editable thought text
+- [ ] User can change context before saving
+- [ ] User can create new context during save flow
+- [ ] User can skip discoveries without penalty
+- [ ] Skipped discoveries don't reappear
+- [ ] Daily limits enforced (4 curated + 4 directed)
+- [ ] Used sessions show "come back tomorrow" state
+- [ ] New users see bootstrap guidance
+- [ ] Mix of trending and evergreen content shown
+
+---
+
 ## Future Features (Not in Current Scope)
 
 ### Multi-Theme System
@@ -362,7 +440,7 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 
 ### Sharing & Social
 - Share individual thoughts
-- Public wisdom profiles
+- Public knowledge profiles
 - Collaborative collections
 
 ### Analytics
@@ -385,17 +463,20 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 - Prompts marked as "applied"
 - Contexts created per user (target: >2 custom)
 - URL extractions per user
+- Discoveries saved per user (target: >2/week)
 
 ### Retention
 - Day 7 / Day 30 retention
 - Active List utilization (target: >80% have 5+ Active)
 - Return visits per week
+- Discovery feature engagement (target: >50% try within first week)
 
 ### Quality
 - Time to first thought capture
 - AI extraction acceptance rate (target: >70%)
 - URL extraction success rate (target: >85%)
 - Moment match relevance ratings
+- Discovery save rate (target: >25% of shown discoveries)
 
 ---
 
@@ -406,6 +487,7 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 - AI extraction < 5 seconds (text), < 10 seconds (URL)
 - Search results instant (< 200ms)
 - URL fetch < 5 seconds
+- Discovery generation < 8 seconds
 
 ### Security
 - All data isolated by user (RLS)
@@ -431,6 +513,7 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 - AI extractions: 10 per day per user
 - AI tokens: 50,000 per day per user
 - Moment matches: 20 per hour per user
+- Discoveries: 4 curated + 4 directed per day per user
 
 ### Content Limits
 - Thought content: max 200 characters
@@ -443,3 +526,4 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 - Google Calendar API for calendar integration
 - Mozilla Readability for article parsing
 - youtube-transcript for YouTube content
+- Gemini grounding for discovery web search
