@@ -196,7 +196,37 @@ export interface DiscoveryGenerationResult {
   tokens_used: number
 }
 
-const DISCOVERY_SYSTEM_PROMPT = `You are a knowledge curator for ThoughtFolio, helping users discover valuable insights and wisdom.
+// Prompt for web search grounding mode
+const DISCOVERY_WEB_SEARCH_PROMPT = `You are a knowledge curator helping users discover new insights from the web.
+
+Search the web and find 4 high-quality articles, blog posts, or resources that contain actionable wisdom.
+
+For each piece of content you find:
+1. Extract ONE key insight (max 200 characters) - a concise, memorable phrase
+2. Provide the source title and URL from your search results
+3. Write a 2-3 sentence summary of the content
+4. Explain why this is relevant to the user's interests
+5. Classify as "trending" (recent/current) or "evergreen" (timeless)
+6. Suggest which context it fits best
+
+Return valid JSON only:
+{
+  "discoveries": [
+    {
+      "thought_content": "The key insight (max 200 chars)",
+      "source_title": "Article title",
+      "source_url": "https://example.com/article",
+      "source_type": "article|video|research|blog",
+      "article_summary": "2-3 sentence summary",
+      "relevance_reason": "Why relevant to user",
+      "content_type": "trending|evergreen",
+      "suggested_context_slug": "context-slug"
+    }
+  ]
+}`
+
+// Fallback prompt when web search is not available
+const DISCOVERY_FALLBACK_PROMPT = `You are a knowledge curator for ThoughtFolio, helping users discover valuable insights and wisdom.
 
 Your task is to recommend 4 pieces of wisdom, insights, or knowledge that would be valuable based on the user's interests.
 
@@ -231,7 +261,7 @@ Return valid JSON only, no markdown code blocks:
 }`
 
 /**
- * Generate discoveries using Gemini
+ * Generate discoveries using Gemini with Google Search grounding (with fallback)
  */
 export async function generateDiscoveries(
   mode: "curated" | "directed",
@@ -240,12 +270,20 @@ export async function generateDiscoveries(
   query?: string,
   specificContextId?: string
 ): Promise<DiscoveryGenerationResult> {
+  // Try with Google Search grounding first, fall back to regular model
+  const useGrounding = true
   const model = genAI.getGenerativeModel({
     model: "gemini-2.0-flash-001",
     generationConfig: {
       responseMimeType: "application/json",
       maxOutputTokens: 2048,
     },
+    // Google Search grounding - requires API access to be enabled
+    tools: [
+      {
+        googleSearch: {},
+      },
+    ],
   })
 
   // Build context information
@@ -296,11 +334,15 @@ ${contextList}
 
 ${thoughtSamples}
 
-Recommend 4 high-quality insights from books, research, or expert sources. Return them as JSON.`
+Find 4 high-quality discoveries and return them as JSON.`
 
-  try {
-    const result = await model.generateContent([
-      { text: DISCOVERY_SYSTEM_PROMPT },
+  // Helper function to call the model and parse response
+  async function callModel(
+    modelInstance: ReturnType<typeof genAI.getGenerativeModel>,
+    systemPrompt: string
+  ): Promise<DiscoveryGenerationResult> {
+    const result = await modelInstance.generateContent([
+      { text: systemPrompt },
       { text: userPrompt },
     ])
 
@@ -348,6 +390,30 @@ Recommend 4 high-quality insights from books, research, or expert sources. Retur
       discoveries: validatedDiscoveries,
       tokens_used: tokensUsed,
     }
+  }
+
+  // Try with Google Search grounding first
+  if (useGrounding) {
+    try {
+      console.log("Attempting discovery with Google Search grounding...")
+      return await callModel(model, DISCOVERY_WEB_SEARCH_PROMPT)
+    } catch (groundingError) {
+      console.warn("Google Search grounding failed, falling back to standard model:", groundingError)
+      // Fall through to fallback
+    }
+  }
+
+  // Fallback: use standard model without grounding
+  try {
+    console.log("Using fallback model without grounding...")
+    const fallbackModel = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash-001",
+      generationConfig: {
+        responseMimeType: "application/json",
+        maxOutputTokens: 2048,
+      },
+    })
+    return await callModel(fallbackModel, DISCOVERY_FALLBACK_PROMPT)
   } catch (error) {
     console.error("Error generating discoveries:", error)
     throw error
