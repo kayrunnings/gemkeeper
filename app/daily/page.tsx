@@ -177,8 +177,8 @@ export default function DailyPage() {
                 <h3 className="text-xl font-bold mb-2">{responseMessage?.title}</h3>
                 <p className="text-muted-foreground mb-8">{responseMessage?.message}</p>
                 <div className="flex gap-3 justify-center">
-                  <Link href="/gems">
-                    <Button variant="outline">View Gems</Button>
+                  <Link href="/thoughts">
+                    <Button variant="outline">View Thoughts</Button>
                   </Link>
                   <Link href="/checkin">
                     <Button>Go to Check-in</Button>
