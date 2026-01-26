@@ -4,29 +4,30 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 backdrop-blur-sm",
   {
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground shadow-sm hover:bg-primary/80",
+          "border-primary/30 bg-primary/20 text-primary shadow-sm hover:bg-primary/30",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "border-secondary/40 bg-secondary/20 text-secondary-foreground hover:bg-secondary/30",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/80",
-        outline: "text-foreground border-border",
-        gem: "border-transparent bg-gem text-gem-foreground",
-        success: "border-transparent bg-success/10 text-success",
-        warning: "border-transparent bg-warning/10 text-warning",
-        // Context tag variants
-        meetings: "border-transparent bg-tag-meetings text-tag-meetings-foreground",
-        feedback: "border-transparent bg-tag-feedback text-tag-feedback-foreground",
-        conflict: "border-transparent bg-tag-conflict text-tag-conflict-foreground",
-        focus: "border-transparent bg-tag-focus text-tag-focus-foreground",
-        health: "border-transparent bg-tag-health text-tag-health-foreground",
-        relationships: "border-transparent bg-tag-relationships text-tag-relationships-foreground",
-        parenting: "border-transparent bg-tag-parenting text-tag-parenting-foreground",
-        other: "border-transparent bg-tag-other text-tag-other-foreground",
+          "border-destructive/40 bg-destructive/20 text-destructive shadow-sm hover:bg-destructive/30",
+        outline: "text-foreground border-[var(--glass-card-border)] bg-transparent",
+        gem: "border-thought/40 bg-thought/20 text-thought-foreground",
+        success: "border-success/40 bg-success/20 text-success",
+        warning: "border-warning/40 bg-warning/20 text-warning",
+        // Context tag variants - muted pastels for glass compatibility
+        // 20% bg opacity, 40% border opacity, full color text
+        meetings: "border-[#60A5FA]/40 bg-[#60A5FA]/20 text-[#60A5FA]",
+        feedback: "border-[#FB923C]/40 bg-[#FB923C]/20 text-[#FB923C]",
+        conflict: "border-[#F87171]/40 bg-[#F87171]/20 text-[#F87171]",
+        focus: "border-[#A78BFA]/40 bg-[#A78BFA]/20 text-[#A78BFA]",
+        health: "border-[#4ADE80]/40 bg-[#4ADE80]/20 text-[#4ADE80]",
+        relationships: "border-[#F472B6]/40 bg-[#F472B6]/20 text-[#F472B6]",
+        parenting: "border-[#FACC15]/40 bg-[#FACC15]/20 text-[#FACC15]",
+        other: "border-[#9CA3AF]/40 bg-[#9CA3AF]/20 text-[#9CA3AF]",
       },
     },
     defaultVariants: {
