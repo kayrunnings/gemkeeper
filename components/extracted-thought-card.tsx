@@ -59,8 +59,8 @@ export function ExtractedThoughtCard({
       className={cn(
         "p-4 rounded-lg border transition-all",
         selected
-          ? "border-violet-300 bg-violet-50"
-          : "border-gray-200 bg-white hover:border-gray-300"
+          ? "border-violet-300 bg-violet-50 dark:border-violet-500/50 dark:bg-violet-900/20"
+          : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600"
       )}
     >
       <div className="flex items-start gap-3">
@@ -102,14 +102,20 @@ export function ExtractedThoughtCard({
                   className="fixed inset-0 z-10"
                   onClick={() => setShowTagSelect(false)}
                 />
-                <div className="absolute top-full left-0 mt-1 z-20 bg-white border rounded-md shadow-lg py-1 min-w-[140px]">
+                <div
+                  className="absolute top-full left-0 mt-1 z-20 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-md shadow-lg py-1 min-w-[140px]"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {Object.entries(CONTEXT_TAG_LABELS).map(([value, label]) => (
                     <button
                       key={value}
-                      onClick={() => handleContextTagChange(value as ContextTag)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleContextTagChange(value as ContextTag)
+                      }}
                       className={cn(
-                        "w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 flex items-center gap-2",
-                        thought.context_tag === value && "bg-gray-50"
+                        "w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2",
+                        thought.context_tag === value && "bg-gray-50 dark:bg-gray-700"
                       )}
                     >
                       <span
@@ -163,7 +169,7 @@ export function ExtractedThoughtCard({
             </div>
           ) : (
             <div className="group relative">
-              <p className="text-sm text-gray-900 pr-8">
+              <p className="text-sm text-gray-900 dark:text-gray-100 pr-8">
                 {truncateContent(thought.content)}
               </p>
               <button
@@ -193,7 +199,7 @@ export function ExtractedThoughtCard({
                 Source quote
               </button>
               {showQuote && (
-                <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600 italic">
+                <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded text-xs text-gray-600 dark:text-gray-300 italic">
                   &ldquo;{thought.source_quote}&rdquo;
                 </div>
               )}

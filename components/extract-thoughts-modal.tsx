@@ -133,7 +133,16 @@ export function ExtractThoughtsModal({
         body: JSON.stringify({ url: urlInput }),
       })
 
-      const data = await response.json()
+      // Handle empty or invalid responses
+      let data
+      try {
+        const text = await response.text()
+        data = text ? JSON.parse(text) : {}
+      } catch {
+        setError("Failed to extract content - please try pasting the content manually")
+        setIsExtractingUrl(false)
+        return
+      }
 
       if (!response.ok) {
         // Show error with fallback message
@@ -156,7 +165,7 @@ export function ExtractThoughtsModal({
         setError("No content could be extracted from this URL")
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to extract content from URL")
+      setError(err instanceof Error ? err.message : "Failed to extract content - please try pasting the content manually")
     } finally {
       setIsExtractingUrl(false)
     }
