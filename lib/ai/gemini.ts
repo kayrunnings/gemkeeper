@@ -1,5 +1,7 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { GoogleGenerativeAI, DynamicRetrievalMode } from "@google/generative-ai"
 import { ContextTag } from "@/lib/types/thought"
+import type { GeneratedDiscovery, DiscoverySourceType, DiscoveryContentType } from "@/lib/types/discovery"
+import type { Context } from "@/lib/types/context"
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
 
@@ -185,4 +187,195 @@ function isValidContextTag(tag: unknown): tag is ContextTag {
     "other",
   ]
   return typeof tag === "string" && validTags.includes(tag as ContextTag)
+}
+
+// Discovery Generation
+
+export interface DiscoveryGenerationResult {
+  discoveries: GeneratedDiscovery[]
+  tokens_used: number
+}
+
+const DISCOVERY_SYSTEM_PROMPT = `You are a knowledge curator for ThoughtFolio, helping users discover new insights relevant to their interests.
+
+Your task is to find 4 high-quality articles, blog posts, research papers, or videos from the web that contain actionable wisdom.
+
+For each piece of content you find:
+1. Extract ONE key insight (max 200 characters) - a concise, memorable phrase
+2. Provide the source title and REAL working URL (verify it exists)
+3. Write a 2-3 sentence summary of the article
+4. Explain why this is relevant to the user's interests
+5. Classify as "trending" (published recently, current events) or "evergreen" (timeless wisdom)
+6. Suggest which context it fits best (from the available contexts)
+
+IMPORTANT:
+- Only include REAL, verifiable URLs from actual websites
+- Prefer high-quality sources (reputable publications, research, expert blogs)
+- Focus on actionable insights, not just interesting facts
+- Match content to the user's context areas and existing interests
+
+Return valid JSON only, no markdown code blocks:
+{
+  "discoveries": [
+    {
+      "thought_content": "The key insight extracted (max 200 chars)",
+      "source_title": "Article or video title",
+      "source_url": "https://actual-url.com/article",
+      "source_type": "article|video|research|blog",
+      "article_summary": "2-3 sentence summary of the content",
+      "relevance_reason": "Why this is relevant to the user",
+      "content_type": "trending|evergreen",
+      "suggested_context_slug": "meetings|feedback|conflict|focus|health|relationships|parenting|other"
+    }
+  ]
+}`
+
+/**
+ * Generate discoveries using Gemini with Google Search grounding
+ */
+export async function generateDiscoveries(
+  mode: "curated" | "directed",
+  contexts: Context[],
+  existingThoughts: Array<{ content: string; context_name?: string }>,
+  query?: string,
+  specificContextId?: string
+): Promise<DiscoveryGenerationResult> {
+  // Use the model with Google Search grounding
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.0-flash-001",
+    generationConfig: {
+      responseMimeType: "application/json",
+      maxOutputTokens: 2048,
+    },
+    tools: [
+      {
+        googleSearchRetrieval: {
+          dynamicRetrievalConfig: {
+            mode: DynamicRetrievalMode.MODE_DYNAMIC,
+            dynamicThreshold: 0.3,
+          },
+        },
+      },
+    ],
+  })
+
+  // Build context information
+  const contextList = contexts.map((c) => `- ${c.name} (slug: ${c.slug})`).join("\n")
+
+  // Build sample thoughts for personalization
+  let thoughtSamples = ""
+  if (existingThoughts.length > 0) {
+    const samples = existingThoughts.slice(0, 10).map((t) => {
+      return t.context_name ? `[${t.context_name}] ${t.content}` : t.content
+    })
+    thoughtSamples = `User's existing thoughts (for context):\n${samples.join("\n")}`
+  }
+
+  // Build mode-specific instructions
+  let modeInstructions = ""
+  if (mode === "directed" && query) {
+    modeInstructions = `The user is searching for: "${query}"
+
+Find 4 articles/content pieces related to this specific topic. Focus on:
+- Practical, actionable content
+- Reputable sources
+- Recent or timeless wisdom depending on the topic`
+  } else if (specificContextId) {
+    const specificContext = contexts.find((c) => c.id === specificContextId)
+    if (specificContext) {
+      modeInstructions = `The user wants discoveries for their "${specificContext.name}" context.
+
+Find 4 articles/content pieces that would be valuable for someone interested in ${specificContext.name.toLowerCase()}-related topics. Focus on:
+- Insights applicable to ${specificContext.name.toLowerCase()} situations
+- Mix of trending and evergreen content
+- Practical wisdom they can apply`
+    }
+  } else {
+    // Curated mode - mix across contexts
+    modeInstructions = `Find 4 diverse articles/content pieces across the user's interest areas.
+
+Distribute discoveries across these contexts based on the user's interests:
+${contextList}
+
+Aim for variety - different contexts, mix of trending and evergreen content.`
+  }
+
+  const userPrompt = `${modeInstructions}
+
+Available contexts to suggest:
+${contextList}
+
+${thoughtSamples}
+
+Search the web and find 4 high-quality discoveries. Return them as JSON.`
+
+  try {
+    const result = await model.generateContent([
+      { text: DISCOVERY_SYSTEM_PROMPT },
+      { text: userPrompt },
+    ])
+
+    const response = result.response
+    const text = response.text()
+
+    // Try to parse the JSON response
+    let parsed: { discoveries?: unknown[] }
+    try {
+      parsed = JSON.parse(text)
+    } catch {
+      // If JSON parsing fails, try to extract JSON from the response
+      const jsonMatch = text.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        parsed = JSON.parse(jsonMatch[0])
+      } else {
+        throw new Error("Could not parse discovery response")
+      }
+    }
+
+    const usage = response.usageMetadata
+    const tokensUsed = (usage?.promptTokenCount || 0) + (usage?.candidatesTokenCount || 0)
+
+    // Validate and sanitize discoveries
+    const validatedDiscoveries: GeneratedDiscovery[] = (parsed.discoveries || [])
+      .slice(0, 4)
+      .map((d: unknown) => {
+        const discovery = d as Record<string, unknown>
+        return {
+          thought_content: String(discovery.thought_content || "").slice(0, 200),
+          source_title: String(discovery.source_title || "Unknown Source"),
+          source_url: String(discovery.source_url || ""),
+          source_type: isValidSourceType(discovery.source_type) ? discovery.source_type : "article",
+          article_summary: String(discovery.article_summary || ""),
+          relevance_reason: String(discovery.relevance_reason || ""),
+          content_type: isValidContentType(discovery.content_type) ? discovery.content_type : "evergreen",
+          suggested_context_slug: isValidContextSlug(discovery.suggested_context_slug, contexts)
+            ? discovery.suggested_context_slug as string
+            : "other",
+        }
+      })
+      .filter((d) => d.thought_content && d.source_url)
+
+    return {
+      discoveries: validatedDiscoveries,
+      tokens_used: tokensUsed,
+    }
+  } catch (error) {
+    console.error("Error generating discoveries:", error)
+    throw error
+  }
+}
+
+function isValidSourceType(type: unknown): type is DiscoverySourceType {
+  const validTypes: DiscoverySourceType[] = ["article", "video", "research", "blog"]
+  return typeof type === "string" && validTypes.includes(type as DiscoverySourceType)
+}
+
+function isValidContentType(type: unknown): type is DiscoveryContentType {
+  const validTypes: DiscoveryContentType[] = ["trending", "evergreen"]
+  return typeof type === "string" && validTypes.includes(type as DiscoveryContentType)
+}
+
+function isValidContextSlug(slug: unknown, contexts: Context[]): boolean {
+  if (typeof slug !== "string") return false
+  return contexts.some((c) => c.slug === slug)
 }
