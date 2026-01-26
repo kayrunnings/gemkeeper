@@ -86,15 +86,15 @@ Expand ThoughtFolio from global 10-thought limit to contextual organization with
 ### Phase 4: URL Extraction
 
 #### 9.0 Article Extraction Backend (traces to: FR-6.2 through FR-6.9)
-- [ ] 9.1 Install `@mozilla/readability` and `jsdom`
-- [ ] 9.2 Create `lib/url-extractor.ts`:
+- [x] 9.1 Install `@mozilla/readability` and `jsdom`
+- [x] 9.2 Create `lib/url-extractor.ts`:
   - `detectUrlType(url)` - 'article' | 'youtube' | 'unknown'
   - `extractArticleContent(url)` - fetch + Readability
-  - `extractYouTubeTranscript(url)` - transcript API
-- [ ] 9.3 Create `app/api/extract/url/route.ts`
-- [ ] 9.4 Add 10 second timeout
-- [ ] 9.5 Error handling for paywalls, 404s
-- [ ] 9.6 Write tests
+  - (YouTube transcript handled in Task 10.0)
+- [x] 9.3 Create `app/api/extract/url/route.ts`
+- [x] 9.4 Add 10 second timeout
+- [x] 9.5 Error handling for paywalls, 404s
+- [ ] 9.6 Write tests (deferred to Phase 5)
 
 #### 10.0 YouTube Extraction (traces to: FR-6.5)
 - [ ] 10.1 Install `youtube-transcript`
