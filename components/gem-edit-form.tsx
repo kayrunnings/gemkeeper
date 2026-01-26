@@ -4,9 +4,8 @@ import { useState } from "react"
 import {
   Gem,
   CreateGemInput,
-  ContextTag,
-  CONTEXT_TAG_LABELS,
 } from "@/lib/types/gem"
+import type { ContextWithCount } from "@/lib/types/context"
 import {
   Dialog,
   DialogContent,
@@ -18,26 +17,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { ChevronDown, AlertCircle, Loader2 } from "lucide-react"
+import { AlertCircle, Loader2 } from "lucide-react"
 import { updateGem } from "@/lib/gems"
 import { cn } from "@/lib/utils"
-
-const CONTEXT_TAGS: ContextTag[] = [
-  "meetings",
-  "feedback",
-  "conflict",
-  "focus",
-  "health",
-  "relationships",
-  "parenting",
-  "other",
-]
+import { ContextDropdown } from "@/components/contexts/ContextDropdown"
 
 const MAX_CONTENT_LENGTH = 500
 
@@ -52,8 +35,8 @@ export function GemEditForm({ gem, isOpen, onClose, onGemUpdated }: GemEditFormP
   const [content, setContent] = useState(gem.content)
   const [source, setSource] = useState(gem.source || "")
   const [sourceUrl, setSourceUrl] = useState(gem.source_url || "")
-  const [contextTag, setContextTag] = useState<ContextTag>(gem.context_tag)
-  const [customContext, setCustomContext] = useState(gem.custom_context || "")
+  const [contextId, setContextId] = useState<string | null>(gem.context_id || null)
+  const [selectedContext, setSelectedContext] = useState<ContextWithCount | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -61,18 +44,21 @@ export function GemEditForm({ gem, isOpen, onClose, onGemUpdated }: GemEditFormP
   const isContentTooLong = contentLength > MAX_CONTENT_LENGTH
   const canSubmit =
     content.trim() &&
-    contextTag &&
     !isContentTooLong &&
-    !isSubmitting &&
-    (contextTag !== "other" || customContext.trim())
+    !isSubmitting
+
+  const handleContextChange = (id: string, context: ContextWithCount) => {
+    setContextId(id)
+    setSelectedContext(context)
+  }
 
   const handleClose = () => {
     // Reset to original values
     setContent(gem.content)
     setSource(gem.source || "")
     setSourceUrl(gem.source_url || "")
-    setContextTag(gem.context_tag)
-    setCustomContext(gem.custom_context || "")
+    setContextId(gem.context_id || null)
+    setSelectedContext(null)
     setError(null)
     onClose()
   }
@@ -85,10 +71,11 @@ export function GemEditForm({ gem, isOpen, onClose, onGemUpdated }: GemEditFormP
 
     const input: Partial<CreateGemInput> = {
       content: content.trim(),
-      context_tag: contextTag,
+      context_id: contextId || undefined,
+      // Keep context_tag for backwards compat
+      context_tag: selectedContext?.slug as CreateGemInput["context_tag"] || gem.context_tag,
       source: source.trim() || undefined,
       source_url: sourceUrl.trim() || undefined,
-      custom_context: contextTag === "other" ? customContext.trim() : undefined,
     }
 
     const result = await updateGem(gem.id, input)
@@ -148,47 +135,18 @@ export function GemEditForm({ gem, isOpen, onClose, onGemUpdated }: GemEditFormP
             </p>
           </div>
 
-          {/* Context tag */}
+          {/* Context */}
           <div className="space-y-2">
-            <Label>
-              Context Tag <span className="text-destructive">*</span>
-            </Label>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  {CONTEXT_TAG_LABELS[contextTag]}
-                  <ChevronDown className="h-4 w-4 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-full min-w-[200px]">
-                {CONTEXT_TAGS.map((tag) => (
-                  <DropdownMenuItem
-                    key={tag}
-                    onClick={() => setContextTag(tag)}
-                    className={cn(contextTag === tag && "bg-muted")}
-                  >
-                    {CONTEXT_TAG_LABELS[tag]}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Label>Context</Label>
+            <ContextDropdown
+              value={contextId}
+              onChange={handleContextChange}
+              showCount={true}
+            />
+            <p className="text-xs text-muted-foreground">
+              Choose which life area this thought belongs to
+            </p>
           </div>
-
-          {/* Custom context (shown when "other" is selected) */}
-          {contextTag === "other" && (
-            <div className="space-y-2">
-              <Label htmlFor="custom-context">
-                Custom Context <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="custom-context"
-                placeholder="Describe when this gem applies..."
-                value={customContext}
-                onChange={(e) => setCustomContext(e.target.value)}
-                maxLength={50}
-              />
-            </div>
-          )}
 
           {/* Source (optional) */}
           <div className="space-y-2">

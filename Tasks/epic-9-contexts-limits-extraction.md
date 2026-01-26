@@ -79,9 +79,9 @@ Expand ThoughtFolio from global 10-thought limit to contextual organization with
 - [x] 7.6 Show Active count ("Active: 7/10")
 
 #### 8.0 Update Thought Detail (traces to: US-1, FR-3.3)
-- [ ] 8.1 Show context on detail page
-- [ ] 8.2 Add Active toggle
-- [ ] 8.3 Allow changing context
+- [x] 8.1 Show context on detail page
+- [x] 8.2 Add Active toggle
+- [x] 8.3 Allow changing context
 
 ### Phase 4: URL Extraction
 
