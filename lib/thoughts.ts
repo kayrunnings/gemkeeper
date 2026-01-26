@@ -200,12 +200,12 @@ export async function getDailyThought(): Promise<{ thought: Thought | null; erro
     return { thought: null, error: "Not authenticated" }
   }
 
-  // Only get thoughts that are on the Active List
+  // Only get thoughts that are on the Active List with active or passive status
   const { data, error } = await supabase
     .from("gems")
     .select("*")
     .eq("user_id", user.id)
-    .eq("status", "active")
+    .in("status", ["active", "passive"])
     .eq("is_on_active_list", true)
     .order("last_surfaced_at", { ascending: true, nullsFirst: true })
     .limit(1)
@@ -325,12 +325,13 @@ export async function getAllThoughtsForMoments(): Promise<{ thoughts: Thought[];
     return { thoughts: [], error: "Not authenticated" }
   }
 
-  // Get ALL active thoughts regardless of is_on_active_list or context
+  // Get ALL active and passive thoughts regardless of is_on_active_list or context
+  // Retired and graduated thoughts are excluded
   const { data, error } = await supabase
     .from("gems")
     .select("*")
     .eq("user_id", user.id)
-    .eq("status", "active")
+    .in("status", ["active", "passive"])
 
   if (error) {
     return { thoughts: [], error: error.message }
@@ -462,6 +463,90 @@ export async function getGraduatedThoughts(): Promise<{ thoughts: Thought[]; err
   return { thoughts: data || [], error: null }
 }
 
+/**
+ * Get retired thoughts for the Retired page
+ */
+export async function getRetiredThoughts(): Promise<{ thoughts: Thought[]; error: string | null }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { thoughts: [], error: "Not authenticated" }
+  }
+
+  const { data, error } = await supabase
+    .from("gems")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("status", "retired")
+    .order("retired_at", { ascending: false })
+
+  if (error) {
+    return { thoughts: [], error: error.message }
+  }
+
+  return { thoughts: data || [], error: null }
+}
+
+/**
+ * Restore a retired thought back to active status
+ */
+export async function restoreThought(
+  id: string
+): Promise<{ thought: Thought | null; error: string | null }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { thought: null, error: "Not authenticated" }
+  }
+
+  const { data, error } = await supabase
+    .from("gems")
+    .update({
+      status: "active",
+      retired_at: null,
+      is_on_active_list: false, // Restored thoughts go to passive list
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select()
+    .single()
+
+  if (error) {
+    return { thought: null, error: error.message }
+  }
+
+  return { thought: data, error: null }
+}
+
+/**
+ * Permanently delete a thought (hard delete)
+ */
+export async function deleteThought(
+  id: string
+): Promise<{ error: string | null }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: "Not authenticated" }
+  }
+
+  const { error } = await supabase
+    .from("gems")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { error: null }
+}
+
 // Legacy aliases for backward compatibility during migration
 export const createMultipleGems = createMultipleThoughts
 export const updateGem = updateThought
@@ -469,3 +554,6 @@ export const retireGem = retireThought
 export const graduateGem = graduateThought
 export const getDailyGem = getDailyThought
 export const getGraduatedGems = getGraduatedThoughts
+export const getRetiredGems = getRetiredThoughts
+export const restoreGem = restoreThought
+export const deleteGem = deleteThought

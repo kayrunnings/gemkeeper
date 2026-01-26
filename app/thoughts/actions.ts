@@ -12,11 +12,12 @@ export async function getActiveThoughts(): Promise<{ thoughts: Thought[]; error:
     return { error: "Not authenticated", thoughts: [] }
   }
 
+  // Get active and passive thoughts (not retired/graduated)
   const { data, error } = await supabase
     .from("gems")
     .select("*")
     .eq("user_id", user.id)
-    .eq("status", "active")
+    .in("status", ["active", "passive"])
     .order("created_at", { ascending: false })
 
   if (error) {
@@ -34,11 +35,12 @@ export async function getActiveThoughtCount(): Promise<{ count: number; error: s
     return { error: "Not authenticated", count: 0 }
   }
 
+  // Count active and passive thoughts (not retired/graduated)
   const { count, error } = await supabase
     .from("gems")
     .select("*", { count: "exact", head: true })
     .eq("user_id", user.id)
-    .eq("status", "active")
+    .in("status", ["active", "passive"])
 
   if (error) {
     return { error: error.message, count: 0 }
@@ -55,12 +57,12 @@ export async function createThought(input: CreateThoughtInput): Promise<{ though
     return { error: "Not authenticated", thought: null }
   }
 
-  // Check the 10-thought limit before inserting
+  // Check the thought limit before inserting (counts active and passive)
   const { count, error: countError } = await supabase
     .from("gems")
     .select("*", { count: "exact", head: true })
     .eq("user_id", user.id)
-    .eq("status", "active")
+    .in("status", ["active", "passive"])
 
   if (countError) {
     return { error: countError.message, thought: null }

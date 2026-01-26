@@ -45,12 +45,12 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Check current active thought count
+  // Check current active/passive thought count
   const { count, error: countError } = await supabase
     .from("gems")
     .select("*", { count: "exact", head: true })
     .eq("user_id", user.id)
-    .eq("status", "active")
+    .in("status", ["active", "passive"])
 
   if (countError) {
     return NextResponse.json({ error: countError.message }, { status: 500 })

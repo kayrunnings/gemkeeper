@@ -52,9 +52,9 @@ export function RetireGemDialog({ gem, isOpen, onClose, onRetired }: RetireGemDi
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Retire Gem</DialogTitle>
+          <DialogTitle>Retire or Delete Thought</DialogTitle>
           <DialogDescription>
-            Choose how you want to retire this gem.
+            Choose what to do with this thought.
           </DialogDescription>
         </DialogHeader>
 
@@ -95,9 +95,9 @@ export function RetireGemDialog({ gem, isOpen, onClose, onRetired }: RetireGemDi
             >
               <Archive className="h-5 w-5 shrink-0" />
               <div className="text-left">
-                <p className="font-medium">Archive</p>
+                <p className="font-medium">Retire</p>
                 <p className="text-xs text-muted-foreground">
-                  Keep the gem for reference, but remove from active rotation
+                  Move to Retired page. You can restore it later.
                 </p>
               </div>
               {isSubmitting && (
@@ -113,9 +113,9 @@ export function RetireGemDialog({ gem, isOpen, onClose, onRetired }: RetireGemDi
             >
               <Trash2 className="h-5 w-5 shrink-0" />
               <div className="text-left">
-                <p className="font-medium">Release</p>
+                <p className="font-medium">Delete Permanently</p>
                 <p className="text-xs text-muted-foreground">
-                  Permanently delete this gem
+                  This cannot be undone.
                 </p>
               </div>
               {isSubmitting && (

@@ -52,11 +52,12 @@ export async function getContexts(): Promise<{
   }
 
   // Get thought counts per context
+  // Only count active and passive thoughts (not retired/graduated)
   const { data: counts, error: countsError } = await supabase
     .from("gems")
     .select("context_id")
     .eq("user_id", user.id)
-    .eq("status", "active")
+    .in("status", ["active", "passive"])
     .not("context_id", "is", null)
 
   if (countsError) {
@@ -479,12 +480,13 @@ export async function getContextThoughtCount(
     return { count: 0, error: "Not authenticated" }
   }
 
+  // Only count active and passive thoughts (not retired/graduated)
   const { count, error } = await supabase
     .from("gems")
     .select("*", { count: "exact", head: true })
     .eq("context_id", contextId)
     .eq("user_id", user.id)
-    .eq("status", "active")
+    .in("status", ["active", "passive"])
 
   if (error) {
     return { count: 0, error: error.message }
@@ -520,13 +522,13 @@ export async function isContextAtLimit(
     return { atLimit: false, count: 0, limit: 0, error: contextError.message }
   }
 
-  // Get current count
+  // Get current count - only count active and passive thoughts (not retired/graduated)
   const { count, error: countError } = await supabase
     .from("gems")
     .select("*", { count: "exact", head: true })
     .eq("context_id", contextId)
     .eq("user_id", user.id)
-    .eq("status", "active")
+    .in("status", ["active", "passive"])
 
   if (countError) {
     return { atLimit: false, count: 0, limit: 0, error: countError.message }
