@@ -270,15 +270,15 @@ export async function generateDiscoveries(
   query?: string,
   specificContextId?: string
 ): Promise<DiscoveryGenerationResult> {
-  // Try with Google Search grounding first, fall back to regular model
+  // Use gemini-1.5-flash for Google Search grounding (2.0-flash doesn't support it)
   const useGrounding = true
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash-001",
+    model: "gemini-1.5-flash",
     generationConfig: {
       responseMimeType: "application/json",
       maxOutputTokens: 2048,
     },
-    // Google Search grounding - requires API access to be enabled
+    // Google Search grounding tool
     tools: [
       {
         googleSearch: {},
