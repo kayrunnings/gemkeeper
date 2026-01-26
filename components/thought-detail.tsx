@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Thought, CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS } from "@/lib/types/thought"
+import { Thought, CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS, MAX_ACTIVE_LIST } from "@/lib/types/thought"
+import type { ContextWithCount } from "@/lib/types/context"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -17,6 +18,8 @@ import {
   Plus,
   ChevronDown,
   ChevronUp,
+  Star,
+  StarOff,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThoughtEditForm } from "@/components/thought-edit-form"
@@ -24,6 +27,9 @@ import { RetireThoughtDialog } from "@/components/retire-thought-dialog"
 import { GraduateThoughtDialog } from "@/components/graduate-thought-dialog"
 import { SchedulePicker } from "@/components/schedules/SchedulePicker"
 import { getThoughtSchedules, getNextTriggerForThought } from "@/lib/schedules"
+import { toggleActiveList, getActiveListCount } from "@/lib/thoughts"
+import { getContexts } from "@/lib/contexts"
+import { useToast } from "@/components/error-toast"
 import type { ThoughtSchedule } from "@/types/schedules"
 
 interface ThoughtDetailProps {
@@ -41,10 +47,15 @@ export function ThoughtDetail({ thought, onThoughtUpdated, onThoughtRetired, onT
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(true)
   const [schedules, setSchedules] = useState<ThoughtSchedule[]>([])
   const [nextTrigger, setNextTrigger] = useState<Date | null>(null)
+  const [contexts, setContexts] = useState<ContextWithCount[]>([])
+  const [activeListCount, setActiveListCount] = useState(0)
+  const [isOnActiveList, setIsOnActiveList] = useState(thought.is_on_active_list)
+  const { showError, showSuccess } = useToast()
 
-  // Load schedules
+  // Load schedules and contexts
   useEffect(() => {
-    async function loadSchedules() {
+    async function loadData() {
+      // Load schedules
       const { schedules: thoughtSchedules } = await getThoughtSchedules(thought.id)
       setSchedules(thoughtSchedules)
 
@@ -52,9 +63,22 @@ export function ThoughtDetail({ thought, onThoughtUpdated, onThoughtRetired, onT
         const { nextTrigger: trigger } = await getNextTriggerForThought(thought.id)
         setNextTrigger(trigger)
       }
+
+      // Load contexts for colors
+      const { contexts: contextData } = await getContexts()
+      setContexts(contextData)
+
+      // Load active list count
+      const { count } = await getActiveListCount()
+      setActiveListCount(count)
     }
-    loadSchedules()
+    loadData()
   }, [thought.id])
+
+  // Sync isOnActiveList with thought prop
+  useEffect(() => {
+    setIsOnActiveList(thought.is_on_active_list)
+  }, [thought.is_on_active_list])
 
   const handleScheduleCreate = (schedule: ThoughtSchedule) => {
     setSchedules((prev) => [...prev, schedule])
@@ -76,6 +100,36 @@ export function ThoughtDetail({ thought, onThoughtUpdated, onThoughtRetired, onT
     setSchedules((prev) => prev.filter((s) => s.id !== scheduleId))
   }
 
+  const handleToggleActiveList = async () => {
+    const { thought: updatedThought, error } = await toggleActiveList(thought.id)
+    if (error) {
+      showError(error)
+      return
+    }
+
+    if (updatedThought) {
+      setIsOnActiveList(updatedThought.is_on_active_list)
+      onThoughtUpdated({ ...thought, is_on_active_list: updatedThought.is_on_active_list })
+
+      // Update active list count
+      const { count } = await getActiveListCount()
+      setActiveListCount(count)
+
+      if (updatedThought.is_on_active_list) {
+        showSuccess("Added to Active List", "This thought will appear in daily prompts")
+      } else {
+        showSuccess("Removed from Active List", "This thought is now passive")
+      }
+    }
+  }
+
+  // Get context by ID for displaying colored badges
+  const getContextById = (contextId: string | null) => {
+    if (!contextId) return null
+    return contexts.find((c) => c.id === contextId)
+  }
+
+  const context = getContextById(thought.context_id)
   const activeScheduleCount = schedules.filter((s) => s.is_active).length
 
   const formatDate = (dateString: string) => {
@@ -95,17 +149,31 @@ export function ThoughtDetail({ thought, onThoughtUpdated, onThoughtRetired, onT
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-sm",
-                CONTEXT_TAG_COLORS[thought.context_tag]
-              )}
-            >
-              {thought.context_tag === "other" && thought.custom_context
-                ? thought.custom_context
-                : CONTEXT_TAG_LABELS[thought.context_tag]}
-            </Badge>
+            {/* Context badge - use context color if available */}
+            {context ? (
+              <Badge
+                variant="outline"
+                className="text-sm border-2"
+                style={{
+                  borderColor: context.color || "#6B7280",
+                  color: context.color || "#6B7280",
+                }}
+              >
+                {context.name}
+              </Badge>
+            ) : (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-sm",
+                  CONTEXT_TAG_COLORS[thought.context_tag]
+                )}
+              >
+                {thought.context_tag === "other" && thought.custom_context
+                  ? thought.custom_context
+                  : CONTEXT_TAG_LABELS[thought.context_tag]}
+              </Badge>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -195,6 +263,44 @@ export function ThoughtDetail({ thought, onThoughtUpdated, onThoughtRetired, onT
               Apply this thought {5 - thought.application_count} more {5 - thought.application_count === 1 ? "time" : "times"} to unlock graduation.
             </p>
           )}
+
+          {/* Active List Section */}
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {isOnActiveList ? (
+                  <Star className="h-4 w-4 text-primary fill-current" />
+                ) : (
+                  <StarOff className="h-4 w-4 text-muted-foreground" />
+                )}
+                <span className="font-medium">Active List</span>
+                <span className="text-sm text-muted-foreground">({activeListCount}/{MAX_ACTIVE_LIST})</span>
+              </div>
+              <Button
+                variant={isOnActiveList ? "secondary" : "outline"}
+                size="sm"
+                onClick={handleToggleActiveList}
+                className="gap-2"
+              >
+                {isOnActiveList ? (
+                  <>
+                    <StarOff className="h-4 w-4" />
+                    Remove
+                  </>
+                ) : (
+                  <>
+                    <Star className="h-4 w-4" />
+                    Add
+                  </>
+                )}
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              {isOnActiveList
+                ? "This thought is on your Active List and will appear in daily prompts."
+                : "Add to Active List to include in daily prompts."}
+            </p>
+          </div>
 
           {/* Schedule Section */}
           <div className="border-t pt-4">
