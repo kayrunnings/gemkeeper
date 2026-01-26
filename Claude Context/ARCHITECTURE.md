@@ -496,12 +496,15 @@ Sync calendar events.
 
 ### Context Service (`lib/contexts.ts`)
 ```typescript
-getContexts(): Promise<Context[]>
+getContexts(): Promise<ContextWithCount[]>
 getContextBySlug(slug: string): Promise<Context>
+getContextById(id: string): Promise<Context>
 createContext(input: CreateContextInput): Promise<Context>
 updateContext(id: string, input: UpdateContextInput): Promise<Context>
 deleteContext(id: string): Promise<void>
 getContextThoughtCount(contextId: string): Promise<number>
+isContextAtLimit(contextId: string): Promise<{atLimit, count, limit}>
+getOtherContextId(): Promise<string>  // For fallback assignments
 ```
 
 ### Thought Service (`lib/thoughts.ts`)
@@ -512,7 +515,8 @@ retireThought(id: string, mode: 'release' | 'archive'): Promise<void>
 graduateThought(id: string): Promise<Thought>
 toggleActiveList(id: string): Promise<Thought>
 getActiveListCount(): Promise<number>
-getDailyThought(): Promise<Thought | null>  // Only Active List
+getDailyThought(): Promise<Thought | null>  // Only Active List (is_on_active_list = true)
+getAllThoughtsForMoments(): Promise<Thought[]>  // ALL thoughts for Moments matching
 ```
 
 ### URL Extractor Service (`lib/url-extractor.ts`)

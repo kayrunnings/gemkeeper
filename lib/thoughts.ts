@@ -1,13 +1,19 @@
 import { createClient } from "@/lib/supabase/client"
-import { Thought, CreateThoughtInput, MAX_ACTIVE_THOUGHTS } from "@/lib/types/thought"
+import { Thought, CreateThoughtInput, MAX_ACTIVE_LIST } from "@/lib/types/thought"
 
-// Create multiple thoughts at once (for AI extraction)
+/**
+ * Create multiple thoughts at once (for AI extraction)
+ * Note: New thoughts default to is_on_active_list = false (Passive)
+ * Per-context limits should be checked by caller before calling this
+ */
 export async function createMultipleThoughts(
   thoughts: Array<{
     content: string
-    context_tag: CreateThoughtInput["context_tag"]
+    context_id?: string
+    context_tag?: CreateThoughtInput["context_tag"]
     source?: string
     source_url?: string
+    is_on_active_list?: boolean
   }>
 ): Promise<{ thoughts: Thought[]; error: string | null }> {
   const supabase = createClient()
@@ -17,41 +23,34 @@ export async function createMultipleThoughts(
     return { thoughts: [], error: "Not authenticated" }
   }
 
-  // Check current active thought count
-  const { count, error: countError } = await supabase
-    .from("gems")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .eq("status", "active")
+  // If any thoughts want to be on Active List, check the limit
+  const wantActiveCount = thoughts.filter(t => t.is_on_active_list).length
+  if (wantActiveCount > 0) {
+    const { count: currentActiveListCount } = await supabase
+      .from("gems")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("is_on_active_list", true)
 
-  if (countError) {
-    return { thoughts: [], error: countError.message }
-  }
-
-  const currentCount = count || 0
-  const availableSlots = MAX_ACTIVE_THOUGHTS - currentCount
-
-  if (availableSlots <= 0) {
-    return {
-      thoughts: [],
-      error: `You have ${MAX_ACTIVE_THOUGHTS} active thoughts. Retire some before adding more.`
-    }
-  }
-
-  if (thoughts.length > availableSlots) {
-    return {
-      thoughts: [],
-      error: `You can only add ${availableSlots} more thought${availableSlots === 1 ? "" : "s"}. You selected ${thoughts.length}.`
+    const availableActiveSlots = MAX_ACTIVE_LIST - (currentActiveListCount || 0)
+    if (wantActiveCount > availableActiveSlots) {
+      return {
+        thoughts: [],
+        error: `Active List is limited to ${MAX_ACTIVE_LIST} thoughts. You have ${availableActiveSlots} slot${availableActiveSlots === 1 ? "" : "s"} available.`
+      }
     }
   }
 
   // Prepare thoughts for insertion
+  // New thoughts default to Passive (is_on_active_list = false)
   const thoughtsToInsert = thoughts.map((thought) => ({
     user_id: user.id,
     content: thought.content,
-    context_tag: thought.context_tag,
+    context_id: thought.context_id || null,
+    context_tag: thought.context_tag || "other",
     source: thought.source || null,
     source_url: thought.source_url || null,
+    is_on_active_list: thought.is_on_active_list ?? false,
     status: "active" as const,
     application_count: 0,
     skip_count: 0,
@@ -188,7 +187,11 @@ export async function graduateThought(
   return { thought: data, error: null }
 }
 
-// Get the daily thought (least recently surfaced active thought)
+/**
+ * Get the daily thought for prompts
+ * IMPORTANT: Only returns thoughts on the Active List (is_on_active_list = true)
+ * This is the core accountability feature - only Active List thoughts surface in daily prompts
+ */
 export async function getDailyThought(): Promise<{ thought: Thought | null; error: string | null }> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -197,24 +200,143 @@ export async function getDailyThought(): Promise<{ thought: Thought | null; erro
     return { thought: null, error: "Not authenticated" }
   }
 
+  // Only get thoughts that are on the Active List
   const { data, error } = await supabase
     .from("gems")
     .select("*")
     .eq("user_id", user.id)
     .eq("status", "active")
+    .eq("is_on_active_list", true)
     .order("last_surfaced_at", { ascending: true, nullsFirst: true })
     .limit(1)
     .single()
 
   if (error) {
     if (error.code === "PGRST116") {
-      // No thoughts found
+      // No thoughts found on Active List
       return { thought: null, error: null }
     }
     return { thought: null, error: error.message }
   }
 
   return { thought: data, error: null }
+}
+
+/**
+ * Toggle a thought's Active List status
+ * Returns error if trying to add when Active List is at limit (10)
+ */
+export async function toggleActiveList(
+  thoughtId: string
+): Promise<{ thought: Thought | null; error: string | null }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { thought: null, error: "Not authenticated" }
+  }
+
+  // Get current thought to check its status
+  const { data: currentThought, error: fetchError } = await supabase
+    .from("gems")
+    .select("*")
+    .eq("id", thoughtId)
+    .eq("user_id", user.id)
+    .single()
+
+  if (fetchError) {
+    if (fetchError.code === "PGRST116") {
+      return { thought: null, error: "Thought not found" }
+    }
+    return { thought: null, error: fetchError.message }
+  }
+
+  const newActiveStatus = !currentThought.is_on_active_list
+
+  // If adding to Active List, check limit
+  if (newActiveStatus) {
+    const { count } = await supabase
+      .from("gems")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("is_on_active_list", true)
+
+    if ((count || 0) >= MAX_ACTIVE_LIST) {
+      return {
+        thought: null,
+        error: `Active List is limited to ${MAX_ACTIVE_LIST} thoughts. Remove one before adding another.`
+      }
+    }
+  }
+
+  // Update the thought
+  const { data, error } = await supabase
+    .from("gems")
+    .update({
+      is_on_active_list: newActiveStatus,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", thoughtId)
+    .eq("user_id", user.id)
+    .select()
+    .single()
+
+  if (error) {
+    return { thought: null, error: error.message }
+  }
+
+  return { thought: data, error: null }
+}
+
+/**
+ * Get the current count of thoughts on the Active List
+ */
+export async function getActiveListCount(): Promise<{ count: number; error: string | null }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { count: 0, error: "Not authenticated" }
+  }
+
+  const { count, error } = await supabase
+    .from("gems")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("is_on_active_list", true)
+
+  if (error) {
+    return { count: 0, error: error.message }
+  }
+
+  return { count: count || 0, error: null }
+}
+
+/**
+ * Get all thoughts for Moments matching
+ * IMPORTANT: Returns ALL thoughts (Active + Passive) from ALL contexts
+ * This is intentional - Moments should search the full wisdom library
+ */
+export async function getAllThoughtsForMoments(): Promise<{ thoughts: Thought[]; error: string | null }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { thoughts: [], error: "Not authenticated" }
+  }
+
+  // Get ALL active thoughts regardless of is_on_active_list or context
+  const { data, error } = await supabase
+    .from("gems")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+
+  if (error) {
+    return { thoughts: [], error: error.message }
+  }
+
+  return { thoughts: data || [], error: null }
 }
 
 // Log a check-in for a thought
