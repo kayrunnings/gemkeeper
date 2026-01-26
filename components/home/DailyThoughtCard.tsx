@@ -1,12 +1,13 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { Thought, CONTEXT_TAG_LABELS, ContextTag } from "@/lib/types/thought"
 import type { ContextWithCount } from "@/lib/types/context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Sun, Lightbulb, ArrowRight } from "lucide-react"
+import { Sun, Lightbulb, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface DailyThoughtCardProps {
@@ -27,6 +28,8 @@ const contextTagVariant: Record<ContextTag, string> = {
 }
 
 export function DailyThoughtCard({ thought, contexts = [], className }: DailyThoughtCardProps) {
+  const [isDismissed, setIsDismissed] = useState(false)
+
   // Look up context by ID or by slug matching context_tag
   const getContext = () => {
     if (!thought) return null
@@ -43,6 +46,10 @@ export function DailyThoughtCard({ thought, contexts = [], className }: DailyTho
 
   const context = getContext()
 
+  if (isDismissed) {
+    return null
+  }
+
   return (
     <Card className={cn("overflow-hidden", className)}>
       <div className="h-1 bg-gradient-to-r from-amber-400 to-orange-500" />
@@ -54,12 +61,15 @@ export function DailyThoughtCard({ thought, contexts = [], className }: DailyTho
             </div>
             <CardTitle className="text-lg">Today&apos;s Thought</CardTitle>
           </div>
-          <Link href="/daily">
-            <Button variant="ghost" size="sm" className="gap-1">
-              Daily Prompt
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1"
+            onClick={() => setIsDismissed(true)}
+          >
+            Dismiss
+            <X className="h-4 w-4" />
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
