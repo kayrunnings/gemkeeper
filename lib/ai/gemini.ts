@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, DynamicRetrievalMode } from "@google/generative-ai"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 import { ContextTag } from "@/lib/types/thought"
 import type { GeneratedDiscovery, DiscoverySourceType, DiscoveryContentType } from "@/lib/types/discovery"
 import type { Context } from "@/lib/types/context"
@@ -196,42 +196,42 @@ export interface DiscoveryGenerationResult {
   tokens_used: number
 }
 
-const DISCOVERY_SYSTEM_PROMPT = `You are a knowledge curator for ThoughtFolio, helping users discover new insights relevant to their interests.
+const DISCOVERY_SYSTEM_PROMPT = `You are a knowledge curator for ThoughtFolio, helping users discover valuable insights and wisdom.
 
-Your task is to find 4 high-quality articles, blog posts, research papers, or videos from the web that contain actionable wisdom.
+Your task is to recommend 4 pieces of wisdom, insights, or knowledge that would be valuable based on the user's interests.
 
-For each piece of content you find:
-1. Extract ONE key insight (max 200 characters) - a concise, memorable phrase
-2. Provide the source title and REAL working URL (verify it exists)
-3. Write a 2-3 sentence summary of the article
-4. Explain why this is relevant to the user's interests
-5. Classify as "trending" (published recently, current events) or "evergreen" (timeless wisdom)
+For each recommendation:
+1. Create ONE key insight (max 200 characters) - a concise, memorable, actionable phrase
+2. Attribute it to a real source (book, thought leader, research, article)
+3. Write a 2-3 sentence explanation of why this insight is valuable
+4. Explain how it relates to the user's interests
+5. Classify as "trending" (contemporary/modern) or "evergreen" (timeless wisdom)
 6. Suggest which context it fits best (from the available contexts)
 
-IMPORTANT:
-- Only include REAL, verifiable URLs from actual websites
-- Prefer high-quality sources (reputable publications, research, expert blogs)
-- Focus on actionable insights, not just interesting facts
-- Match content to the user's context areas and existing interests
+Focus on:
+- Actionable wisdom that can be applied in daily life
+- Insights from reputable sources (books, research, experts)
+- Practical advice relevant to the user's contexts
+- A mix of classic wisdom and modern insights
 
 Return valid JSON only, no markdown code blocks:
 {
   "discoveries": [
     {
-      "thought_content": "The key insight extracted (max 200 chars)",
-      "source_title": "Article or video title",
-      "source_url": "https://actual-url.com/article",
+      "thought_content": "The key insight (max 200 chars)",
+      "source_title": "Book title, article, or source name",
+      "source_url": "https://example.com/source",
       "source_type": "article|video|research|blog",
-      "article_summary": "2-3 sentence summary of the content",
+      "article_summary": "2-3 sentence explanation of the insight",
       "relevance_reason": "Why this is relevant to the user",
       "content_type": "trending|evergreen",
-      "suggested_context_slug": "meetings|feedback|conflict|focus|health|relationships|parenting|other"
+      "suggested_context_slug": "the-context-slug"
     }
   ]
 }`
 
 /**
- * Generate discoveries using Gemini with Google Search grounding
+ * Generate discoveries using Gemini
  */
 export async function generateDiscoveries(
   mode: "curated" | "directed",
@@ -240,23 +240,12 @@ export async function generateDiscoveries(
   query?: string,
   specificContextId?: string
 ): Promise<DiscoveryGenerationResult> {
-  // Use the model with Google Search grounding
   const model = genAI.getGenerativeModel({
     model: "gemini-2.0-flash-001",
     generationConfig: {
       responseMimeType: "application/json",
       maxOutputTokens: 2048,
     },
-    tools: [
-      {
-        googleSearchRetrieval: {
-          dynamicRetrievalConfig: {
-            mode: DynamicRetrievalMode.MODE_DYNAMIC,
-            dynamicThreshold: 0.3,
-          },
-        },
-      },
-    ],
   })
 
   // Build context information
@@ -307,7 +296,7 @@ ${contextList}
 
 ${thoughtSamples}
 
-Search the web and find 4 high-quality discoveries. Return them as JSON.`
+Recommend 4 high-quality insights from books, research, or expert sources. Return them as JSON.`
 
   try {
     const result = await model.generateContent([
