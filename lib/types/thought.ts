@@ -1,13 +1,5 @@
-// Context tag options for categorizing thoughts
-export type ContextTag =
-  | "meetings"
-  | "feedback"
-  | "conflict"
-  | "focus"
-  | "health"
-  | "relationships"
-  | "parenting"
-  | "other"
+// Context type re-export for convenience
+export type { Context, ContextWithCount } from "./context"
 
 // Status of a thought in the lifecycle
 export type ThoughtStatus = "active" | "retired" | "graduated"
@@ -19,6 +11,11 @@ export interface Thought {
   content: string
   source: string | null
   source_url: string | null
+  // New: Foreign key to contexts table
+  context_id: string | null
+  // New: Whether thought is on the Active List for daily prompts
+  is_on_active_list: boolean
+  // Legacy fields (deprecated, kept for backwards compat)
   context_tag: ContextTag
   custom_context: string | null
   status: ThoughtStatus
@@ -37,9 +34,26 @@ export interface CreateThoughtInput {
   content: string
   source?: string
   source_url?: string
-  context_tag: ContextTag
+  // New: Use context_id for new thoughts
+  context_id?: string
+  // New: Whether to add to Active List (defaults to false - Passive)
+  is_on_active_list?: boolean
+  // Legacy fields (deprecated, kept for backwards compat)
+  context_tag?: ContextTag
   custom_context?: string
 }
+
+// Legacy context tag type (deprecated - use Context from context.ts instead)
+// Kept for backwards compatibility during migration
+export type ContextTag =
+  | "meetings"
+  | "feedback"
+  | "conflict"
+  | "focus"
+  | "health"
+  | "relationships"
+  | "parenting"
+  | "other"
 
 // Display labels for context tags
 export const CONTEXT_TAG_LABELS: Record<ContextTag, string> = {
@@ -65,11 +79,15 @@ export const CONTEXT_TAG_COLORS: Record<ContextTag, string> = {
   other: "bg-gray-100 text-gray-800 border-gray-200",
 }
 
-// Maximum number of active thoughts allowed
-export const MAX_ACTIVE_THOUGHTS = 10
+// Maximum number of thoughts on Active List (for daily prompts)
+// This is a hard limit enforced by database trigger
+export const MAX_ACTIVE_LIST = 10
+
+// Legacy constant name (deprecated, use MAX_ACTIVE_LIST)
+export const MAX_ACTIVE_THOUGHTS = MAX_ACTIVE_LIST
 
 // Legacy aliases for backward compatibility during migration
 export type Gem = Thought
 export type GemStatus = ThoughtStatus
 export type CreateGemInput = CreateThoughtInput
-export const MAX_ACTIVE_GEMS = MAX_ACTIVE_THOUGHTS
+export const MAX_ACTIVE_GEMS = MAX_ACTIVE_LIST
