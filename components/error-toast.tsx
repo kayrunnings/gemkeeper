@@ -146,10 +146,10 @@ const toastIcons = {
 }
 
 const toastStyles = {
-  error: "bg-destructive/10 border-destructive/20 text-destructive",
-  success: "bg-success/10 border-success/20 text-success",
-  info: "bg-primary/10 border-primary/20 text-primary",
-  warning: "bg-warning/10 border-warning/20 text-warning",
+  error: "bg-destructive/20 border-destructive/30 text-destructive backdrop-blur-xl",
+  success: "bg-success/20 border-success/30 text-success backdrop-blur-xl",
+  info: "bg-primary/20 border-primary/30 text-primary backdrop-blur-xl",
+  warning: "bg-warning/20 border-warning/30 text-warning backdrop-blur-xl",
 }
 
 interface ToastItemProps {
@@ -171,9 +171,10 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
   return (
     <div
       className={cn(
-        "flex items-start gap-3 p-4 rounded-xl border shadow-lg animate-in max-w-sm",
+        "flex items-start gap-3 p-4 rounded-xl border shadow-lg animate-in max-w-sm transition-all",
         toastStyles[toast.type]
       )}
+      style={{ WebkitBackdropFilter: "blur(24px)" }}
     >
       <Icon className="h-5 w-5 shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
