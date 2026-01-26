@@ -125,12 +125,12 @@ export function ThoughtForm({ isOpen, onClose, onThoughtCreated, currentThoughtC
         <div className="space-y-4 py-4">
           {/* Error message for limit */}
           {isAtLimit && (
-            <div className="flex items-start gap-2 p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800">
+            <div className="flex items-start gap-2 p-3 rounded-xl bg-warning/10 border border-warning/20 text-warning">
               <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
               <div className="text-sm">
                 <p className="font-medium">Maximum thoughts reached</p>
-                <p className="mt-1">
-                  You have {MAX_ACTIVE_THOUGHTS} active thoughts. Please retire or graduate a thought
+                <p className="mt-1 opacity-80">
+                  You have {currentThoughtCount} active thoughts. Please retire or graduate a thought
                   before adding a new one.
                 </p>
               </div>
@@ -139,7 +139,7 @@ export function ThoughtForm({ isOpen, onClose, onThoughtCreated, currentThoughtC
 
           {/* General error */}
           {error && !isAtLimit && (
-            <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive">
+            <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive">
               <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
               <p className="text-sm">{error}</p>
             </div>

@@ -214,21 +214,21 @@ export function ThoughtDetail({ thought, onThoughtUpdated, onThoughtRetired, onT
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4 py-4 border-y">
             <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-green-600 mb-1">
+              <div className="flex items-center justify-center gap-1 text-success mb-1">
                 <CheckCircle className="h-4 w-4" />
                 <span className="text-lg font-semibold">{thought.application_count}</span>
               </div>
               <p className="text-xs text-muted-foreground">Applications</p>
             </div>
             <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-amber-600 mb-1">
+              <div className="flex items-center justify-center gap-1 text-warning mb-1">
                 <XCircle className="h-4 w-4" />
                 <span className="text-lg font-semibold">{thought.skip_count}</span>
               </div>
               <p className="text-xs text-muted-foreground">Skips</p>
             </div>
             <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-blue-600 mb-1">
+              <div className="flex items-center justify-center gap-1 text-info mb-1">
                 <Calendar className="h-4 w-4" />
               </div>
               <p className="text-xs text-muted-foreground">{formatDate(thought.created_at)}</p>
@@ -352,7 +352,7 @@ export function ThoughtDetail({ thought, onThoughtUpdated, onThoughtRetired, onT
                         <Badge
                           key={schedule.id}
                           variant="outline"
-                          className="bg-blue-50 text-blue-700 border-blue-200"
+                          className="bg-info/10 text-info border-info/30"
                         >
                           {schedule.human_readable}
                         </Badge>

@@ -492,7 +492,7 @@ export default function ThoughtsPage() {
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         onThoughtCreated={handleThoughtCreated}
-        currentThoughtCount={thoughtCount}
+        currentThoughtCount={activeListCount}
       />
 
       {/* Extract thoughts modal */}
@@ -500,7 +500,7 @@ export default function ThoughtsPage() {
         isOpen={isExtractModalOpen}
         onClose={() => setIsExtractModalOpen(false)}
         onThoughtsCreated={handleThoughtsExtracted}
-        activeThoughtCount={thoughtCount}
+        activeThoughtCount={activeListCount}
         hasAIConsent={hasAIConsent}
       />
 

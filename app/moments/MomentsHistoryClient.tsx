@@ -118,8 +118,8 @@ export function MomentsHistoryClient({ initialMoments }: MomentsHistoryClientPro
                     className={cn(
                       "text-xs",
                       moment.source === 'calendar'
-                        ? "bg-blue-50 text-blue-700 border-blue-200"
-                        : "bg-amber-50 text-amber-700 border-amber-200"
+                        ? "bg-info/10 text-info border-info/30"
+                        : "bg-warning/10 text-warning border-warning/30"
                     )}
                   >
                     {moment.source === 'calendar' ? (
