@@ -98,6 +98,41 @@ This document tracks key product and technical decisions with their rationale. C
 
 ---
 
+### 2025-01-25: Thought Status Model Clarification
+
+**Decision:** Four explicit statuses + separate Active List boolean:
+
+| Status | Meaning | Visible In |
+|--------|---------|------------|
+| `active` | Available thought | Thoughts page |
+| `passive` | Available but dormant | Thoughts page (filtered) |
+| `retired` | Archived, historical | Retired page |
+| `graduated` | Applied 5+ times, mastered | ThoughtBank |
+
+`is_on_active_list` (boolean) is separate — controls daily prompt inclusion (max 10).
+
+**Rationale:** 
+- Status = lifecycle state (where is this thought in its journey?)
+- Active List = engagement choice (am I focusing on this now?)
+- These are orthogonal concerns and should remain separate
+- Clear user mental model: status is "what kind of thought is this", Active List is "am I working on this now"
+
+**Consequences:**
+- UI needs filter tabs: All / Active List / Passive
+- Retired page needed for archived thoughts
+- Delete = hard delete (row removed from database)
+- Constraint updated: `CHECK (status IN ('active', 'passive', 'retired', 'graduated'))`
+- Thoughts page only shows `status IN ('active', 'passive')`
+- Moments searches only `status IN ('active', 'passive')`
+- Daily prompts only pull `is_on_active_list = true AND status IN ('active', 'passive')`
+
+**Alternatives Considered:**
+- Single status field with "active_list" as a status → Rejected: conflates lifecycle with engagement
+- No passive status (just active/retired/graduated) → Rejected: need distinction between "available" and "dormant"
+- Soft delete instead of hard delete → Rejected: user expects delete to mean delete
+
+---
+
 ## Technical Decisions
 
 ### 2024-XX-XX: Google Gemini API Over Anthropic
