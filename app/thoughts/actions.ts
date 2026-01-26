@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
-import { Thought, CreateThoughtInput, MAX_ACTIVE_THOUGHTS } from "@/lib/types/thought"
+import { Thought, CreateThoughtInput } from "@/lib/types/thought"
 
 export async function getActiveThoughts(): Promise<{ thoughts: Thought[]; error: string | null }> {
   const supabase = await createClient()
@@ -57,23 +57,9 @@ export async function createThought(input: CreateThoughtInput): Promise<{ though
     return { error: "Not authenticated", thought: null }
   }
 
-  // Check the thought limit before inserting (counts active and passive)
-  const { count, error: countError } = await supabase
-    .from("gems")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .in("status", ["active", "passive"])
-
-  if (countError) {
-    return { error: countError.message, thought: null }
-  }
-
-  if ((count ?? 0) >= MAX_ACTIVE_THOUGHTS) {
-    return {
-      error: `You've reached the maximum of ${MAX_ACTIVE_THOUGHTS} active thoughts. Please retire or graduate a thought before adding a new one.`,
-      thought: null,
-    }
-  }
+  // Note: No limit on total thoughts. The Active List limit (10) is enforced
+  // separately when adding thoughts to the Active List via toggleActiveList().
+  // New thoughts are created with is_on_active_list = false (Passive) by default.
 
   const { data, error } = await supabase
     .from("gems")

@@ -251,7 +251,7 @@ Core feature table for knowledge/insights. Note: Database table is named `gems` 
 | `retired` | Archived, kept for historical record | Retired page |
 | `graduated` | Applied 5+ times, mastered | ThoughtBank |
 
-**Active List:** Controlled by `is_on_active_list` boolean. Maximum 10 thoughts with `is_on_active_list = true` (enforced by trigger). Only thoughts with `status IN ('active', 'passive')` can be on the Active List.
+**Active List:** Controlled by `is_on_active_list` boolean. Maximum 10 thoughts with `is_on_active_list = true`. Limit is enforced in application code via `toggleActiveList()` function in `lib/thoughts.ts`. Only thoughts with `status IN ('active', 'passive')` can be on the Active List. New thoughts are created with `is_on_active_list = false` by default (Passive), so there is no limit on total thoughts — only on how many can be on the Active List at once.
 
 **Deletion:** Hard delete (row removed from database). No soft delete.
 
@@ -827,7 +827,7 @@ generateDiscoveries(mode: 'curated' | 'directed', contexts: Context[], existingT
 - Users can only access their own data
 - OAuth tokens encrypted at rest
 - API keys in environment variables only
-- Active List limit enforced at database level via trigger
+- Active List limit (10 max) enforced at application level via `toggleActiveList()` in `lib/thoughts.ts`
 
 ---
 

@@ -6,7 +6,6 @@ import {
   CreateThoughtInput,
   ContextTag,
   CONTEXT_TAG_LABELS,
-  MAX_ACTIVE_THOUGHTS,
 } from "@/lib/types/thought"
 import {
   Dialog,
@@ -46,10 +45,9 @@ interface ThoughtFormProps {
   isOpen: boolean
   onClose: () => void
   onThoughtCreated: (thought: Thought) => void
-  currentThoughtCount: number
 }
 
-export function ThoughtForm({ isOpen, onClose, onThoughtCreated, currentThoughtCount }: ThoughtFormProps) {
+export function ThoughtForm({ isOpen, onClose, onThoughtCreated }: ThoughtFormProps) {
   const [content, setContent] = useState("")
   const [source, setSource] = useState("")
   const [sourceUrl, setSourceUrl] = useState("")
@@ -58,14 +56,14 @@ export function ThoughtForm({ isOpen, onClose, onThoughtCreated, currentThoughtC
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const isAtLimit = currentThoughtCount >= MAX_ACTIVE_THOUGHTS
   const contentLength = content.length
   const isContentTooLong = contentLength > MAX_CONTENT_LENGTH
+  // New thoughts go to Passive by default, so no limit on total thoughts
+  // The Active List limit (10) is enforced when adding to Active List
   const canSubmit =
     content.trim() &&
     contextTag &&
     !isContentTooLong &&
-    !isAtLimit &&
     !isSubmitting &&
     (contextTag !== "other" || customContext.trim())
 
@@ -123,22 +121,8 @@ export function ThoughtForm({ isOpen, onClose, onThoughtCreated, currentThoughtC
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Error message for limit */}
-          {isAtLimit && (
-            <div className="flex items-start gap-2 p-3 rounded-xl bg-warning/10 border border-warning/20 text-warning">
-              <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-medium">Maximum thoughts reached</p>
-                <p className="mt-1 opacity-80">
-                  You have {currentThoughtCount} active thoughts. Please retire or graduate a thought
-                  before adding a new one.
-                </p>
-              </div>
-            </div>
-          )}
-
           {/* General error */}
-          {error && !isAtLimit && (
+          {error && (
             <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive">
               <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
               <p className="text-sm">{error}</p>
@@ -159,7 +143,6 @@ export function ThoughtForm({ isOpen, onClose, onThoughtCreated, currentThoughtC
                 "min-h-[120px] resize-y",
                 isContentTooLong && "border-destructive focus-visible:ring-destructive"
               )}
-              disabled={isAtLimit}
             />
             <p
               className={cn(
@@ -181,7 +164,6 @@ export function ThoughtForm({ isOpen, onClose, onThoughtCreated, currentThoughtC
                 <Button
                   variant="outline"
                   className="w-full justify-between"
-                  disabled={isAtLimit}
                 >
                   {contextTag ? CONTEXT_TAG_LABELS[contextTag] : "Select a context..."}
                   <ChevronDown className="h-4 w-4 opacity-50" />
@@ -216,7 +198,6 @@ export function ThoughtForm({ isOpen, onClose, onThoughtCreated, currentThoughtC
                 value={customContext}
                 onChange={(e) => setCustomContext(e.target.value)}
                 maxLength={50}
-                disabled={isAtLimit}
               />
             </div>
           )}
@@ -230,7 +211,6 @@ export function ThoughtForm({ isOpen, onClose, onThoughtCreated, currentThoughtC
               value={source}
               onChange={(e) => setSource(e.target.value)}
               maxLength={200}
-              disabled={isAtLimit}
             />
           </div>
 
@@ -243,7 +223,6 @@ export function ThoughtForm({ isOpen, onClose, onThoughtCreated, currentThoughtC
               placeholder="https://..."
               value={sourceUrl}
               onChange={(e) => setSourceUrl(e.target.value)}
-              disabled={isAtLimit}
             />
           </div>
         </div>
