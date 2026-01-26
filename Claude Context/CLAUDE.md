@@ -31,7 +31,7 @@ Before starting work, read these files in `Claude Context/`:
 
 ## Current Work
 
-Check `/tasks/` for active task files. Each file represents a scoped body of work.
+Check `/Tasks/` for active task files. Each file represents a scoped body of work.
 
 **When starting a session:**
 1. Ask which task file to work from, OR
