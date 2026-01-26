@@ -29,12 +29,12 @@ export default async function PreparePage({ params }: PreparePageProps) {
     notFound()
   }
 
-  // Fetch matched gems with gem data
+  // Fetch matched gems with thought data
   const { data: momentGems } = await supabase
     .from("moment_gems")
     .select(`
       *,
-      gem:gems(*)
+      thought:gems(*)
     `)
     .eq("moment_id", id)
     .eq("user_id", user.id)

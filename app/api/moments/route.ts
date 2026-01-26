@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
       .from("moment_gems")
       .select(`
         *,
-        gem:gems(*)
+        thought:gems(*)
       `)
       .eq("moment_id", moment.id)
       .order("relevance_score", { ascending: false })
