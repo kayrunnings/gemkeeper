@@ -27,7 +27,6 @@ import {
   FileText,
 } from "lucide-react"
 import { ExtractedThoughtCard, ExtractedThought } from "./extracted-thought-card"
-import { MAX_ACTIVE_THOUGHTS } from "@/lib/types/thought"
 import { AIConsentModal } from "./ai-consent-modal"
 import { grantAIConsent } from "@/app/settings/actions"
 
@@ -35,7 +34,6 @@ interface ExtractThoughtsModalProps {
   isOpen: boolean
   onClose: () => void
   onThoughtsCreated: () => void
-  activeThoughtCount: number
   hasAIConsent: boolean
 }
 
@@ -60,7 +58,6 @@ export function ExtractThoughtsModal({
   isOpen,
   onClose,
   onThoughtsCreated,
-  activeThoughtCount,
   hasAIConsent,
 }: ExtractThoughtsModalProps) {
   const [step, setStep] = useState<Step>("input")
@@ -79,9 +76,9 @@ export function ExtractThoughtsModal({
   const [showConsentModal, setShowConsentModal] = useState(false)
   const [consentGranted, setConsentGranted] = useState(hasAIConsent)
 
-  const availableSlots = MAX_ACTIVE_THOUGHTS - activeThoughtCount
   const selectedCount = selectedThoughts.size
-  const canSave = selectedCount > 0 && selectedCount <= availableSlots
+  // No limit on total thoughts - new thoughts go to Passive by default
+  const canSave = selectedCount > 0
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -628,15 +625,6 @@ export function ExtractThoughtsModal({
                   </p>
                 </div>
 
-                {selectedCount > availableSlots && (
-                  <div className="flex items-start gap-2 p-3 rounded-xl bg-warning/10 border border-warning/20 text-warning">
-                    <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-                    <p className="text-sm">
-                      You have {activeThoughtCount}/{MAX_ACTIVE_THOUGHTS} active thoughts. You
-                      can save up to {availableSlots} more.
-                    </p>
-                  </div>
-                )}
 
                 <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2">
                   {extractedThoughts.map((thought, i) => (

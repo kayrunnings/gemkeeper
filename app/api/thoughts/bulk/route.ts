@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { ContextTag, MAX_ACTIVE_THOUGHTS } from "@/lib/types/thought"
+import { ContextTag } from "@/lib/types/thought"
 
 interface BulkThoughtInput {
   content: string
@@ -45,41 +45,8 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Check current active/passive thought count
-  const { count, error: countError } = await supabase
-    .from("gems")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .in("status", ["active", "passive"])
-
-  if (countError) {
-    return NextResponse.json({ error: countError.message }, { status: 500 })
-  }
-
-  const currentCount = count || 0
-  const availableSlots = MAX_ACTIVE_THOUGHTS - currentCount
-
-  if (availableSlots <= 0) {
-    return NextResponse.json(
-      {
-        error: `You have ${MAX_ACTIVE_THOUGHTS} active thoughts. Retire some before adding more.`,
-        currentCount,
-        availableSlots: 0,
-      },
-      { status: 400 }
-    )
-  }
-
-  if (thoughts.length > availableSlots) {
-    return NextResponse.json(
-      {
-        error: `You can only add ${availableSlots} more thought${availableSlots === 1 ? "" : "s"}. You selected ${thoughts.length}.`,
-        currentCount,
-        availableSlots,
-      },
-      { status: 400 }
-    )
-  }
+  // Note: No limit on total thoughts. New thoughts are created as Passive by default.
+  // The Active List limit (10) is enforced when adding to Active List via toggleActiveList().
 
   // Prepare thoughts for insertion
   const thoughtsToInsert = thoughts.map((thought) => ({
