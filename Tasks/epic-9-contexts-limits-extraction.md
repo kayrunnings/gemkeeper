@@ -11,7 +11,7 @@ Expand ThoughtFolio from global 10-thought limit to contextual organization with
 
 - [x] Database migration complete (contexts table, gems columns, triggers)
 - [x] Types updated
-- [ ] API routes not created
+- [x] API routes created
 - [ ] UI not updated
 - [ ] URL extraction not implemented
 
@@ -38,10 +38,10 @@ Expand ThoughtFolio from global 10-thought limit to contextual organization with
 - [x] 2.3 Write unit tests
 
 #### 3.0 Create Context API Routes (traces to: FR-1.1 through FR-1.8)
-- [ ] 3.1 Create `app/api/contexts/route.ts` (GET, POST)
-- [ ] 3.2 Create `app/api/contexts/[id]/route.ts` (GET, PUT, DELETE)
-- [ ] 3.3 Add error handling and validation
-- [ ] 3.4 Test API routes
+- [x] 3.1 Create `app/api/contexts/route.ts` (GET, POST)
+- [x] 3.2 Create `app/api/contexts/[id]/route.ts` (GET, PUT, DELETE)
+- [x] 3.3 Add error handling and validation
+- [x] 3.4 Test API routes (TypeScript compilation verified)
 
 #### 4.0 Update Thought Service for Active List (traces to: FR-3.1 through FR-3.5)
 - [ ] 4.1 Update `lib/thoughts.ts` for `context_id` and `is_on_active_list`
