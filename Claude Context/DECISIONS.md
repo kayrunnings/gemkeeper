@@ -246,6 +246,30 @@ This document tracks key product and technical decisions with their rationale. C
 
 ---
 
+### 2026-01-26: Bug Fix - Total Thought Limit Removal
+
+**Decision:** Remove the incorrect total thought limit from thought creation endpoints.
+
+**Bug Description:** The `createThought` server action and bulk creation endpoints were incorrectly counting ALL thoughts with `status IN ('active', 'passive')` and blocking new thought creation when the count reached 10. This was wrong — the limit of 10 should only apply to the **Active List** (`is_on_active_list = true`), not total thoughts.
+
+**Root Cause:** Remnant code from an older design where there was a hard limit of 10 total thoughts. The current design allows unlimited total thoughts with only the Active List constrained to 10.
+
+**Files Fixed:**
+- `app/thoughts/actions.ts` - Removed limit check from `createThought`
+- `app/api/thoughts/bulk/route.ts` - Removed limit check
+- `app/api/gems/bulk/route.ts` - Removed limit check (legacy endpoint)
+- `components/thought-form.tsx` - Removed client-side limit UI
+- `components/extract-thoughts-modal.tsx` - Removed limit warning
+
+**Correct Behavior:**
+- Users can create **unlimited thoughts** (they go to Passive by default)
+- Active List limit of 10 is enforced **only** in `toggleActiveList()` when adding a thought to the Active List
+- New thoughts are created with `is_on_active_list = false` by default
+
+**Lesson Learned:** When refactoring from a constrained model (10 total thoughts) to a more flexible model (unlimited total, 10 Active List), ensure all code paths are updated — not just the primary ones.
+
+---
+
 ## Technical Decisions
 
 ### 2024-XX-XX: Google Gemini API Over Anthropic
