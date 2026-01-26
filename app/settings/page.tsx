@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, LogOut, RefreshCw, Settings as SettingsIcon, Sparkles, AlertCircle } from "lucide-react"
+import { Loader2, LogOut, RefreshCw, Settings as SettingsIcon, Sparkles, AlertCircle, Palette } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { grantAIConsent, revokeAIConsent } from "./actions"
 import { AIConsentModal } from "@/components/ai-consent-modal"
@@ -16,6 +16,106 @@ import { LayoutShell } from "@/components/layout-shell"
 import { CalendarSettings } from "@/components/settings/CalendarSettings"
 import { ContextSettings } from "@/components/settings/ContextSettings"
 import { useToast } from "@/components/error-toast"
+import { useUITheme, UI_THEMES, UI_THEME_INFO, UITheme } from "@/lib/ui-theme-context"
+import { useTheme, THEMES, THEME_INFO, Theme } from "@/components/theme-provider"
+import { cn } from "@/lib/utils"
+
+// Appearance Settings Component
+function AppearanceSettings() {
+  const { theme, setTheme } = useTheme()
+  const { uiTheme, setUITheme } = useUITheme()
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Palette className="h-5 w-5" />
+          Appearance
+        </CardTitle>
+        <CardDescription>Customize the look and feel of ThoughtFolio</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* UI Style Toggle */}
+        <div className="space-y-3">
+          <Label>UI Style</Label>
+          <p className="text-xs text-muted-foreground">
+            Choose between modern glass effects or traditional solid backgrounds
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {UI_THEMES.map((style) => (
+              <button
+                key={style}
+                onClick={() => setUITheme(style)}
+                className={cn(
+                  "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                  uiTheme === style
+                    ? "border-primary bg-primary/10"
+                    : "border-[var(--glass-card-border)] hover:border-[var(--glass-hover-border)] hover:bg-[var(--glass-hover-bg)]"
+                )}
+              >
+                <div
+                  className={cn(
+                    "w-12 h-8 rounded-lg",
+                    style === "glass"
+                      ? "bg-gradient-to-br from-white/20 to-white/5 backdrop-blur border border-white/20"
+                      : "bg-card border border-border"
+                  )}
+                />
+                <span className="text-sm font-medium">{UI_THEME_INFO[style].name}</span>
+                <span className="text-xs text-muted-foreground text-center">
+                  {UI_THEME_INFO[style].description}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Color Theme Selector */}
+        <div className="space-y-3">
+          <Label>Color Theme</Label>
+          <p className="text-xs text-muted-foreground">
+            Choose your preferred color palette
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {THEMES.map((t) => (
+              <button
+                key={t}
+                onClick={() => setTheme(t)}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all",
+                  theme === t
+                    ? "border-primary bg-primary/10"
+                    : "border-[var(--glass-card-border)] hover:border-[var(--glass-hover-border)] hover:bg-[var(--glass-hover-bg)]"
+                )}
+              >
+                <div
+                  className="w-6 h-6 rounded-full border-2 border-white/20"
+                  style={{
+                    background: getThemeColor(t),
+                  }}
+                />
+                <span className="text-xs font-medium">{THEME_INFO[t].name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Helper to get theme accent color for preview
+function getThemeColor(theme: Theme): string {
+  const colors: Record<Theme, string> = {
+    midnight: "#f97316",
+    obsidian: "#10b981",
+    amethyst: "#a78bfa",
+    ocean: "#3b82f6",
+    ruby: "#f43f5e",
+    sunrise: "#f59e0b",
+  }
+  return colors[theme]
+}
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -289,6 +389,9 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Appearance Card */}
+          <AppearanceSettings />
 
           {/* Context Management */}
           <ContextSettings />
