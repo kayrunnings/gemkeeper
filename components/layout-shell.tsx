@@ -33,6 +33,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: "/home", label: "Home", icon: Home },
   { href: "/thoughts", label: "Thoughts", icon: Gem },
+  { href: "/dashboard", label: "Notes", icon: StickyNote },
   { href: "/daily", label: "Daily Prompt", icon: Sun },
   { href: "/checkin", label: "Check-in", icon: Moon },
   { href: "/thought-bank", label: "ThoughtBank", icon: Trophy },
@@ -40,7 +41,6 @@ const navItems: NavItem[] = [
 
 const secondaryNavItems: NavItem[] = [
   { href: "/retired", label: "Retired", icon: Archive },
-  { href: "/dashboard", label: "Notes", icon: StickyNote },
   { href: "/settings", label: "Settings", icon: Settings },
 ]
 

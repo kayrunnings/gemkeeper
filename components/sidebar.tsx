@@ -136,15 +136,15 @@ export function Sidebar({
   }, [isCreatingFolder, editingFolderId])
 
   return (
-    <aside className="w-64 border-r bg-muted/30 p-4 flex flex-col gap-1 h-full overflow-y-auto">
+    <aside className="w-64 border-r border-[var(--glass-sidebar-border)] bg-[var(--glass-sidebar-bg)] backdrop-blur-xl p-4 flex flex-col gap-1 h-full overflow-y-auto">
       {/* All Notes */}
       <button
         onClick={() => onFilterSelect("all")}
         className={cn(
-          "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-left",
+          "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 w-full text-left",
           isSelected("all")
-            ? "bg-primary text-primary-foreground"
-            : "hover:bg-muted text-foreground"
+            ? "glass-button-primary text-primary-foreground shadow-sm"
+            : "hover:bg-[var(--glass-hover-bg)] text-foreground"
         )}
       >
         <StickyNote className="h-4 w-4" />
@@ -153,7 +153,7 @@ export function Sidebar({
       </button>
 
       {/* Divider */}
-      <div className="my-2 border-t" />
+      <div className="my-2 border-t border-[var(--glass-sidebar-border)]" />
 
       {/* Folders section header */}
       <div className="flex items-center justify-between px-3 py-1">
@@ -280,10 +280,10 @@ export function Sidebar({
                   handleStartRename(folder)
                 }}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-left pr-8",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 w-full text-left pr-8",
                   isSelected({ folderId: folder.id })
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted text-foreground"
+                    ? "glass-button-primary text-primary-foreground shadow-sm"
+                    : "hover:bg-[var(--glass-hover-bg)] text-foreground"
                 )}
               >
                 <FolderIcon className="h-4 w-4" />
@@ -337,16 +337,16 @@ export function Sidebar({
       )}
 
       {/* Divider */}
-      <div className="my-2 border-t" />
+      <div className="my-2 border-t border-[var(--glass-sidebar-border)]" />
 
       {/* Unfiled */}
       <button
         onClick={() => onFilterSelect("unfiled")}
         className={cn(
-          "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-left",
+          "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 w-full text-left",
           isSelected("unfiled")
-            ? "bg-primary text-primary-foreground"
-            : "hover:bg-muted text-foreground"
+            ? "glass-button-primary text-primary-foreground shadow-sm"
+            : "hover:bg-[var(--glass-hover-bg)] text-foreground"
         )}
       >
         <FileX className="h-4 w-4" />
@@ -355,12 +355,12 @@ export function Sidebar({
       </button>
 
       {/* Divider */}
-      <div className="my-2 border-t" />
+      <div className="my-2 border-t border-[var(--glass-sidebar-border)]" />
 
       {/* Thoughts link */}
       <Link
         href="/thoughts"
-        className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-left hover:bg-muted text-foreground"
+        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 w-full text-left hover:bg-[var(--glass-hover-bg)] text-foreground"
       >
         <Gem className="h-4 w-4" />
         <span className="flex-1">Thoughts</span>

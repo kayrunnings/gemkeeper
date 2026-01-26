@@ -85,8 +85,8 @@ export function NoteCard({
         </CardContent>
       </div>
 
-      {/* Action buttons - show on hover */}
-      <div className="absolute bottom-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Action buttons - always visible on mobile, hover on desktop */}
+      <div className="absolute bottom-3 right-3 flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-[var(--glass-card-bg)] backdrop-blur-sm rounded-lg p-1 border border-[var(--glass-card-border)]">
         {/* Move to folder dropdown */}
         {onMoveToFolder && folders.length > 0 && (
           <DropdownMenu>
