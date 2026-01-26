@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         moment: {
           ...moment,
-          matched_gems: [],
+          matched_thoughts: [],
         } as MomentWithGems
       })
     }
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         moment: {
           ...moment,
-          matched_gems: [],
+          matched_thoughts: [],
         } as MomentWithGems
       })
     }
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       moment: {
         ...(fullMoment || moment),
-        matched_gems: momentGemRecords || [],
+        matched_thoughts: momentGemRecords || [],
       } as MomentWithGems
     })
   } catch (error) {

@@ -42,7 +42,7 @@ export default async function PreparePage({ params }: PreparePageProps) {
 
   const momentWithGems: MomentWithGems = {
     ...moment,
-    matched_gems: momentGems || [],
+    matched_thoughts: momentGems || [],
   }
 
   return (

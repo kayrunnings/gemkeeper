@@ -18,7 +18,7 @@ describe('MomentEntryModal', () => {
           id: '123',
           description: 'Test moment',
           gems_matched_count: 2,
-          matched_gems: [
+          matched_thoughts: [
             { gem_id: '1', relevance_score: 0.9 },
             { gem_id: '2', relevance_score: 0.8 },
           ],
@@ -145,7 +145,7 @@ describe('MomentEntryModal', () => {
           id: '123',
           description: 'Test moment',
           gems_matched_count: 0,
-          matched_gems: [],
+          matched_thoughts: [],
         },
       }),
     })
