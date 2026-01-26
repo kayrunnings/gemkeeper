@@ -1,8 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { Gem, CONTEXT_TAG_LABELS, MAX_ACTIVE_GEMS, ContextTag } from "@/lib/types/gem"
+import { Gem, CONTEXT_TAG_LABELS, ContextTag } from "@/lib/types/gem"
+import { MAX_ACTIVE_LIST } from "@/lib/types/thought"
+import type { ContextWithCount } from "@/lib/types/context"
 import { GemForm } from "@/components/gem-form"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -11,9 +13,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, Gem as GemIcon, Loader2, MoreHorizontal, Trash2, CheckCircle, Sparkles, AlertCircle } from "lucide-react"
+import { Plus, Gem as GemIcon, MoreHorizontal, Trash2, CheckCircle, Sparkles, AlertCircle, Star, StarOff, Filter, ChevronDown } from "lucide-react"
 import { ExtractGemsModal } from "@/components/extract-gems-modal"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
@@ -21,8 +24,13 @@ import Link from "next/link"
 import { LayoutShell } from "@/components/layout-shell"
 import { useToast } from "@/components/error-toast"
 import { MomentFAB } from "@/components/moments/MomentFAB"
+import { toggleActiveList, getActiveListCount } from "@/lib/thoughts"
+import { getContexts } from "@/lib/contexts"
 
-// Map context tags to badge variants
+// Filter types
+type ActiveFilter = "all" | "active" | "passive"
+
+// Map context tags to badge variants (legacy, kept for backwards compat)
 const contextTagVariant: Record<ContextTag, string> = {
   meetings: "meetings",
   feedback: "feedback",
@@ -41,6 +49,10 @@ export default function GemsPage() {
   const [isExtractModalOpen, setIsExtractModalOpen] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [hasAIConsent, setHasAIConsent] = useState(false)
+  const [activeFilter, setActiveFilter] = useState<ActiveFilter>("all")
+  const [contextFilter, setContextFilter] = useState<string | null>(null)
+  const [contexts, setContexts] = useState<ContextWithCount[]>([])
+  const [activeListCount, setActiveListCount] = useState(0)
   const router = useRouter()
   const supabase = createClient()
   const { showError, showSuccess } = useToast()
@@ -76,6 +88,14 @@ export default function GemsPage() {
           .single()
 
         setHasAIConsent(profile?.ai_consent_given ?? false)
+
+        // Fetch contexts
+        const { contexts: contextData } = await getContexts()
+        setContexts(contextData)
+
+        // Fetch active list count
+        const { count } = await getActiveListCount()
+        setActiveListCount(count)
       } catch (err) {
         showError(err, "Failed to load data")
       } finally {
@@ -130,6 +150,52 @@ export default function GemsPage() {
     }
   }
 
+  const handleToggleActiveList = async (gemId: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const { thought, error } = await toggleActiveList(gemId)
+    if (error) {
+      showError(error)
+      return
+    }
+
+    if (thought) {
+      setGems((prev) =>
+        prev.map((gem) => (gem.id === gemId ? { ...gem, is_on_active_list: thought.is_on_active_list } : gem))
+      )
+      // Update active list count
+      const { count } = await getActiveListCount()
+      setActiveListCount(count)
+
+      if (thought.is_on_active_list) {
+        showSuccess("Added to Active List", "This thought will appear in daily prompts")
+      } else {
+        showSuccess("Removed from Active List", "This thought is now passive")
+      }
+    }
+  }
+
+  // Filter gems based on active filter and context filter
+  const filteredGems = useMemo(() => {
+    return gems.filter((gem) => {
+      // Active filter
+      if (activeFilter === "active" && !gem.is_on_active_list) return false
+      if (activeFilter === "passive" && gem.is_on_active_list) return false
+
+      // Context filter
+      if (contextFilter && gem.context_id !== contextFilter) return false
+
+      return true
+    })
+  }, [gems, activeFilter, contextFilter])
+
+  // Get context by ID for displaying colored badges
+  const getContextById = (contextId: string | null) => {
+    if (!contextId) return null
+    return contexts.find((c) => c.id === contextId)
+  }
+
   const formatRelativeDate = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
@@ -154,7 +220,7 @@ export default function GemsPage() {
   }
 
   const gemCount = gems.length
-  const isAtLimit = gemCount >= MAX_ACTIVE_GEMS
+  const isActiveListFull = activeListCount >= MAX_ACTIVE_LIST
 
   if (isLoading) {
     return (
@@ -175,12 +241,22 @@ export default function GemsPage() {
     <LayoutShell userEmail={userEmail}>
       <div className="p-4 md:p-8 max-w-5xl mx-auto">
         {/* Page header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Your Thoughts</h1>
-            <p className="text-muted-foreground mt-1">
-              {gemCount} of {MAX_ACTIVE_GEMS} active thoughts
-            </p>
+            <div className="flex items-center gap-3 mt-1">
+              <p className="text-muted-foreground">
+                {gemCount} thought{gemCount !== 1 ? "s" : ""}
+              </p>
+              <span className="text-muted-foreground">•</span>
+              <p className={cn(
+                "flex items-center gap-1",
+                isActiveListFull ? "text-warning" : "text-muted-foreground"
+              )}>
+                <Star className="h-3.5 w-3.5" />
+                Active: {activeListCount}/{MAX_ACTIVE_LIST}
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -188,8 +264,7 @@ export default function GemsPage() {
               onClick={() => setIsExtractModalOpen(true)}
               variant="ai"
               className="gap-2"
-              disabled={isAtLimit}
-              title={isAtLimit ? `Maximum ${MAX_ACTIVE_GEMS} active thoughts reached` : "Extract thoughts from content using AI"}
+              title="Extract thoughts from content using AI"
             >
               <Sparkles className="h-4 w-4 ai-sparkle" />
               Extract with AI
@@ -197,8 +272,6 @@ export default function GemsPage() {
             <Button
               onClick={() => setIsFormOpen(true)}
               className="gap-2"
-              disabled={isAtLimit}
-              title={isAtLimit ? `Maximum ${MAX_ACTIVE_GEMS} active thoughts reached` : undefined}
             >
               <Plus className="h-4 w-4" />
               Add Thought
@@ -206,105 +279,231 @@ export default function GemsPage() {
           </div>
         </div>
 
-        {/* Limit warning */}
-        {isAtLimit && (
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          {/* Active/Passive filter tabs */}
+          <div className="flex items-center rounded-lg border p-1">
+            {(["all", "active", "passive"] as ActiveFilter[]).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={cn(
+                  "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                  activeFilter === filter
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {filter === "all" ? "All" : filter === "active" ? "Active" : "Passive"}
+              </button>
+            ))}
+          </div>
+
+          {/* Context filter dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1">
+                <Filter className="h-4 w-4" />
+                {contextFilter
+                  ? contexts.find((c) => c.id === contextFilter)?.name || "Context"
+                  : "All Contexts"}
+                <ChevronDown className="h-3 w-3 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-[180px]">
+              <DropdownMenuItem
+                onClick={() => setContextFilter(null)}
+                className={cn(!contextFilter && "bg-muted")}
+              >
+                All Contexts
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {contexts.map((context) => (
+                <DropdownMenuItem
+                  key={context.id}
+                  onClick={() => setContextFilter(context.id)}
+                  className={cn(
+                    "flex items-center gap-2",
+                    contextFilter === context.id && "bg-muted"
+                  )}
+                >
+                  <span
+                    className="w-3 h-3 rounded-full shrink-0"
+                    style={{ backgroundColor: context.color || "#6B7280" }}
+                  />
+                  <span className="flex-1">{context.name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {context.thought_count}
+                  </span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Clear filters */}
+          {(activeFilter !== "all" || contextFilter) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setActiveFilter("all")
+                setContextFilter(null)
+              }}
+              className="text-muted-foreground"
+            >
+              Clear filters
+            </Button>
+          )}
+        </div>
+
+        {/* Active List info */}
+        {isActiveListFull && activeFilter !== "passive" && (
           <div className="flex items-start gap-3 p-4 rounded-xl bg-warning/10 border border-warning/20 text-warning mb-6">
             <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium">You&apos;ve reached the maximum of {MAX_ACTIVE_GEMS} active thoughts</p>
+              <p className="font-medium">Active List is full ({MAX_ACTIVE_LIST}/{MAX_ACTIVE_LIST})</p>
               <p className="text-sm opacity-80 mt-0.5">
-                Retire or graduate some thoughts to add more wisdom to your collection.
+                Remove a thought from your Active List to add another. Only Active thoughts appear in daily prompts.
               </p>
             </div>
           </div>
         )}
 
         {/* Gems grid */}
-        {gems.length === 0 ? (
+        {filteredGems.length === 0 ? (
           <Card className="border-dashed border-2">
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mb-6">
                 <GemIcon className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">No thoughts yet</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                {gems.length === 0 ? "No thoughts yet" : "No matching thoughts"}
+              </h3>
               <p className="text-muted-foreground mb-6 max-w-sm">
-                Capture wisdom, insights, and advice that you want to remember and apply in your life.
+                {gems.length === 0
+                  ? "Capture wisdom, insights, and advice that you want to remember and apply in your life."
+                  : "Try adjusting your filters to see more thoughts."}
               </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button onClick={() => setIsExtractModalOpen(true)} variant="ai" className="gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  Extract with AI
-                </Button>
-                <Button onClick={() => setIsFormOpen(true)} variant="outline" className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add manually
-                </Button>
-              </div>
+              {gems.length === 0 && (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button onClick={() => setIsExtractModalOpen(true)} variant="ai" className="gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Extract with AI
+                  </Button>
+                  <Button onClick={() => setIsFormOpen(true)} variant="outline" className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add manually
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            {gems.map((gem) => (
-              <Link key={gem.id} href={`/gems/${gem.id}`}>
-                <Card className="group relative cursor-pointer card-hover h-full">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <Badge variant={contextTagVariant[gem.context_tag] as "meetings" | "feedback" | "conflict" | "focus" | "health" | "relationships" | "parenting" | "other"}>
-                        {gem.context_tag === "other" && gem.custom_context
-                          ? gem.custom_context
-                          : CONTEXT_TAG_LABELS[gem.context_tag]}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {formatRelativeDate(gem.created_at)}
-                      </span>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pb-4">
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
-                      {truncateContent(gem.content)}
-                    </p>
-
-                    <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
-                      {gem.source && (
-                        <span className="truncate max-w-[150px]" title={gem.source}>
-                          {gem.source}
+            {filteredGems.map((gem) => {
+              const context = getContextById(gem.context_id)
+              return (
+                <Link key={gem.id} href={`/gems/${gem.id}`}>
+                  <Card className="group relative cursor-pointer card-hover h-full">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {/* Active badge */}
+                          {gem.is_on_active_list && (
+                            <Badge variant="default" className="bg-amber-500 text-white hover:bg-amber-600">
+                              <Star className="h-3 w-3 mr-1" />
+                              Active
+                            </Badge>
+                          )}
+                          {/* Context badge - use new context if available, fall back to context_tag */}
+                          {context ? (
+                            <Badge
+                              variant="outline"
+                              className="border-2"
+                              style={{
+                                borderColor: context.color || "#6B7280",
+                                color: context.color || "#6B7280",
+                              }}
+                            >
+                              {context.name}
+                            </Badge>
+                          ) : (
+                            <Badge variant={contextTagVariant[gem.context_tag] as "meetings" | "feedback" | "conflict" | "focus" | "health" | "relationships" | "parenting" | "other"}>
+                              {gem.context_tag === "other" && gem.custom_context
+                                ? gem.custom_context
+                                : CONTEXT_TAG_LABELS[gem.context_tag]}
+                            </Badge>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {formatRelativeDate(gem.created_at)}
                         </span>
-                      )}
-                      <span className="flex items-center gap-1.5">
-                        <CheckCircle className="h-3.5 w-3.5 text-success" />
-                        {gem.application_count} {gem.application_count === 1 ? "application" : "applications"}
-                      </span>
-                    </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pb-4">
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
+                        {truncateContent(gem.content)}
+                      </p>
 
-                    {/* Actions dropdown */}
-                    <div
-                      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => e.preventDefault()}
-                    >
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon-sm" className="h-8 w-8 bg-card/80 backdrop-blur-sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.preventDefault()
-                              handleDeleteGem(gem.id)
-                            }}
-                            className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+                      <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
+                        {gem.source && (
+                          <span className="truncate max-w-[150px]" title={gem.source}>
+                            {gem.source}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle className="h-3.5 w-3.5 text-success" />
+                          {gem.application_count} {gem.application_count === 1 ? "application" : "applications"}
+                        </span>
+                      </div>
+
+                      {/* Actions dropdown */}
+                      <div
+                        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon-sm" className="h-8 w-8 bg-card/80 backdrop-blur-sm">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={(e) => handleToggleActiveList(gem.id, e)}
+                              disabled={!gem.is_on_active_list && isActiveListFull}
+                            >
+                              {gem.is_on_active_list ? (
+                                <>
+                                  <StarOff className="h-4 w-4 mr-2" />
+                                  Remove from Active
+                                </>
+                              ) : (
+                                <>
+                                  <Star className="h-4 w-4 mr-2" />
+                                  Add to Active
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.preventDefault()
+                                handleDeleteGem(gem.id)
+                              }}
+                              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              )
+            })}
           </div>
         )}
       </div>

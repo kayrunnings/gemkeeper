@@ -71,12 +71,12 @@ Expand ThoughtFolio from global 10-thought limit to contextual organization with
 - [x] 6.4 Block creation if context full
 
 #### 7.0 Update Thought Cards & List (traces to: FR-3.3, FR-3.4, FR-3.5)
-- [ ] 7.1 Add Active badge to `components/gems/gem-card.tsx`
-- [ ] 7.2 Add toggle Active action button
-- [ ] 7.3 Show context badge (colored)
-- [ ] 7.4 Add filter tabs: All / Active / Passive
-- [ ] 7.5 Add context filter dropdown
-- [ ] 7.6 Show Active count ("Active: 7/10")
+- [x] 7.1 Add Active badge to gem cards (in page.tsx)
+- [x] 7.2 Add toggle Active action button
+- [x] 7.3 Show context badge (colored)
+- [x] 7.4 Add filter tabs: All / Active / Passive
+- [x] 7.5 Add context filter dropdown
+- [x] 7.6 Show Active count ("Active: 7/10")
 
 #### 8.0 Update Thought Detail (traces to: US-1, FR-3.3)
 - [ ] 8.1 Show context on detail page
