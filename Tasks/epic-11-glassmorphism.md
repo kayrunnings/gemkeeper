@@ -31,6 +31,49 @@ Based on [Webflow glassmorphism article](https://webflow.com/blog/glassmorphism)
 
 ## Tasks
 
+### Phase 0: Legacy File Cleanup (KAY-89)
+
+**Goal:** Remove duplicate/legacy files before applying glassmorphism. Clean slate = fewer files to update.
+
+- [ ] 0.1 Audit Component Folders (traces to: KAY-89)
+  - [ ] 0.1.1 List all files in `components/gems/`
+  - [ ] 0.1.2 List all files in `components/thoughts/`
+  - [ ] 0.1.3 Identify duplicates (gem-card vs thought-card, etc.)
+
+- [ ] 0.2 Audit Sidebar/Layout Files (traces to: KAY-89)
+  - [ ] 0.2.1 Check if `app-sidebar.tsx` is used or legacy
+  - [ ] 0.2.2 Confirm `layout-shell.tsx` is the current layout
+  - [ ] 0.2.3 Search codebase for imports of each
+
+- [ ] 0.3 Remove Legacy Files (traces to: KAY-89)
+  - [ ] 0.3.1 Delete `components/gems/` folder (if thoughts/ has equivalents)
+  - [ ] 0.3.2 Delete unused sidebar component (if applicable)
+  - [ ] 0.3.3 Delete any other identified legacy files
+
+- [ ] 0.4 Update Imports (traces to: KAY-89)
+  - [ ] 0.4.1 Search for imports from deleted paths
+  - [ ] 0.4.2 Update to correct current paths
+  - [ ] 0.4.3 Fix any TypeScript errors
+
+- [ ] 0.5 Verify Build (traces to: KAY-89)
+  - [ ] 0.5.1 Run `npm run build` — must pass
+  - [ ] 0.5.2 Run `npm run lint` — fix any errors
+  - [ ] 0.5.3 Quick smoke test in browser
+
+**Cleanup Checklist:**
+```
+REMOVE (if duplicates exist):
+- components/gems/          → use components/thoughts/
+- app-sidebar.tsx           → use layout-shell.tsx (verify first)
+
+KEEP:
+- components/thoughts/
+- components/layout-shell.tsx
+- components/ui/            (shadcn components)
+```
+
+---
+
 ### Phase 1: Foundation (KAY-81)
 
 **Goal:** Set up CSS variables, Tailwind utilities, and background gradient.
@@ -401,6 +444,14 @@ body {
 ---
 
 ## Acceptance Criteria
+
+### Cleanup (Phase 0)
+- [ ] **No duplicate component folders** (gems/ removed)
+- [ ] **No unused legacy files**
+- [ ] **All imports point to current files**
+- [ ] **Build passes after cleanup**
+
+### Glassmorphism (Phases 1-7)
 
 - [ ] All components have consistent glassmorphism treatment
 - [ ] Background gradient is subtle (dark purple tones)
