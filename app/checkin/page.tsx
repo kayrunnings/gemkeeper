@@ -25,7 +25,7 @@ import Link from "next/link"
 import { LayoutShell } from "@/components/layout-shell"
 import { useToast } from "@/components/error-toast"
 
-type CheckinState = "prompt" | "stale" | "success" | "skip"
+type CheckinState = "prompt" | "stale" | "success" | "skip" | "already_done"
 
 // Map context tags to badge variants
 const contextTagVariant: Record<ContextTag, string> = {
@@ -65,7 +65,10 @@ export default function CheckinPage() {
         setUserEmail(user.email ?? null)
 
         const result = await getDailyGem()
-        if (result.gem) {
+        if (result.alreadyCheckedIn) {
+          // User already did their check-in today
+          setCheckinState("already_done")
+        } else if (result.gem) {
           setGem(result.gem)
           // Check if gem is stale
           if (result.gem.skip_count >= STALE_THRESHOLD) {
@@ -209,7 +212,23 @@ export default function CheckinPage() {
             </div>
           </div>
 
-          {!gem ? (
+          {checkinState === "already_done" ? (
+            // Already checked in today
+            <Card>
+              <CardContent className="py-10 text-center">
+                <div className="w-20 h-20 bg-success/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Check className="h-10 w-10 text-success" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">All done for today!</h3>
+                <p className="text-muted-foreground mb-8">
+                  You&apos;ve already completed your evening check-in. Come back tomorrow!
+                </p>
+                <Link href="/thoughts">
+                  <Button>View Thoughts</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          ) : !gem ? (
             // No thoughts available
             <Card className="border-dashed border-2">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">

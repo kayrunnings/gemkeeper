@@ -190,12 +190,31 @@ export async function graduateGem(
 
 // Get the daily gem (least recently surfaced active gem on Active List)
 // DEPRECATED: Use getDailyThought from lib/thoughts.ts instead
-export async function getDailyGem(): Promise<{ gem: Gem | null; error: string | null }> {
+export async function getDailyGem(): Promise<{ gem: Gem | null; alreadyCheckedIn: boolean; error: string | null }> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return { gem: null, error: "Not authenticated" }
+    return { gem: null, alreadyCheckedIn: false, error: "Not authenticated" }
+  }
+
+  // Check if user has already done an evening check-in today
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const todayISO = today.toISOString()
+
+  const { data: todayCheckin } = await supabase
+    .from("gem_checkins")
+    .select("id, response")
+    .eq("user_id", user.id)
+    .eq("checkin_type", "evening_checkin")
+    .gte("created_at", todayISO)
+    .limit(1)
+    .maybeSingle()
+
+  if (todayCheckin) {
+    // User already checked in today - return the gem they checked in on but mark as done
+    return { gem: null, alreadyCheckedIn: true, error: null }
   }
 
   // Get thoughts on the Active List with active or passive status
@@ -212,12 +231,12 @@ export async function getDailyGem(): Promise<{ gem: Gem | null; error: string | 
   if (error) {
     if (error.code === "PGRST116") {
       // No gems found
-      return { gem: null, error: null }
+      return { gem: null, alreadyCheckedIn: false, error: null }
     }
-    return { gem: null, error: error.message }
+    return { gem: null, alreadyCheckedIn: false, error: error.message }
   }
 
-  return { gem: data, error: null }
+  return { gem: data, alreadyCheckedIn: false, error: null }
 }
 
 // Log a check-in for a gem
