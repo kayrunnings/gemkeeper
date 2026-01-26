@@ -278,10 +278,10 @@ export async function generateDiscoveries(
       responseMimeType: "application/json",
       maxOutputTokens: 2048,
     },
-    // Google Search grounding tool
+    // Google Search grounding tool (googleSearchRetrieval is the correct SDK property)
     tools: [
       {
-        googleSearch: {},
+        googleSearchRetrieval: {},
       },
     ],
   })
