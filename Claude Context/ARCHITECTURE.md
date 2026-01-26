@@ -48,13 +48,14 @@ gemkeeper/
 │   ├── dashboard/                # Main dashboard
 │   ├── thoughts/                 # Thought management (alias: gems/)
 │   │   └── [id]/                 # Thought detail page
+│   ├── retired/                  # Retired thoughts page
 │   ├── moments/                  # Moments feature
 │   │   ├── page.tsx              # Moments history
 │   │   └── [id]/prepare/         # Moment prep card
 │   ├── login/                    # Authentication
 │   ├── onboarding/               # First-time setup
 │   ├── settings/                 # User preferences + contexts
-│   ├── trophy-case/              # Graduated thoughts
+│   ├── trophy-case/              # Graduated thoughts (ThoughtBank)
 │   ├── layout.tsx                # Root layout
 │   └── page.tsx                  # Home page
 ├── components/                   # React components
@@ -201,20 +202,35 @@ Core feature table for wisdom/insights. Note: Database table is named `gems` for
 | source_url | TEXT | URL to source |
 | context_tag | ENUM | Legacy field (deprecated) |
 | custom_context | TEXT | Legacy field (deprecated) |
-| is_on_active_list | BOOLEAN | On Active List for daily prompts |
-| status | ENUM | active/retired/graduated |
+| is_on_active_list | BOOLEAN | On Active List for daily prompts (max 10) |
+| status | ENUM | active/passive/retired/graduated |
 | application_count | INTEGER | Times applied |
 | skip_count | INTEGER | Times skipped |
 | last_surfaced_at | TIMESTAMPTZ | Last shown to user |
 | last_applied_at | TIMESTAMPTZ | Last applied |
-| retired_at | TIMESTAMPTZ | When archived |
+| retired_at | TIMESTAMPTZ | When retired |
 | graduated_at | TIMESTAMPTZ | When graduated |
 | created_at | TIMESTAMPTZ | |
 | updated_at | TIMESTAMPTZ | |
 
-**Status Values:** `active`, `retired`, `graduated`
+**Status Values:**
 
-**Active List:** Maximum 10 thoughts with `is_on_active_list = true` (enforced by trigger)
+| Status | Description | Visible In |
+|--------|-------------|------------|
+| `active` | Available thought | Thoughts page |
+| `passive` | Available but dormant | Thoughts page (filtered) |
+| `retired` | Archived, kept for historical record | Retired page |
+| `graduated` | Applied 5+ times, mastered | ThoughtBank |
+
+**Active List:** Controlled by `is_on_active_list` boolean. Maximum 10 thoughts with `is_on_active_list = true` (enforced by trigger). Only thoughts with `status IN ('active', 'passive')` can be on the Active List.
+
+**Deletion:** Hard delete (row removed from database). No soft delete.
+
+**Important:** Status and Active List are orthogonal:
+- `status` = lifecycle state (where is this thought in its journey?)
+- `is_on_active_list` = engagement choice (am I focusing on this now?)
+
+A thought can be `status = 'active'` but `is_on_active_list = false` (available but not in daily rotation).
 
 #### `gem_schedules`
 Individual check-in schedules per thought.
@@ -349,7 +365,7 @@ List user's contexts with thought counts.
     color: string;
     is_default: boolean;
     thought_limit: number;
-    thought_count: number;
+    thought_count: number; // Only counts status IN ('active', 'passive')
   }>;
 }
 ```
@@ -424,6 +440,16 @@ Extract thoughts from URL (article or YouTube).
 
 ### Thought Management
 
+#### GET `/api/gems`
+List user's thoughts.
+
+**Query Parameters:**
+- `status`: Filter by status (`active`, `passive`, `retired`, `graduated`)
+- `context_id`: Filter by context
+- `is_on_active_list`: Filter by Active List status
+
+**Note:** By default, only returns thoughts with `status IN ('active', 'passive')`. Retired and graduated thoughts require explicit status filter.
+
 #### POST `/api/gems/bulk`
 Create multiple thoughts at once.
 
@@ -435,10 +461,27 @@ Create multiple thoughts at once.
     context_id: string;
     source?: string;
     source_url?: string;
-    is_on_active_list?: boolean;
+    is_on_active_list?: boolean; // Defaults to false
+    status?: string; // Defaults to 'active'
   }>;
 }
 ```
+
+#### PATCH `/api/gems/[id]`
+Update a thought.
+
+**Request:**
+```typescript
+{
+  content?: string;
+  context_id?: string;
+  is_on_active_list?: boolean;
+  status?: 'active' | 'passive' | 'retired' | 'graduated';
+}
+```
+
+#### DELETE `/api/gems/[id]`
+Permanently delete a thought (hard delete).
 
 ### Moments
 
@@ -446,7 +489,7 @@ Create multiple thoughts at once.
 Create moment and trigger AI matching.
 
 #### POST `/api/moments/match`
-Match thoughts to moment using AI. Searches ALL thoughts (Active + Passive) across ALL contexts.
+Match thoughts to moment using AI. Searches ALL thoughts with `status IN ('active', 'passive')` across ALL contexts.
 
 ### Calendar
 
@@ -502,7 +545,7 @@ getContextById(id: string): Promise<Context>
 createContext(input: CreateContextInput): Promise<Context>
 updateContext(id: string, input: UpdateContextInput): Promise<Context>
 deleteContext(id: string): Promise<void>
-getContextThoughtCount(contextId: string): Promise<number>
+getContextThoughtCount(contextId: string): Promise<number> // Only counts status IN ('active', 'passive')
 isContextAtLimit(contextId: string): Promise<{atLimit, count, limit}>
 getOtherContextId(): Promise<string>  // For fallback assignments
 ```
@@ -511,12 +554,15 @@ getOtherContextId(): Promise<string>  // For fallback assignments
 ```typescript
 createMultipleThoughts(thoughts: CreateThoughtInput[]): Promise<Thought[]>
 updateThought(id: string, input: Partial<CreateThoughtInput>): Promise<Thought>
-retireThought(id: string, mode: 'release' | 'archive'): Promise<void>
+retireThought(id: string): Promise<Thought> // Sets status = 'retired', retired_at = now()
+deleteThought(id: string): Promise<void> // Hard delete
+restoreThought(id: string): Promise<Thought> // Sets status = 'active', clears retired_at
 graduateThought(id: string): Promise<Thought>
 toggleActiveList(id: string): Promise<Thought>
 getActiveListCount(): Promise<number>
-getDailyThought(): Promise<Thought | null>  // Only Active List (is_on_active_list = true)
-getAllThoughtsForMoments(): Promise<Thought[]>  // ALL thoughts for Moments matching
+getDailyThought(): Promise<Thought | null>  // Only Active List (is_on_active_list = true AND status IN ('active', 'passive'))
+getAllThoughtsForMoments(): Promise<Thought[]>  // ALL thoughts with status IN ('active', 'passive')
+getRetiredThoughts(): Promise<Thought[]> // status = 'retired'
 ```
 
 ### URL Extractor Service (`lib/url-extractor.ts`)
@@ -549,27 +595,46 @@ matchThoughtsToMoment(description: string, thoughts: Thought[]): Promise<Matchin
 4. AI suggests context based on content
 5. User reviews, adjusts context, selects thoughts
 6. Check per-context limit
-7. Save to database (Passive by default)
+7. Save to database (status = 'active', is_on_active_list = false by default)
 8. User can add to Active List if desired
 ```
 
 ### Daily Prompt Flow
 ```
-1. Query Active List thoughts only (is_on_active_list = true)
+1. Query thoughts with:
+   - is_on_active_list = true
+   - status IN ('active', 'passive')
 2. Select least recently surfaced
 3. Generate contextual prompt via AI
 4. User marks as applied (optional)
 5. Update application_count
+6. If application_count >= 5, prompt for graduation
 ```
 
 ### Moment Matching Flow
 ```
 1. User describes upcoming situation
-2. Fetch ALL user's thoughts (Active + Passive, all contexts)
+2. Fetch ALL user's thoughts where status IN ('active', 'passive')
 3. Send to Gemini for matching
 4. Return top 3-5 with relevance scores
 5. Display prep card
 6. User can mark as helpful after moment
+```
+
+### Retire Flow
+```
+1. User clicks "Retire" on thought detail
+2. Confirm action
+3. Set status = 'retired', retired_at = now()
+4. Thought moves to Retired page
+5. User can restore later (sets status = 'active', clears retired_at)
+```
+
+### Delete Flow
+```
+1. User clicks "Delete" on thought detail or Retired page
+2. Confirm action with warning "This cannot be undone"
+3. Hard delete row from database
 ```
 
 ---
