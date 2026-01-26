@@ -145,12 +145,10 @@ export function ExtractThoughtsModal({
       }
 
       if (!response.ok) {
-        // Show error with fallback message
-        setError(data.error || "Failed to extract content")
-        if (data.fallbackMessage) {
-          // Switch to text mode so user can paste manually
-          setInputMode("text")
-        }
+        // Show error with helpful message
+        const errorMsg = data.error || "Failed to extract content"
+        const helpfulMsg = `${errorMsg}. Try pasting the content manually instead.`
+        setError(helpfulMsg)
         setIsExtractingUrl(false)
         return
       }
