@@ -8,6 +8,10 @@ ThoughtFolio is a knowledge accountability partner that helps users capture insi
 
 **Primary URL:** https://gemkeeper.vercel.app (rebrand pending)
 
+**Last Updated:** January 2026
+
+**Feature Status:** All core features complete (Contexts, Active List, Daily Prompts, Check-ins, Moments, Discovery, Calendar Integration, Graduation System)
+
 ---
 
 ## Target User

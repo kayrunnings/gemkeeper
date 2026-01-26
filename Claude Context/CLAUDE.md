@@ -6,7 +6,7 @@
 
 ThoughtFolio (formerly GemKeeper) is a knowledge accountability partner app that helps users capture insights from books, podcasts, articles, videos, and life experiences, then proactively surfaces them for daily application. Unlike passive note-taking tools, ThoughtFolio uses constraint-based design (Active List of 10 thoughts) and calendar-aware accountability to drive behavior change.
 
-**Live App:** https://gemkeeper.vercel.app (rebrand to thoughtfolio pending)
+**Live App:** https://gemkeeper.vercel.app
 
 ## Quick Reference
 
@@ -29,40 +29,50 @@ Before starting work, read these files in `Claude Context/`:
 | `PRODUCT-BRIEF.md` | Vision, positioning, target user, principles |
 | `STANDARDS.md` | Code conventions, patterns, things to avoid |
 
-## Current Work
+## Current State (January 2026)
 
-Check `/Tasks/` for active task files. Each file represents a scoped body of work.
+### Completed Features
+- **Epic 8: Moments** - Individual scheduling, moments matching, calendar integration
+- **Epic 12: Discovery** - AI-powered content discovery with Google Search grounding
+- **Contexts System** - Life areas for organizing thoughts (8 defaults + custom)
+- **Glassmorphism UI** - Modern UI overhaul with dark/light theme support
+- **Graduation System** - Trophy case for mastered thoughts
 
-**When starting a session:**
-1. Ask which task file to work from, OR
-2. If given a specific task file, work exclusively from that scope
-
-Do not mix work across task files unless explicitly instructed.
+### Active Work
+Check `/tasks/` for any active task files. Each file represents a scoped body of work.
 
 **For current issues and priorities:** Check Linear (Kay's Personal Playground workspace) for active issues and sprint context.
 
 ## Tech Stack
 
-- **Framework:** Next.js + TypeScript
-- **Styling:** Tailwind CSS + shadcn/ui
-- **Database:** Supabase (PostgreSQL)
-- **AI:** Google Gemini API (not Anthropic)
-- **Deployment:** Vercel (auto-deploy from main branch)
-- **Auth:** Supabase Auth
+| Layer | Technology | Version |
+|-------|------------|---------|
+| Framework | Next.js (App Router) | 16.1.4 |
+| Language | TypeScript | 5.x |
+| Styling | Tailwind CSS | 4.x |
+| UI Components | shadcn/ui + Radix | Latest |
+| Database | Supabase (PostgreSQL) | Latest |
+| Auth | Supabase Auth | Latest |
+| AI | Google Gemini API | 2.0 Flash |
+| Hosting | Vercel | Latest |
 
 ## Key Concepts
 
 ### Contexts
-User-defined life areas for organizing thoughts (e.g., Coding, PM, Relationships). Eight defaults provided, users can create custom contexts. Each context has a configurable thought limit (default: 20).
+User-defined life areas for organizing thoughts (e.g., Meetings, Health, Relationships). Eight defaults provided, users can create custom contexts. Each context has a configurable thought limit (default: 20).
 
 ### Thoughts (formerly "Gems")
-Captured insights/knowledge. Each thought belongs to one context. Thoughts can be Active (on Active List) or Passive.
+Captured insights/knowledge. Each thought belongs to one context. Thoughts have a status:
+- `active` - Available thought (Thoughts page)
+- `passive` - Available but dormant (Thoughts page, filtered)
+- `retired` - Archived (Retired page)
+- `graduated` - Applied 5+ times, mastered (Trophy Case)
 
 ### Active List
-Curated subset of up to 10 thoughts that appear in daily prompts. Preserves the original constraint-based accountability model while allowing unlimited total thoughts across contexts.
+Curated subset of up to 10 thoughts that appear in daily prompts. Controlled by `is_on_active_list` boolean, separate from status. Preserves the original constraint-based accountability model while allowing unlimited total thoughts across contexts.
 
 ### Moments
-On-demand thought matching for upcoming situations. Moments search ALL thoughts across ALL contexts, regardless of Active status.
+On-demand thought matching for upcoming situations. Moments search ALL thoughts with `status IN ('active', 'passive')` across ALL contexts, returning the most relevant with explanations.
 
 ### Discover
 AI-powered content discovery from the web. Dashboard card with three paths: free-text search, context chips, or "Surprise Me". Returns 4 discoveries per session. Daily limits: 4 curated + 4 directed = 8 max. User edits thought before saving (preserves "user's words" principle).
@@ -84,7 +94,7 @@ AI-powered content discovery from the web. Dashboard card with three paths: free
 - Ask clarifying questions when requirements are ambiguous
 
 **Git Workflow:**
-- Create feature branches for new work
+- Create feature branches for new work (`claude/[description]-[random]`)
 - Write clear commit messages
 - Create PRs for Kay to review before merging to main
 
@@ -97,6 +107,21 @@ AI-powered content discovery from the web. Dashboard card with three paths: free
 - Add TypeScript types — avoid `any`
 - Keep components focused and reasonably sized
 - Handle errors gracefully with user-friendly messages
+- Follow glassmorphism UI patterns for visual consistency
+
+## UI Design System
+
+The app uses a **glassmorphism design system** with:
+- Semi-transparent backgrounds with backdrop blur
+- Subtle borders and shadows
+- Dark/light theme support via `theme-provider.tsx`
+- Semantic color tokens from shadcn/ui
+
+Key UI patterns:
+- Cards use `bg-card/80 backdrop-blur-sm` for glassmorphism effect
+- Dropdowns use solid backgrounds for legibility
+- Hover states with smooth transitions
+- Mobile-first responsive design
 
 ## Key Contacts
 
@@ -106,8 +131,8 @@ AI-powered content discovery from the web. Dashboard card with three paths: free
 
 ## Important Notes
 
-- The rebrand from GemKeeper → ThoughtFolio is in progress
 - Database uses "gems" table name but UI shows "thoughts"
 - Use "knowledge" and "thoughts" terminology, not "wisdom"
-- API keys need regeneration on Supabase (reminder noted)
+- AI uses Google Gemini, not Anthropic Claude
 - Always verify changes work in the live app at gemkeeper.vercel.app
+- Check DECISIONS.md before proposing architectural changes

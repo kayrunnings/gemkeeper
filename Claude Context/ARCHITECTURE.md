@@ -113,15 +113,18 @@ gemkeeper/
 | Layer | Technology | Version |
 |-------|------------|---------|
 | Framework | Next.js (App Router) | 16.1.4 |
-| Language | TypeScript | 5 |
-| Styling | Tailwind CSS | 4 |
+| Language | TypeScript | 5.x |
+| Runtime | React | 19.2.3 |
+| Styling | Tailwind CSS | 4.x |
 | UI Components | shadcn/ui + Radix UI | Latest |
 | Database | Supabase (PostgreSQL) | Latest |
-| Authentication | Supabase Auth | Latest |
+| Authentication | Supabase Auth (@supabase/ssr) | 0.8.0 |
 | AI/ML | Google Gemini API | 2.0 Flash |
-| Calendar | Google Calendar API | v3 |
-| URL Parsing | Mozilla Readability | Latest |
-| YouTube | youtube-transcript | Latest |
+| Calendar | Google Calendar API (googleapis) | v3 |
+| URL Parsing | Mozilla Readability | 0.6.0 |
+| YouTube | youtube-transcript | 1.2.1 |
+| Schedule Parsing | cron-parser | 5.5.0 |
+| Testing | Jest | 30.2.0 |
 | Hosting | Vercel | Latest |
 
 ---
@@ -841,3 +844,55 @@ Required in Vercel:
 | GOOGLE_CALENDAR_CLIENT_ID | Calendar OAuth |
 | GOOGLE_CALENDAR_CLIENT_SECRET | Calendar OAuth |
 | GOOGLE_CALENDAR_REDIRECT_URI | OAuth callback URL |
+
+---
+
+## 11. UI Design System
+
+The app uses a **glassmorphism design system** implemented in January 2026.
+
+### Theme Support
+- Dark/light theme via `theme-provider.tsx` and `theme-toggle.tsx`
+- Theme persisted in localStorage
+- System preference detection
+
+### Glassmorphism Patterns
+```typescript
+// Card with glassmorphism effect
+className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl shadow-lg"
+
+// Dropdown menus (solid background for legibility)
+className="bg-popover border border-border rounded-md shadow-md"
+
+// Hover states
+className="transition-all duration-200 hover:bg-accent/50"
+```
+
+### Color Tokens (shadcn/ui)
+- `bg-background` / `text-foreground` - Base colors
+- `bg-card` / `text-card-foreground` - Card surfaces
+- `bg-primary` / `text-primary-foreground` - Primary actions
+- `bg-muted` / `text-muted-foreground` - Secondary text
+- `bg-accent` / `text-accent-foreground` - Highlights
+
+### Key Components
+| Component | File | Purpose |
+|-----------|------|---------|
+| Theme Provider | `components/theme-provider.tsx` | Theme context |
+| Theme Toggle | `components/theme-toggle.tsx` | Dark/light switch |
+| Layout Shell | `components/layout-shell.tsx` | Page wrapper with sidebar |
+
+---
+
+## 12. Feature Status (January 2026)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Core Thoughts | Complete | CRUD, contexts, Active List |
+| Daily Prompts | Complete | Morning surfacing from Active List |
+| Check-ins | Complete | Evening reflection, graduation |
+| Moments (Epic 8) | Complete | AI matching, calendar integration |
+| Discovery (Epic 12) | Complete | Web search, save/skip workflow |
+| Glassmorphism UI | Complete | Dark/light theme support |
+| Contexts System | Complete | 8 defaults + custom creation |
+| Trophy Case | Complete | Graduated thoughts display |

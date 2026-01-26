@@ -1,5 +1,7 @@
 # ThoughtFolio Product Brief
 
+**Last Updated:** January 2026
+
 ## Vision
 
 **ThoughtFolio transforms passive knowledge consumption into active application.**

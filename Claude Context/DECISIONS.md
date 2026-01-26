@@ -189,6 +189,63 @@ This document tracks key product and technical decisions with their rationale. C
 
 ---
 
+### 2026-01-XX: Glassmorphism UI Overhaul
+
+**Decision:** Implement a glassmorphism design system with dark/light theme support across the entire application.
+
+**Rationale:**
+- Modern, visually appealing aesthetic
+- Creates depth and hierarchy through transparency
+- Differentiates from typical flat design
+- Theme toggle allows user preference
+- Consistent with premium app feel
+
+**Implementation:**
+- Cards use `bg-card/80 backdrop-blur-sm` for glass effect
+- Dropdowns use solid `bg-popover` for legibility (important lesson learned)
+- Smooth transitions on hover states
+- Theme persisted in localStorage
+
+**Alternatives Considered:**
+- Keep flat design → Rejected: less engaging, doesn't feel premium
+- Full glassmorphism everywhere → Rejected: dropdowns need solid backgrounds for readability
+
+**Consequences:**
+- All pages updated (KAY-81 through KAY-89)
+- Theme toggle added to header
+- Some components required solid backgrounds (dropdowns, menus)
+
+---
+
+### 2026-01-XX: Epic 8 (Moments) Completed
+
+**Decision:** Ship Moments feature with individual scheduling, AI matching, and Google Calendar integration.
+
+**Status:** COMPLETED
+
+**Key Learnings:**
+- Calendar OAuth requires careful token refresh handling
+- AI matching works best searching ALL thoughts, not just Active List
+- Moments are valuable for "right thought, right time" use case
+- Auto-moment creation from calendar events enhances proactive surfacing
+
+---
+
+### 2026-01-XX: Epic 12 (Discovery) Completed
+
+**Decision:** Ship Discovery feature with AI-powered web search using Google Search grounding.
+
+**Status:** COMPLETED
+
+**Key Learnings:**
+- Gemini 1.5 Flash required for Google Search grounding (not 2.0 Flash)
+- 4 discoveries per session is the right balance
+- Separate curated and directed limits encourage both exploration modes
+- User editing before save preserves "user's words" principle
+- Skipped content tracking prevents annoying re-suggestions
+
+---
+
 ## Technical Decisions
 
 ### 2024-XX-XX: Google Gemini API Over Anthropic
