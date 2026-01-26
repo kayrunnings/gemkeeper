@@ -4,7 +4,7 @@
 
 ## Project Overview
 
-ThoughtFolio (formerly GemKeeper) is a wisdom accountability partner app that helps users capture insights from books, podcasts, articles, videos, and life experiences, then proactively surfaces them for daily application. Unlike passive note-taking tools, ThoughtFolio uses constraint-based design (Active List of 10 thoughts) and calendar-aware accountability to drive behavior change.
+ThoughtFolio (formerly GemKeeper) is a knowledge accountability partner app that helps users capture insights from books, podcasts, articles, videos, and life experiences, then proactively surfaces them for daily application. Unlike passive note-taking tools, ThoughtFolio uses constraint-based design (Active List of 10 thoughts) and calendar-aware accountability to drive behavior change.
 
 **Live App:** https://gemkeeper.vercel.app (rebrand to thoughtfolio pending)
 
@@ -56,13 +56,16 @@ Do not mix work across task files unless explicitly instructed.
 User-defined life areas for organizing thoughts (e.g., Coding, PM, Relationships). Eight defaults provided, users can create custom contexts. Each context has a configurable thought limit (default: 20).
 
 ### Thoughts (formerly "Gems")
-Captured insights/wisdom. Each thought belongs to one context. Thoughts can be Active (on Active List) or Passive.
+Captured insights/knowledge. Each thought belongs to one context. Thoughts can be Active (on Active List) or Passive.
 
 ### Active List
 Curated subset of up to 10 thoughts that appear in daily prompts. Preserves the original constraint-based accountability model while allowing unlimited total thoughts across contexts.
 
 ### Moments
-On-demand gem matching for upcoming situations. Moments search ALL thoughts across ALL contexts, regardless of Active status.
+On-demand thought matching for upcoming situations. Moments search ALL thoughts across ALL contexts, regardless of Active status.
+
+### Discover
+AI-powered content discovery from the web. Dashboard card with three paths: free-text search, context chips, or "Surprise Me". Returns 4 discoveries per session. Daily limits: 4 curated + 4 directed = 8 max. User edits thought before saving (preserves "user's words" principle).
 
 ## Workflow Expectations
 
@@ -105,5 +108,6 @@ On-demand gem matching for upcoming situations. Moments search ALL thoughts acro
 
 - The rebrand from GemKeeper → ThoughtFolio is in progress
 - Database uses "gems" table name but UI shows "thoughts"
+- Use "knowledge" and "thoughts" terminology, not "wisdom"
 - API keys need regeneration on Supabase (reminder noted)
 - Always verify changes work in the live app at gemkeeper.vercel.app
