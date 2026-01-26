@@ -44,12 +44,12 @@ Expand ThoughtFolio from global 10-thought limit to contextual organization with
 - [x] 3.4 Test API routes (TypeScript compilation verified)
 
 #### 4.0 Update Thought Service for Active List (traces to: FR-3.1 through FR-3.5)
-- [ ] 4.1 Update `lib/thoughts.ts` for `context_id` and `is_on_active_list`
-- [ ] 4.2 Add `toggleActiveList(thoughtId)` with limit check
-- [ ] 4.3 Add `getActiveListCount()` function
-- [ ] 4.4 Update `createMultipleThoughts()` for `context_id`
-- [ ] 4.5 Update daily prompt query: filter `is_on_active_list = true`
-- [ ] 4.6 Verify Moments queries ALL thoughts (no filter change)
+- [x] 4.1 Update `lib/thoughts.ts` for `context_id` and `is_on_active_list`
+- [x] 4.2 Add `toggleActiveList(thoughtId)` with limit check
+- [x] 4.3 Add `getActiveListCount()` function
+- [x] 4.4 Update `createMultipleThoughts()` for `context_id`
+- [x] 4.5 Update daily prompt query: filter `is_on_active_list = true`
+- [x] 4.6 Verify Moments queries ALL thoughts (added `getAllThoughtsForMoments()`)
 
 ### Phase 2: Settings UI
 
@@ -143,13 +143,13 @@ Expand ThoughtFolio from global 10-thought limit to contextual organization with
 
 ### Services
 - `lib/contexts.ts` - created
-- `lib/thoughts.ts` - update
+- `lib/thoughts.ts` - updated (Active List support)
 - `lib/url-extractor.ts` - create
 - `lib/ai/gemini.ts` - update prompts
 
 ### API Routes
-- `app/api/contexts/route.ts` - create
-- `app/api/contexts/[id]/route.ts` - create
+- `app/api/contexts/route.ts` - created
+- `app/api/contexts/[id]/route.ts` - created
 - `app/api/extract/url/route.ts` - create
 
 ### Components
