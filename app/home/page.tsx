@@ -154,6 +154,14 @@ export default function HomePage() {
         {/* Today's Thought */}
         <DailyThoughtCard thought={dailyThought} alreadyCheckedIn={alreadyCheckedIn} contexts={contexts} className="mb-6" />
 
+        {/* Discover Something New - Featured at top */}
+        <div className="mb-6">
+          <DiscoverCard contexts={contexts} />
+        </div>
+
+        {/* Upcoming Moments - Near the top */}
+        <UpcomingMomentsCard moments={moments} className="mb-6" />
+
         {/* Quick Actions Row */}
         <QuickActionsRow className="mb-6" />
 
@@ -172,24 +180,17 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Main grid */}
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Recent Activity - Full width */}
-          <RecentActivityCard
-            contexts={contexts}
-            selectedContextId={selectedContextId}
-            className="md:col-span-2"
-          />
-
-          {/* Upcoming Moments - Full width */}
-          <UpcomingMomentsCard moments={moments} className="md:col-span-2" />
-
+        {/* Stats and Activity */}
+        <div className="grid gap-6 md:grid-cols-2 mb-6">
           {/* Activity Stats */}
-          <ActivityStatsCard stats={stats} />
-
-          {/* Discover Something New */}
-          <DiscoverCard contexts={contexts} />
+          <ActivityStatsCard stats={stats} className="md:col-span-2" />
         </div>
+
+        {/* Recent Activity - At the bottom */}
+        <RecentActivityCard
+          contexts={contexts}
+          selectedContextId={selectedContextId}
+        />
       </div>
     </LayoutShell>
   )
