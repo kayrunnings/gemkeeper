@@ -25,6 +25,7 @@ import {
   Target,
   FileText,
   BookOpen,
+  Plus,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -33,6 +34,9 @@ import { useSidebar } from "@/lib/sidebar-context"
 import { GlobalSearch } from "@/components/search/GlobalSearch"
 import { useGlobalShortcuts } from "@/lib/hooks/useGlobalShortcuts"
 import { BottomNavigation } from "@/components/layout/BottomNavigation"
+import { FloatingMomentButton } from "@/components/moments/FloatingMomentButton"
+import { AICaptureModal } from "@/components/capture/AICaptureModal"
+import type { ContextWithCount } from "@/lib/types/context"
 
 interface NavItem {
   href: string
@@ -74,6 +78,8 @@ interface LayoutShellProps {
   rightPanel?: ReactNode
   showRightPanel?: boolean
   onToggleRightPanel?: () => void
+  contexts?: ContextWithCount[]
+  calendarConnected?: boolean
 }
 
 export function LayoutShell({
@@ -82,11 +88,13 @@ export function LayoutShell({
   rightPanel,
   showRightPanel = false,
   onToggleRightPanel,
+  contexts = [],
+  calendarConnected = false,
 }: LayoutShellProps) {
   const { isCollapsedByDefault } = useSidebar()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(isCollapsedByDefault)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const { isSearchOpen, setIsSearchOpen } = useGlobalShortcuts()
+  const { isSearchOpen, setIsSearchOpen, isCaptureOpen, setIsCaptureOpen } = useGlobalShortcuts()
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -149,6 +157,17 @@ export function LayoutShell({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Quick Capture button */}
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setIsCaptureOpen(true)}
+              title="Quick Capture (Cmd+N)"
+              className="hidden sm:flex"
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
+
             {/* Search button */}
             <Button
               variant="ghost"
@@ -523,6 +542,16 @@ export function LayoutShell({
 
       {/* Global Search Modal */}
       <GlobalSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+
+      {/* AI Capture Modal */}
+      <AICaptureModal
+        isOpen={isCaptureOpen}
+        onClose={() => setIsCaptureOpen(false)}
+        contexts={contexts}
+      />
+
+      {/* Floating Moment Button */}
+      <FloatingMomentButton calendarConnected={calendarConnected} />
 
       {/* Mobile Bottom Navigation */}
       <BottomNavigation />

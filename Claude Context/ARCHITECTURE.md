@@ -33,6 +33,11 @@ gemkeeper/
 ├── app/                          # Next.js App Router pages
 │   ├── api/                      # API routes
 │   │   ├── ai/extract/           # AI extraction endpoint
+│   │   ├── capture/              # AI Quick Capture (ThoughtFolio 2.0)
+│   │   │   ├── analyze/          # Analyze content
+│   │   │   └── save/             # Save selected items
+│   │   ├── calendar/             # Calendar endpoints
+│   │   │   └── events/           # Upcoming events (ThoughtFolio 2.0)
 │   │   ├── contexts/             # Context CRUD endpoints
 │   │   ├── discover/             # Discovery endpoints
 │   │   │   ├── route.ts          # Generate discoveries
@@ -87,7 +92,17 @@ gemkeeper/
 │   │   ├── MomentEntryModal.tsx  # Create moment modal
 │   │   ├── PrepCard.tsx          # Matched thoughts display
 │   │   ├── RecentMoments.tsx     # Dashboard widget
-│   │   └── MomentBanner.tsx      # Moment header banner
+│   │   ├── MomentBanner.tsx      # Moment header banner
+│   │   ├── FloatingMomentButton.tsx  # Fixed FAB (ThoughtFolio 2.0)
+│   │   ├── FloatingButtonMenu.tsx    # Menu options
+│   │   ├── QuickMomentEntry.tsx      # Inline moment entry
+│   │   └── CalendarEventPicker.tsx   # Event selector
+│   ├── capture/                  # AI Capture components (ThoughtFolio 2.0)
+│   │   ├── AICaptureModal.tsx    # Main capture modal (Cmd+N)
+│   │   ├── CaptureEmptyState.tsx # Initial state
+│   │   ├── CaptureAnalyzing.tsx  # Loading state
+│   │   ├── CaptureSuggestions.tsx # Results display
+│   │   └── CaptureItemCard.tsx   # Item card with selection
 │   ├── notes/                    # Notes components
 │   │   ├── note-editor.tsx       # Note editing with markdown
 │   │   ├── note-card.tsx         # Note display card
@@ -113,7 +128,9 @@ gemkeeper/
 ├── lib/                          # Utilities and services
 │   ├── ai/                       # AI/Gemini integration
 │   │   ├── gemini.ts             # Gemini API logic
-│   │   └── rate-limit.ts         # Rate limiting & caching
+│   │   ├── rate-limit.ts         # Rate limiting & caching
+│   │   ├── content-detector.ts   # Content type detection (ThoughtFolio 2.0)
+│   │   └── content-splitter.ts   # Quote/reflection splitting (ThoughtFolio 2.0)
 │   ├── supabase/                 # Database clients
 │   │   ├── client.ts             # Browser client
 │   │   └── server.ts             # Server client
@@ -124,9 +141,11 @@ gemkeeper/
 │   │   ├── source.ts             # Source entity types (ThoughtFolio 2.0)
 │   │   ├── note-link.ts          # Note-thought link types (ThoughtFolio 2.0)
 │   │   ├── search.ts             # Search types (ThoughtFolio 2.0)
+│   │   ├── capture.ts            # AI Capture types (ThoughtFolio 2.0)
 │   │   └── gem.ts                # Legacy gem types (backward compat)
 │   ├── hooks/                    # React hooks
-│   │   └── useGlobalShortcuts.ts # Global keyboard shortcuts (Cmd+K)
+│   │   ├── useGlobalShortcuts.ts # Global keyboard shortcuts (Cmd+K, Cmd+N)
+│   │   └── useScrollVisibility.ts # Scroll-based visibility (ThoughtFolio 2.0)
 │   ├── contexts.ts               # Context service functions
 │   ├── thoughts.ts               # Thought service functions
 │   ├── discovery.ts              # Discovery service functions
@@ -761,6 +780,81 @@ Get user's discovery usage for today.
 }
 ```
 
+### AI Quick Capture (ThoughtFolio 2.0)
+
+#### POST `/api/capture/analyze`
+Analyze content and suggest items to capture.
+
+**Request:**
+```typescript
+{
+  content: string;  // Text, URL, or mixed content
+}
+```
+
+**Response:**
+```typescript
+{
+  success: boolean;
+  contentType: 'url' | 'short_text' | 'long_text' | 'mixed' | 'list';
+  suggestions: CaptureItem[];
+}
+
+interface CaptureItem {
+  id: string;
+  type: 'thought' | 'note' | 'source';
+  content: string;
+  source?: string;
+  sourceUrl?: string;
+  selected: boolean;
+}
+```
+
+#### POST `/api/capture/save`
+Save selected capture items.
+
+**Request:**
+```typescript
+{
+  items: CaptureItem[];
+}
+```
+
+**Response:**
+```typescript
+{
+  success: boolean;
+  created: {
+    thoughts: number;
+    notes: number;
+    sources: number;
+  };
+}
+```
+
+### Calendar Events
+
+#### GET `/api/calendar/events`
+Get upcoming calendar events.
+
+**Query Parameters:**
+- `days`: Number of days to fetch (default: 7)
+
+**Response:**
+```typescript
+{
+  events: CalendarEvent[];
+}
+
+interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  description?: string;
+}
+```
+
 ### Full-Text Search (ThoughtFolio 2.0)
 
 #### GET `/api/search`
@@ -840,6 +934,19 @@ interface SearchResult {
 | Prep Card | `components/moments/PrepCard.tsx` | Matched thoughts with relevance scores |
 | Recent Moments | `components/moments/RecentMoments.tsx` | Dashboard widget |
 | Moment Banner | `components/moments/MomentBanner.tsx` | Moment header display |
+| Floating Moment Button | `components/moments/FloatingMomentButton.tsx` | Fixed bottom-right FAB with scroll visibility |
+| Floating Button Menu | `components/moments/FloatingButtonMenu.tsx` | Menu with "From Calendar" and "Describe It" options |
+| Quick Moment Entry | `components/moments/QuickMomentEntry.tsx` | Inline moment description input |
+| Calendar Event Picker | `components/moments/CalendarEventPicker.tsx` | Upcoming events selector |
+
+### Capture Components (ThoughtFolio 2.0)
+| Component | File | Purpose |
+|-----------|------|---------|
+| AI Capture Modal | `components/capture/AICaptureModal.tsx` | Main capture modal (Cmd+N shortcut) |
+| Capture Empty State | `components/capture/CaptureEmptyState.tsx` | Initial state with examples |
+| Capture Analyzing | `components/capture/CaptureAnalyzing.tsx` | Loading/analyzing state |
+| Capture Suggestions | `components/capture/CaptureSuggestions.tsx` | Results with selection checkboxes |
+| Capture Item Card | `components/capture/CaptureItemCard.tsx` | Individual item with type/context/edit |
 
 ### Notes Components
 | Component | File | Purpose |
@@ -979,6 +1086,42 @@ parseScheduleNLP(text: string): Promise<NLPScheduleResult>
 matchThoughtsToMoment(description: string, thoughts: Thought[]): Promise<MatchingResponse>
 generateDiscoveries(mode: 'curated' | 'directed', contexts: Context[], existingThoughts: Thought[], query?: string): Promise<Discovery[]>
 ```
+
+### Content Detector (`lib/ai/content-detector.ts`) (ThoughtFolio 2.0)
+```typescript
+detectContentType(content: string): ContentType  // 'url' | 'short_text' | 'long_text' | 'mixed' | 'list'
+isUrl(text: string): boolean
+isQuoteLike(text: string): boolean
+isBulletList(text: string): boolean
+extractUrls(text: string): string[]
+extractBulletPoints(text: string): string[]
+```
+
+### Content Splitter (`lib/ai/content-splitter.ts`) (ThoughtFolio 2.0)
+```typescript
+splitMixedContent(content: string): Promise<SplitContentResult>  // Uses Gemini AI
+extractSourceAttribution(text: string): SourceAttribution
+detectBookReference(text: string): { isBook: boolean; title?: string; author?: string }
+```
+
+### Scroll Visibility Hook (`lib/hooks/useScrollVisibility.ts`) (ThoughtFolio 2.0)
+```typescript
+useScrollVisibility(options?: { hideDelay?: number }): { isVisible: boolean; setIsVisible: (v: boolean) => void }
+```
+
+Custom hook that hides UI elements on scroll down and shows them after a delay (default 500ms).
+
+### Global Shortcuts Hook (`lib/hooks/useGlobalShortcuts.ts`)
+```typescript
+useGlobalShortcuts(): {
+  isSearchOpen: boolean;
+  setIsSearchOpen: (open: boolean) => void;
+  isCaptureOpen: boolean;
+  setIsCaptureOpen: (open: boolean) => void;
+}
+```
+
+Handles Cmd+K (search) and Cmd+N (capture) keyboard shortcuts globally.
 
 ---
 
@@ -1147,3 +1290,5 @@ className="transition-all duration-200 hover:bg-accent/50"
 | - Unified Library | Complete | All/Thoughts/Notes/Sources/Archive tabs |
 | - Context Chips Filter | Complete | Horizontal scrollable filter |
 | - Quick Actions | Complete | AI Capture, New Moment, Discover shortcuts |
+| - Floating Moment Button | Complete | Phase 5: FAB with scroll visibility, calendar picker |
+| - AI Quick Capture | Complete | Phase 6: Cmd+N modal, content analysis, multi-item save |

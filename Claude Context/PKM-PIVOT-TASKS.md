@@ -275,36 +275,47 @@
 **Duration:** Week 5
 **Priority:** P1 (High)
 **Dependencies:** None (parallel)
+**Status:** COMPLETED (January 2026)
 
 ### 5.1 Floating Button
 
-- [ ] **T5.1.1** Create FloatingMomentButton component
+- [x] **T5.1.1** Create FloatingMomentButton component
   - File: `components/moments/FloatingMomentButton.tsx`
   - Fixed position bottom-right
   - Scroll hide/show behavior
   - Expansion on tap
 
-- [ ] **T5.1.2** Create FloatingButtonMenu component
+- [x] **T5.1.2** Create FloatingButtonMenu component
   - File: `components/moments/FloatingButtonMenu.tsx`
   - Two options: From Calendar, Describe It
   - Animation for expand/collapse
 
-- [ ] **T5.1.3** Create QuickMomentEntry component
+- [x] **T5.1.3** Create QuickMomentEntry component
   - File: `components/moments/QuickMomentEntry.tsx`
   - Inline text input
   - Optional date/time picker
   - Submit to moments API
 
-- [ ] **T5.1.4** Create CalendarEventPicker component
+- [x] **T5.1.4** Create CalendarEventPicker component
   - File: `components/moments/CalendarEventPicker.tsx`
   - List of upcoming events
   - Select to create moment
 
 ### 5.2 Integration
 
-- [ ] **T5.2.1** Add FloatingMomentButton to layout
+- [x] **T5.2.1** Add FloatingMomentButton to layout
   - File: `components/layout-shell.tsx`
   - Conditionally hide on Moments page
+
+### 5.3 Supporting Features
+
+- [x] **T5.3.1** Create useScrollVisibility hook
+  - File: `lib/hooks/useScrollVisibility.ts`
+  - Hide on scroll down, show after 500ms
+
+- [x] **T5.3.2** Create calendar events API endpoint
+  - File: `app/api/calendar/events/route.ts`
+  - Returns upcoming events for next 7 days
 
 ---
 
@@ -313,31 +324,32 @@
 **Duration:** Week 6-7
 **Priority:** P1 (High)
 **Dependencies:** Phase 1, 4
+**Status:** COMPLETED (January 2026)
 
 ### 6.1 Capture Modal
 
-- [ ] **T6.1.1** Create AICaptureModal component
+- [x] **T6.1.1** Create AICaptureModal component
   - File: `components/capture/AICaptureModal.tsx`
   - Modal with text area
   - Entry point handlers (Cmd+N, header, home)
 
-- [ ] **T6.1.2** Create CaptureEmptyState component
+- [x] **T6.1.2** Create CaptureEmptyState component
   - File: `components/capture/CaptureEmptyState.tsx`
   - Placeholder text
   - Example suggestions
 
-- [ ] **T6.1.3** Create CaptureAnalyzing component
+- [x] **T6.1.3** Create CaptureAnalyzing component
   - File: `components/capture/CaptureAnalyzing.tsx`
   - Loading spinner
   - "Analyzing..." text
 
-- [ ] **T6.1.4** Create CaptureSuggestions component
+- [x] **T6.1.4** Create CaptureSuggestions component
   - File: `components/capture/CaptureSuggestions.tsx`
   - List of detected items
   - Checkboxes for selection
   - Edit capability per item
 
-- [ ] **T6.1.5** Create CaptureItemCard component
+- [x] **T6.1.5** Create CaptureItemCard component
   - File: `components/capture/CaptureItemCard.tsx`
   - Type label (THOUGHT/NOTE/SOURCE)
   - Content preview
@@ -346,12 +358,12 @@
 
 ### 6.2 Capture API
 
-- [ ] **T6.2.1** Create capture analysis endpoint
+- [x] **T6.2.1** Create capture analysis endpoint
   - File: `app/api/capture/analyze/route.ts`
   - POST with content
   - Returns detected items with types
 
-- [ ] **T6.2.2** Create capture save endpoint
+- [x] **T6.2.2** Create capture save endpoint
   - File: `app/api/capture/save/route.ts`
   - POST with selected items
   - Creates thoughts, notes, sources
@@ -359,14 +371,14 @@
 
 ### 6.3 AI Detection Logic
 
-- [ ] **T6.3.1** Create content detector
+- [x] **T6.3.1** Create content detector
   - File: `lib/ai/content-detector.ts`
   - URL detection
   - Quote detection
   - Length-based classification
   - Bullet list detection
 
-- [ ] **T6.3.2** Create content splitter
+- [x] **T6.3.2** Create content splitter
   - File: `lib/ai/content-splitter.ts`
   - Separate quotes from reflections
   - Identify source attribution
