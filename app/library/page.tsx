@@ -141,7 +141,10 @@ function LibraryContent() {
           />
         </div>
 
-        {/* Context Filter - only show for tabs that support it */}
+        {/* Tabs */}
+        <LibraryTabs activeTab={activeTab} className="mb-4" />
+
+        {/* Context Filter - only show for tabs that support it (below tabs since contexts only apply to Thoughts) */}
         {(activeTab === "all" || activeTab === "thoughts" || activeTab === "archive") && (
           <div className="mb-6">
             <ContextChipsFilter
@@ -151,9 +154,6 @@ function LibraryContent() {
             />
           </div>
         )}
-
-        {/* Tabs */}
-        <LibraryTabs activeTab={activeTab} className="mb-6" />
 
         {/* Tab Content */}
         {renderTabContent()}
