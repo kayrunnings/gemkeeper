@@ -416,6 +416,41 @@ This document tracks key product and technical decisions with their rationale. C
 
 ---
 
+### 2026-01-27: Merge Daily Prompt and Check-in into Single Daily Check-in
+
+**Decision:** Merge the separate "Daily Prompt" (morning) and "Check-in" (evening) flows into a single "Daily Check-in" interaction.
+
+**Previous Design:**
+- Morning `/daily`: "Will you apply this thought today?" (Yes/Maybe/No)
+- Evening `/checkin`: "Did you apply this thought today?" (Yes/No + reflection)
+- Two separate pages, two touchpoints per day
+
+**New Design:**
+- Single `/checkin` page: "Did you apply this thought today?" (Yes/No + reflection)
+- One touchpoint per day, user can check in anytime
+- `/daily` redirects to `/checkin`
+
+**Rationale:**
+- The morning prompt didn't track anything meaningful — only evening "Yes" incremented `application_count`
+- Morning was purely psychological (commitment device) with no enforcement
+- Redundant interaction: same thought shown twice daily with slightly different questions
+- Simpler mental model: "check in once a day"
+- Less friction for users
+- Graduation system (5+ applications) only cared about evening responses anyway
+
+**Files Changed:**
+- `app/checkin/page.tsx` — Renamed to "Daily Check-in", updated icons/colors
+- `app/daily/page.tsx` — Now redirects to `/checkin`
+- `components/layout-shell.tsx` — Removed "Daily Prompt" nav item, renamed "Check-in" to "Daily Check-in"
+- `components/home/DailyThoughtCard.tsx` — Added "Check In" button
+- `lib/thoughts.ts` — Added `daily_checkin` type, backward-compatible with `evening_checkin`
+
+**Alternatives Considered:**
+- Keep both, clarify roles → Rejected: morning prompt adds complexity without value
+- Make morning track something → Rejected: over-engineering for unclear benefit
+
+---
+
 ## Deferred Decisions
 
 Items we've discussed but intentionally not decided yet:

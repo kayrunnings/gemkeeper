@@ -101,6 +101,11 @@ export function DailyThoughtCard({ thought, alreadyCheckedIn = false, contexts =
             {thought.source && (
               <p className="text-sm text-muted-foreground">— {thought.source}</p>
             )}
+            <div className="pt-2">
+              <Link href="/checkin">
+                <Button size="sm" className="w-full">Check In</Button>
+              </Link>
+            </div>
           </div>
         ) : alreadyCheckedIn ? (
           <div className="flex flex-col items-center justify-center py-6 text-center">

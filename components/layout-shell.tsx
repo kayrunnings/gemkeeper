@@ -6,7 +6,6 @@ import Link from "next/link"
 import {
   Gem,
   Sun,
-  Moon,
   Trophy,
   StickyNote,
   Settings,
@@ -34,8 +33,7 @@ const navItems: NavItem[] = [
   { href: "/home", label: "Home", icon: Home },
   { href: "/thoughts", label: "Thoughts", icon: Gem },
   { href: "/dashboard", label: "Notes", icon: StickyNote },
-  { href: "/daily", label: "Daily Prompt", icon: Sun },
-  { href: "/checkin", label: "Check-in", icon: Moon },
+  { href: "/checkin", label: "Daily Check-in", icon: Sun },
   { href: "/thought-bank", label: "ThoughtBank", icon: Trophy },
 ]
 

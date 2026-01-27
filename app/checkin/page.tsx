@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import {
   Lightbulb,
   Loader2,
-  Moon,
+  Sun,
   Check,
   X,
   Sparkles,
@@ -91,7 +91,7 @@ export default function CheckinPage() {
     setIsSubmitting(true)
 
     try {
-      const result = await logCheckin(thought.id, "evening_checkin", "yes", reflectionNote || undefined)
+      const result = await logCheckin(thought.id, "daily_checkin", "yes", reflectionNote || undefined)
 
       if (result.error) {
         showError(result.error)
@@ -115,7 +115,7 @@ export default function CheckinPage() {
     setIsSubmitting(true)
 
     try {
-      const result = await logCheckin(thought.id, "evening_checkin", "no", reflectionNote || undefined)
+      const result = await logCheckin(thought.id, "daily_checkin", "no", reflectionNote || undefined)
 
       if (result.error) {
         showError(result.error)
@@ -188,8 +188,8 @@ export default function CheckinPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ai-glow">
-            <Moon className="h-8 w-8 text-white" />
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center ai-glow">
+            <Sun className="h-8 w-8 text-white" />
           </div>
           <p className="text-muted-foreground">Loading check-in...</p>
         </div>
@@ -203,11 +203,11 @@ export default function CheckinPage() {
         <div className="w-full max-w-lg">
           {/* Header */}
           <div className="flex items-center gap-4 mb-8 justify-center">
-            <div className="w-14 h-14 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-2xl flex items-center justify-center shadow-lg">
-              <Moon className="h-7 w-7 text-white" />
+            <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+              <Sun className="h-7 w-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Evening Check-in</h1>
+              <h1 className="text-2xl font-bold">Daily Check-in</h1>
               <p className="text-muted-foreground text-sm">Reflect on your day</p>
             </div>
           </div>
@@ -221,7 +221,7 @@ export default function CheckinPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-2">All done for today!</h3>
                 <p className="text-muted-foreground mb-8">
-                  You&apos;ve already completed your evening check-in. Come back tomorrow!
+                  You&apos;ve already checked in today. Come back tomorrow!
                 </p>
                 <Link href="/thoughts">
                   <Button>View Thoughts</Button>
@@ -335,7 +335,7 @@ export default function CheckinPage() {
             <Card>
               <CardContent className="py-10 text-center">
                 <div className="w-20 h-20 bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <Moon className="h-10 w-10 text-muted-foreground" />
+                  <Sun className="h-10 w-10 text-muted-foreground" />
                 </div>
                 <h3 className="text-xl font-bold mb-2">Tomorrow is another chance!</h3>
                 <p className="text-muted-foreground mb-8">
