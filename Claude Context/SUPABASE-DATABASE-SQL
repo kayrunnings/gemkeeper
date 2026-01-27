@@ -1,0 +1,293 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.ai_extractions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  input_content text NOT NULL,
+  input_hash character varying NOT NULL,
+  source text,
+  extracted_gems jsonb NOT NULL,
+  tokens_used integer,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT ai_extractions_pkey PRIMARY KEY (id),
+  CONSTRAINT ai_extractions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.ai_usage (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  usage_date date NOT NULL DEFAULT CURRENT_DATE,
+  extraction_count integer DEFAULT 0,
+  tokens_used integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT ai_usage_pkey PRIMARY KEY (id),
+  CONSTRAINT ai_usage_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.calendar_connections (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  provider character varying NOT NULL,
+  email character varying NOT NULL,
+  access_token text NOT NULL,
+  refresh_token text NOT NULL,
+  token_expires_at timestamp with time zone,
+  is_active boolean DEFAULT true,
+  last_sync_at timestamp with time zone,
+  sync_error text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT calendar_connections_pkey PRIMARY KEY (id),
+  CONSTRAINT calendar_connections_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.calendar_events_cache (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  connection_id uuid NOT NULL,
+  external_event_id character varying NOT NULL,
+  title character varying NOT NULL,
+  description text,
+  start_time timestamp with time zone NOT NULL,
+  end_time timestamp with time zone NOT NULL,
+  moment_created boolean DEFAULT false,
+  moment_id uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT calendar_events_cache_pkey PRIMARY KEY (id),
+  CONSTRAINT calendar_events_cache_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT calendar_events_cache_connection_id_fkey FOREIGN KEY (connection_id) REFERENCES public.calendar_connections(id),
+  CONSTRAINT calendar_events_cache_moment_id_fkey FOREIGN KEY (moment_id) REFERENCES public.moments(id)
+);
+CREATE TABLE public.contexts (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  name character varying NOT NULL,
+  slug character varying NOT NULL,
+  color character varying DEFAULT '#6B7280'::character varying,
+  icon character varying DEFAULT NULL::character varying,
+  is_default boolean DEFAULT false,
+  thought_limit integer DEFAULT 20 CHECK (thought_limit >= 5 AND thought_limit <= 100),
+  sort_order integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT contexts_pkey PRIMARY KEY (id),
+  CONSTRAINT contexts_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.discoveries (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  session_type character varying NOT NULL CHECK (session_type::text = ANY (ARRAY['curated'::character varying, 'directed'::character varying]::text[])),
+  query text,
+  context_id uuid,
+  thought_content text NOT NULL,
+  source_title text NOT NULL,
+  source_url text NOT NULL,
+  source_type character varying NOT NULL CHECK (source_type::text = ANY (ARRAY['article'::character varying, 'video'::character varying, 'research'::character varying, 'blog'::character varying]::text[])),
+  article_summary text NOT NULL,
+  relevance_reason text NOT NULL,
+  content_type character varying NOT NULL CHECK (content_type::text = ANY (ARRAY['trending'::character varying, 'evergreen'::character varying]::text[])),
+  suggested_context_id uuid,
+  status character varying NOT NULL DEFAULT 'pending'::character varying CHECK (status::text = ANY (ARRAY['pending'::character varying, 'saved'::character varying, 'skipped'::character varying]::text[])),
+  saved_gem_id uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  saved_at timestamp with time zone,
+  CONSTRAINT discoveries_pkey PRIMARY KEY (id),
+  CONSTRAINT discoveries_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT discoveries_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.contexts(id),
+  CONSTRAINT discoveries_suggested_context_id_fkey FOREIGN KEY (suggested_context_id) REFERENCES public.contexts(id),
+  CONSTRAINT discoveries_saved_gem_id_fkey FOREIGN KEY (saved_gem_id) REFERENCES public.gems(id)
+);
+CREATE TABLE public.discovery_skips (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  content_hash character varying NOT NULL,
+  source_url text NOT NULL,
+  skipped_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT discovery_skips_pkey PRIMARY KEY (id),
+  CONSTRAINT discovery_skips_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.discovery_usage (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  usage_date date NOT NULL,
+  curated_count integer NOT NULL DEFAULT 0,
+  directed_count integer NOT NULL DEFAULT 0,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT discovery_usage_pkey PRIMARY KEY (id),
+  CONSTRAINT discovery_usage_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.folders (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  name text NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT folders_pkey PRIMARY KEY (id),
+  CONSTRAINT folders_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.gem_checkins (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  gem_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  checkin_type text NOT NULL CHECK (checkin_type = ANY (ARRAY['morning_prompt'::text, 'evening_checkin'::text])),
+  response text CHECK (response = ANY (ARRAY['yes'::text, 'no'::text, 'maybe'::text])),
+  note text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT gem_checkins_pkey PRIMARY KEY (id),
+  CONSTRAINT gem_checkins_gem_id_fkey FOREIGN KEY (gem_id) REFERENCES public.gems(id),
+  CONSTRAINT gem_checkins_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.gem_schedules (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  gem_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  cron_expression character varying NOT NULL,
+  human_readable character varying NOT NULL,
+  timezone character varying DEFAULT 'America/Toronto'::character varying,
+  schedule_type character varying DEFAULT 'custom'::character varying,
+  days_of_week ARRAY,
+  time_of_day time without time zone,
+  day_of_month integer,
+  is_active boolean DEFAULT true,
+  next_trigger_at timestamp with time zone,
+  last_triggered_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT gem_schedules_pkey PRIMARY KEY (id),
+  CONSTRAINT gem_schedules_gem_id_fkey FOREIGN KEY (gem_id) REFERENCES public.gems(id),
+  CONSTRAINT gem_schedules_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.gems (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  content text NOT NULL,
+  source text,
+  source_url text,
+  context_tag text NOT NULL CHECK (context_tag = ANY (ARRAY['meetings'::text, 'feedback'::text, 'conflict'::text, 'focus'::text, 'health'::text, 'relationships'::text, 'parenting'::text, 'other'::text])),
+  custom_context text,
+  status text DEFAULT 'active'::text CHECK (status = ANY (ARRAY['active'::text, 'passive'::text, 'retired'::text, 'graduated'::text])),
+  application_count integer DEFAULT 0,
+  skip_count integer DEFAULT 0,
+  last_surfaced_at timestamp with time zone,
+  last_applied_at timestamp with time zone,
+  retired_at timestamp with time zone,
+  graduated_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  context_id uuid,
+  is_on_active_list boolean DEFAULT false,
+  source_id uuid,
+  search_vector tsvector,
+  CONSTRAINT gems_pkey PRIMARY KEY (id),
+  CONSTRAINT gems_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT gems_context_id_fkey FOREIGN KEY (context_id) REFERENCES public.contexts(id),
+  CONSTRAINT gems_source_id_fkey FOREIGN KEY (source_id) REFERENCES public.sources(id)
+);
+CREATE TABLE public.moment_gems (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  moment_id uuid NOT NULL,
+  gem_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  relevance_score double precision NOT NULL CHECK (relevance_score >= 0::double precision AND relevance_score <= 1::double precision),
+  relevance_reason text,
+  was_helpful boolean,
+  was_reviewed boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT moment_gems_pkey PRIMARY KEY (id),
+  CONSTRAINT moment_gems_moment_id_fkey FOREIGN KEY (moment_id) REFERENCES public.moments(id),
+  CONSTRAINT moment_gems_gem_id_fkey FOREIGN KEY (gem_id) REFERENCES public.gems(id),
+  CONSTRAINT moment_gems_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.moments (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  description text NOT NULL,
+  source character varying DEFAULT 'manual'::character varying,
+  calendar_event_id character varying,
+  calendar_event_title character varying,
+  calendar_event_start timestamp with time zone,
+  gems_matched_count integer DEFAULT 0,
+  ai_processing_time_ms integer,
+  status character varying DEFAULT 'active'::character varying,
+  completed_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT moments_pkey PRIMARY KEY (id),
+  CONSTRAINT moments_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.note_attachments (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  note_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  file_name text NOT NULL,
+  file_type text NOT NULL,
+  file_size integer NOT NULL,
+  storage_path text NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT note_attachments_pkey PRIMARY KEY (id),
+  CONSTRAINT note_attachments_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT note_attachments_note_id_fkey FOREIGN KEY (note_id) REFERENCES public.notes(id)
+);
+CREATE TABLE public.note_thought_links (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  note_id uuid NOT NULL,
+  gem_id uuid NOT NULL,
+  position integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT note_thought_links_pkey PRIMARY KEY (id),
+  CONSTRAINT note_thought_links_note_id_fkey FOREIGN KEY (note_id) REFERENCES public.notes(id),
+  CONSTRAINT note_thought_links_gem_id_fkey FOREIGN KEY (gem_id) REFERENCES public.gems(id)
+);
+CREATE TABLE public.notes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  title text,
+  content text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  folder_id uuid,
+  search_vector tsvector,
+  CONSTRAINT notes_pkey PRIMARY KEY (id),
+  CONSTRAINT notes_folder_id_fkey FOREIGN KEY (folder_id) REFERENCES public.folders(id),
+  CONSTRAINT notes_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  email text,
+  name text,
+  daily_prompt_time time without time zone DEFAULT '08:00:00'::time without time zone,
+  checkin_time time without time zone DEFAULT '20:00:00'::time without time zone,
+  timezone text DEFAULT 'America/Toronto'::text,
+  calendar_connected boolean DEFAULT false,
+  onboarding_completed boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  ai_consent_given boolean DEFAULT false,
+  ai_consent_date timestamp with time zone,
+  auto_moment_enabled boolean DEFAULT true,
+  auto_moment_lead_time integer DEFAULT 30,
+  auto_moment_filter character varying DEFAULT 'all'::character varying,
+  focus_mode_enabled boolean DEFAULT true,
+  active_list_limit integer DEFAULT 10 CHECK (active_list_limit >= 10 AND active_list_limit <= 25),
+  checkin_enabled boolean DEFAULT true,
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.sources (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  name text NOT NULL,
+  author text,
+  type text DEFAULT 'other'::text CHECK (type = ANY (ARRAY['book'::text, 'article'::text, 'podcast'::text, 'video'::text, 'course'::text, 'other'::text])),
+  url text,
+  isbn text,
+  cover_image_url text,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  search_vector tsvector,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT sources_pkey PRIMARY KEY (id),
+  CONSTRAINT sources_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
