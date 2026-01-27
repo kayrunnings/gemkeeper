@@ -11,8 +11,9 @@ import { getContexts } from "@/lib/contexts"
 import { LayoutShell } from "@/components/layout-shell"
 import { DailyThoughtCard } from "@/components/home/DailyThoughtCard"
 import { ActivityStatsCard } from "@/components/home/ActivityStatsCard"
-import { QuickActionsCard } from "@/components/home/QuickActionsCard"
+import { QuickActionsRow } from "@/components/home/QuickActionsRow"
 import { UpcomingMomentsCard } from "@/components/home/UpcomingMomentsCard"
+import { RecentActivityCard } from "@/components/home/RecentActivityCard"
 import { DiscoverCard } from "@/components/discover"
 import { useToast } from "@/components/error-toast"
 import { Home as HomeIcon } from "lucide-react"
@@ -148,23 +149,25 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Main grid */}
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Today's Thought - Full width */}
-          <DailyThoughtCard thought={dailyThought} alreadyCheckedIn={alreadyCheckedIn} contexts={contexts} className="md:col-span-2" />
+        {/* Quick Actions - At the very top */}
+        <QuickActionsRow className="mb-6" />
 
-          {/* Discover Something New - Full width */}
-          <DiscoverCard contexts={contexts} className="md:col-span-2" />
+        {/* Today's Thought */}
+        <DailyThoughtCard thought={dailyThought} alreadyCheckedIn={alreadyCheckedIn} contexts={contexts} className="mb-6" />
 
-          {/* Quick Actions */}
-          <QuickActionsCard />
-
-          {/* Activity Stats */}
-          <ActivityStatsCard stats={stats} />
-
-          {/* Upcoming Moments - Full width */}
-          <UpcomingMomentsCard moments={moments} className="md:col-span-2" />
+        {/* Discover Something New */}
+        <div className="mb-6">
+          <DiscoverCard contexts={contexts} />
         </div>
+
+        {/* Upcoming Moments */}
+        <UpcomingMomentsCard moments={moments} className="mb-6" />
+
+        {/* Activity Stats */}
+        <ActivityStatsCard stats={stats} className="mb-6" />
+
+        {/* Recent Activity - At the bottom */}
+        <RecentActivityCard contexts={contexts} />
       </div>
     </LayoutShell>
   )
