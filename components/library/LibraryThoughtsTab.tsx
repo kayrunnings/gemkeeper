@@ -127,7 +127,7 @@ export function LibraryThoughtsTab({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {thoughts.map((thought) => {
         const context = getContext(thought.context_id)
 
