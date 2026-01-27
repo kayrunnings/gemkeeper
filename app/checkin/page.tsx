@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Thought, CONTEXT_TAG_LABELS, ContextTag } from "@/lib/types/thought"
+import type { Context } from "@/lib/types/context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -41,6 +42,7 @@ const contextTagVariant: Record<ContextTag, string> = {
 
 export default function CheckinPage() {
   const [thought, setThought] = useState<Thought | null>(null)
+  const [contexts, setContexts] = useState<Context[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -50,6 +52,22 @@ export default function CheckinPage() {
   const router = useRouter()
   const supabase = createClient()
   const { showError, showSuccess } = useToast()
+
+  // Look up context by ID or by slug matching context_tag
+  const getContext = () => {
+    if (!thought) return null
+    // First try to find by context_id
+    if (thought.context_id) {
+      return contexts.find((c) => c.id === thought.context_id) || null
+    }
+    // Fall back to matching context_tag to slug
+    if (thought.context_tag) {
+      return contexts.find((c) => c.slug === thought.context_tag) || null
+    }
+    return null
+  }
+
+  const context = getContext()
 
   // Stale thought threshold (21 skips = 3 weeks)
   const STALE_THRESHOLD = 21
@@ -63,6 +81,17 @@ export default function CheckinPage() {
           return
         }
         setUserEmail(user.email ?? null)
+
+        // Fetch contexts
+        const { data: contextsData } = await supabase
+          .from("contexts")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("name")
+
+        if (contextsData) {
+          setContexts(contextsData)
+        }
 
         const result = await getDailyThought()
         if (result.alreadyCheckedIn) {
@@ -91,7 +120,7 @@ export default function CheckinPage() {
     setIsSubmitting(true)
 
     try {
-      const result = await logCheckin(thought.id, "daily_checkin", "yes", reflectionNote || undefined)
+      const result = await logCheckin(thought.id, "evening_checkin", "yes", reflectionNote || undefined)
 
       if (result.error) {
         showError(result.error)
@@ -115,7 +144,7 @@ export default function CheckinPage() {
     setIsSubmitting(true)
 
     try {
-      const result = await logCheckin(thought.id, "daily_checkin", "no", reflectionNote || undefined)
+      const result = await logCheckin(thought.id, "evening_checkin", "no", reflectionNote || undefined)
 
       if (result.error) {
         showError(result.error)
@@ -266,11 +295,24 @@ export default function CheckinPage() {
 
                 {/* Thought preview */}
                 <div className="p-4 bg-secondary/50 rounded-xl space-y-3">
-                  <Badge variant={contextTagVariant[thought.context_tag] as "meetings" | "feedback" | "conflict" | "focus" | "health" | "relationships" | "parenting" | "other"}>
-                    {thought.context_tag === "other" && thought.custom_context
-                      ? thought.custom_context
-                      : CONTEXT_TAG_LABELS[thought.context_tag]}
-                  </Badge>
+                  {context ? (
+                    <Badge
+                      variant="outline"
+                      className="border-2"
+                      style={{
+                        borderColor: context.color || "#6B7280",
+                        color: context.color || "#6B7280",
+                      }}
+                    >
+                      {context.name}
+                    </Badge>
+                  ) : (
+                    <Badge variant={contextTagVariant[thought.context_tag] as "meetings" | "feedback" | "conflict" | "focus" | "health" | "relationships" | "parenting" | "other"}>
+                      {thought.context_tag === "other" && thought.custom_context
+                        ? thought.custom_context
+                        : CONTEXT_TAG_LABELS[thought.context_tag]}
+                    </Badge>
+                  )}
                   <p className="text-sm">
                     {thought.content.length > 100 ? thought.content.substring(0, 100) + "..." : thought.content}
                   </p>
@@ -352,11 +394,24 @@ export default function CheckinPage() {
               <CardContent className="py-8 space-y-6">
                 {/* Badge */}
                 <div className="flex justify-center">
-                  <Badge variant={contextTagVariant[thought.context_tag] as "meetings" | "feedback" | "conflict" | "focus" | "health" | "relationships" | "parenting" | "other"}>
-                    {thought.context_tag === "other" && thought.custom_context
-                      ? thought.custom_context
-                      : CONTEXT_TAG_LABELS[thought.context_tag]}
-                  </Badge>
+                  {context ? (
+                    <Badge
+                      variant="outline"
+                      className="border-2"
+                      style={{
+                        borderColor: context.color || "#6B7280",
+                        color: context.color || "#6B7280",
+                      }}
+                    >
+                      {context.name}
+                    </Badge>
+                  ) : (
+                    <Badge variant={contextTagVariant[thought.context_tag] as "meetings" | "feedback" | "conflict" | "focus" | "health" | "relationships" | "parenting" | "other"}>
+                      {thought.context_tag === "other" && thought.custom_context
+                        ? thought.custom_context
+                        : CONTEXT_TAG_LABELS[thought.context_tag]}
+                    </Badge>
+                  )}
                 </div>
 
                 {/* Thought content */}

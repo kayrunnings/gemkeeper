@@ -113,8 +113,8 @@ export function LibrarySourcesTab({ searchQuery, sortOrder = "desc" }: LibrarySo
   }
 
   return (
-    <div className="space-y-5">
-      <div className="grid gap-5 sm:grid-cols-2">
+    <div className="space-y-6">
+      <div className="grid gap-6 sm:grid-cols-2">
         {sources.map((source) => (
           <SourceCard
             key={source.id}

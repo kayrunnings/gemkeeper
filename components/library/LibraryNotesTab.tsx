@@ -622,7 +622,7 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc" }: LibraryNote
               </Button>
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredNotes.map((note) => (
                 <NoteCard
                   key={note.id}
