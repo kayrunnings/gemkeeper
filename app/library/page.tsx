@@ -14,7 +14,10 @@ import { LibraryArchiveTab } from "@/components/library/LibraryArchiveTab"
 import { ContextChipsFilter } from "@/components/ui/ContextChipsFilter"
 import { Input } from "@/components/ui/input"
 import { Context } from "@/lib/types/context"
-import { Library as LibraryIcon, Search, Loader2 } from "lucide-react"
+import { Library as LibraryIcon, Search, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { Button } from "@/components/ui/button"
+
+export type SortOrder = "desc" | "asc"
 import { useToast } from "@/components/error-toast"
 
 function LibraryContent() {
@@ -25,6 +28,7 @@ function LibraryContent() {
   const [selectedContextId, setSelectedContextId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
   const [isLoading, setIsLoading] = useState(true)
   const { showError } = useToast()
 
@@ -84,6 +88,7 @@ function LibraryContent() {
             selectedContextId={selectedContextId}
             contexts={contexts}
             searchQuery={debouncedSearchQuery}
+            sortOrder={sortOrder}
           />
         )
       case "thoughts":
@@ -92,18 +97,20 @@ function LibraryContent() {
             selectedContextId={selectedContextId}
             contexts={contexts}
             searchQuery={debouncedSearchQuery}
+            sortOrder={sortOrder}
           />
         )
       case "notes":
-        return <LibraryNotesTab searchQuery={debouncedSearchQuery} />
+        return <LibraryNotesTab searchQuery={debouncedSearchQuery} sortOrder={sortOrder} />
       case "sources":
-        return <LibrarySourcesTab searchQuery={debouncedSearchQuery} />
+        return <LibrarySourcesTab searchQuery={debouncedSearchQuery} sortOrder={sortOrder} />
       case "archive":
         return (
           <LibraryArchiveTab
             selectedContextId={selectedContextId}
             contexts={contexts}
             searchQuery={debouncedSearchQuery}
+            sortOrder={sortOrder}
           />
         )
       default:
@@ -112,6 +119,7 @@ function LibraryContent() {
             selectedContextId={selectedContextId}
             contexts={contexts}
             searchQuery={debouncedSearchQuery}
+            sortOrder={sortOrder}
           />
         )
     }
@@ -130,15 +138,30 @@ function LibraryContent() {
           </p>
         </div>
 
-        {/* Search */}
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search your library..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+        {/* Search and Sort */}
+        <div className="flex gap-2 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search your library..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
+            title={sortOrder === "desc" ? "Showing newest first" : "Showing oldest first"}
+            className="shrink-0"
+          >
+            {sortOrder === "desc" ? (
+              <ArrowDown className="h-4 w-4" />
+            ) : (
+              <ArrowUp className="h-4 w-4" />
+            )}
+          </Button>
         </div>
 
         {/* Tabs */}

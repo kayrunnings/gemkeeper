@@ -37,12 +37,14 @@ import { moveNoteToFolder as moveNoteToFolderAction } from "@/app/notes/actions"
 import { useToast } from "@/components/error-toast"
 
 type FilterType = "all" | "unfiled" | { folderId: string }
+type SortOrder = "desc" | "asc"
 
 interface LibraryNotesTabProps {
   searchQuery?: string
+  sortOrder?: SortOrder
 }
 
-export function LibraryNotesTab({ searchQuery }: LibraryNotesTabProps) {
+export function LibraryNotesTab({ searchQuery, sortOrder = "desc" }: LibraryNotesTabProps) {
   const [notes, setNotes] = useState<Note[]>([])
   const [folders, setFolders] = useState<Folder[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -66,7 +68,7 @@ export function LibraryNotesTab({ searchQuery }: LibraryNotesTabProps) {
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [sortOrder])
 
   async function loadData() {
     setIsLoading(true)
@@ -82,7 +84,7 @@ export function LibraryNotesTab({ searchQuery }: LibraryNotesTabProps) {
         .from("notes")
         .select("*")
         .eq("user_id", user.id)
-        .order("updated_at", { ascending: false }),
+        .order("updated_at", { ascending: sortOrder === "asc" }),
       supabase
         .from("folders")
         .select("*")

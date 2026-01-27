@@ -25,10 +25,13 @@ interface LibraryItem {
   updatedAt: string
 }
 
+type SortOrder = "desc" | "asc"
+
 interface LibraryAllTabProps {
   selectedContextId: string | null
   contexts: Context[]
   searchQuery?: string
+  sortOrder?: SortOrder
 }
 
 const typeConfig = {
@@ -56,6 +59,7 @@ export function LibraryAllTab({
   selectedContextId,
   contexts,
   searchQuery,
+  sortOrder = "desc",
 }: LibraryAllTabProps) {
   const [items, setItems] = useState<LibraryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -66,7 +70,7 @@ export function LibraryAllTab({
   useEffect(() => {
     setOffset(0)
     loadItems(true)
-  }, [selectedContextId, searchQuery])
+  }, [selectedContextId, searchQuery, sortOrder])
 
   async function loadItems(reset = false) {
     setIsLoading(true)
@@ -87,7 +91,7 @@ export function LibraryAllTab({
       .select("id, content, source, context_id, is_on_active_list, updated_at")
       .eq("user_id", user.id)
       .neq("status", "retired")
-      .order("updated_at", { ascending: false })
+      .order("updated_at", { ascending: sortOrder === "asc" })
       .range(currentOffset, currentOffset + limit - 1)
 
     if (selectedContextId) {
@@ -105,7 +109,7 @@ export function LibraryAllTab({
       .from("notes")
       .select("id, title, content, updated_at")
       .eq("user_id", user.id)
-      .order("updated_at", { ascending: false })
+      .order("updated_at", { ascending: sortOrder === "asc" })
       .range(currentOffset, currentOffset + limit - 1)
 
     if (searchQuery) {
@@ -119,7 +123,7 @@ export function LibraryAllTab({
       .from("sources")
       .select("id, name, author, type, updated_at")
       .eq("user_id", user.id)
-      .order("updated_at", { ascending: false })
+      .order("updated_at", { ascending: sortOrder === "asc" })
       .range(currentOffset, currentOffset + limit - 1)
 
     if (searchQuery) {
@@ -180,10 +184,10 @@ export function LibraryAllTab({
     }
 
     // Sort by updated_at
-    newItems.sort(
-      (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    )
+    newItems.sort((a, b) => {
+      const diff = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
+      return sortOrder === "asc" ? diff : -diff
+    })
 
     if (reset) {
       setItems(newItems)
@@ -280,17 +284,26 @@ export function LibraryAllTab({
                         </span>
                       </>
                     )}
-                    {item.context && (
-                      <Badge
-                        variant="outline"
-                        className="ml-2"
-                        style={{
-                          borderColor: item.context.color || undefined,
-                          color: item.context.color || undefined,
-                        }}
-                      >
-                        {item.context.name}
-                      </Badge>
+                    {item.type === "thought" && (
+                      item.context ? (
+                        <Badge
+                          variant="outline"
+                          className="ml-2"
+                          style={{
+                            borderColor: item.context.color || undefined,
+                            color: item.context.color || undefined,
+                          }}
+                        >
+                          {item.context.name}
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="ml-2 text-muted-foreground border-muted-foreground/50"
+                        >
+                          Uncategorized
+                        </Badge>
+                      )
                     )}
                   </div>
                 </div>

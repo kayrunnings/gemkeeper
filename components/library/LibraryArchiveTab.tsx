@@ -19,16 +19,20 @@ import { Archive, Loader2, Quote, RotateCcw, Trash2 } from "lucide-react"
 import { restoreThought, deleteThought } from "@/lib/thoughts"
 import { useToast } from "@/components/error-toast"
 
+type SortOrder = "desc" | "asc"
+
 interface LibraryArchiveTabProps {
   selectedContextId: string | null
   contexts: Context[]
   searchQuery?: string
+  sortOrder?: SortOrder
 }
 
 export function LibraryArchiveTab({
   selectedContextId,
   contexts,
   searchQuery,
+  sortOrder = "desc",
 }: LibraryArchiveTabProps) {
   const [thoughts, setThoughts] = useState<Thought[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -40,7 +44,7 @@ export function LibraryArchiveTab({
 
   useEffect(() => {
     loadArchivedThoughts()
-  }, [selectedContextId, searchQuery])
+  }, [selectedContextId, searchQuery, sortOrder])
 
   async function loadArchivedThoughts() {
     setIsLoading(true)
@@ -57,7 +61,7 @@ export function LibraryArchiveTab({
       .select("*")
       .eq("user_id", user.id)
       .eq("status", "retired")
-      .order("retired_at", { ascending: false })
+      .order("retired_at", { ascending: sortOrder === "asc" })
 
     if (selectedContextId) {
       query = query.eq("context_id", selectedContextId)
@@ -175,20 +179,25 @@ export function LibraryArchiveTab({
                         </>
                       )}
                       <span>Archived {formatDate(thought.retired_at)}</span>
-                      {context && (
-                        <>
-                          <span>•</span>
-                          <Badge
-                            variant="outline"
-                            className="opacity-50"
-                            style={{
-                              borderColor: context.color || undefined,
-                              color: context.color || undefined,
-                            }}
-                          >
-                            {context.name}
-                          </Badge>
-                        </>
+                      <span>•</span>
+                      {context ? (
+                        <Badge
+                          variant="outline"
+                          className="opacity-50"
+                          style={{
+                            borderColor: context.color || undefined,
+                            color: context.color || undefined,
+                          }}
+                        >
+                          {context.name}
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="opacity-50 text-muted-foreground border-muted-foreground/50"
+                        >
+                          Uncategorized
+                        </Badge>
                       )}
                     </div>
 

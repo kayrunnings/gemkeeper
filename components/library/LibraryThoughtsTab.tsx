@@ -11,16 +11,20 @@ import { Button } from "@/components/ui/button"
 import { Gem, Zap, Loader2, Quote } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+type SortOrder = "desc" | "asc"
+
 interface LibraryThoughtsTabProps {
   selectedContextId: string | null
   contexts: Context[]
   searchQuery?: string
+  sortOrder?: SortOrder
 }
 
 export function LibraryThoughtsTab({
   selectedContextId,
   contexts,
   searchQuery,
+  sortOrder = "desc",
 }: LibraryThoughtsTabProps) {
   const [thoughts, setThoughts] = useState<Thought[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -31,7 +35,7 @@ export function LibraryThoughtsTab({
   useEffect(() => {
     setOffset(0)
     loadThoughts(true)
-  }, [selectedContextId, searchQuery])
+  }, [selectedContextId, searchQuery, sortOrder])
 
   async function loadThoughts(reset = false) {
     setIsLoading(true)
@@ -50,7 +54,7 @@ export function LibraryThoughtsTab({
       .select("*")
       .eq("user_id", user.id)
       .in("status", ["active", "passive"])
-      .order("updated_at", { ascending: false })
+      .order("updated_at", { ascending: sortOrder === "asc" })
       .range(currentOffset, currentOffset + limit - 1)
 
     if (selectedContextId) {
@@ -165,7 +169,7 @@ export function LibraryThoughtsTab({
                           Active List
                         </Badge>
                       )}
-                      {context && (
+                      {context ? (
                         <Badge
                           variant="outline"
                           style={{
@@ -174,6 +178,13 @@ export function LibraryThoughtsTab({
                           }}
                         >
                           {context.name}
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="text-muted-foreground border-muted-foreground/50"
+                        >
+                          Uncategorized
                         </Badge>
                       )}
                       {thought.status === "graduated" && (

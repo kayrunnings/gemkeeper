@@ -7,11 +7,14 @@ import { SourceCard } from "./SourceCard"
 import { Button } from "@/components/ui/button"
 import { BookOpen, Loader2 } from "lucide-react"
 
+type SortOrder = "desc" | "asc"
+
 interface LibrarySourcesTabProps {
   searchQuery?: string
+  sortOrder?: SortOrder
 }
 
-export function LibrarySourcesTab({ searchQuery }: LibrarySourcesTabProps) {
+export function LibrarySourcesTab({ searchQuery, sortOrder = "desc" }: LibrarySourcesTabProps) {
   const [sources, setSources] = useState<Source[]>([])
   const [linkedThoughtsCounts, setLinkedThoughtsCounts] = useState<Record<string, number>>({})
   const [isLoading, setIsLoading] = useState(true)
@@ -22,7 +25,7 @@ export function LibrarySourcesTab({ searchQuery }: LibrarySourcesTabProps) {
   useEffect(() => {
     setOffset(0)
     loadSources(true)
-  }, [searchQuery])
+  }, [searchQuery, sortOrder])
 
   async function loadSources(reset = false) {
     setIsLoading(true)
@@ -40,7 +43,7 @@ export function LibrarySourcesTab({ searchQuery }: LibrarySourcesTabProps) {
       .from("sources")
       .select("*")
       .eq("user_id", user.id)
-      .order("updated_at", { ascending: false })
+      .order("updated_at", { ascending: sortOrder === "asc" })
       .range(currentOffset, currentOffset + limit - 1)
 
     if (searchQuery) {
