@@ -571,7 +571,7 @@ export interface CaptureAnalysisResult {
   contentType: ContentType
   suggestions: CaptureItem[]
 }
-```
+
 
 ## Guidelines
 
@@ -595,7 +595,7 @@ export interface CaptureAnalysisResult {
 
 ## Commit
 
-```
+
 feat: Add floating moment button and AI capture modal
 
 - Add FloatingMomentButton with expand/collapse behavior
@@ -607,7 +607,7 @@ feat: Add floating moment button and AI capture modal
 - Add Cmd+N keyboard shortcut for capture
 
 Phase 5 + 6 of PKM Pivot
-```
+
 ```
 
 ---
