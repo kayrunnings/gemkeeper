@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { cn } from "@/lib/utils"
 import { SearchResultType } from "@/lib/types/search"
 
@@ -15,7 +16,7 @@ const filters: { label: string; value: SearchResultType | null }[] = [
   { label: "Sources", value: "source" },
 ]
 
-export function SearchFilters({ activeFilter, onFilterChange }: SearchFiltersProps) {
+export const SearchFilters = memo(function SearchFilters({ activeFilter, onFilterChange }: SearchFiltersProps) {
   return (
     <div className="flex gap-2 px-1">
       {filters.map((filter) => (
@@ -34,4 +35,4 @@ export function SearchFilters({ activeFilter, onFilterChange }: SearchFiltersPro
       ))}
     </div>
   )
-}
+})

@@ -1136,9 +1136,12 @@ reorderLinks(noteId: string, links: ReorderLinkInput[]): Promise<{ error: string
 ### Search Service (`lib/search.ts`) (ThoughtFolio 2.0)
 ```typescript
 search(query: string, filters?: SearchFilters): Promise<{ data: SearchResponse; error: string | null }>
+clearSearchCache(): void  // Clear cache when content is created/modified
 ```
 
 Uses PostgreSQL full-text search with `tsvector` columns and falls back to ILIKE queries if the `search_knowledge` database function is unavailable.
+
+**Caching:** Results are cached in-memory with 30-second TTL. Cache key is generated from query + filters. Cache is limited to 100 entries to prevent memory issues. Call `clearSearchCache()` when new content is created to ensure fresh results.
 
 ### AI Service (`lib/ai/gemini.ts`)
 ```typescript
@@ -1343,13 +1346,13 @@ className="transition-all duration-200 hover:bg-accent/50"
 | Glassmorphism UI | Complete | Dark/light theme support |
 | Contexts System | Complete | 8 defaults + custom creation |
 | Trophy Case | Complete | Graduated thoughts display |
-| **ThoughtFolio 2.0** | In Progress | PKM Pivot implementation |
-| - Full-Text Search | Complete | Cmd+K modal, filters, keyboard nav |
+| **ThoughtFolio 2.0** | Complete | PKM Pivot implementation |
+| - Full-Text Search | Complete | Cmd+K modal, filters, keyboard nav, result caching |
 | - Sources Entity | Complete | Types and CRUD service |
 | - Note-Thought Links | Complete | Bi-directional linking service |
 | - Profile Settings | Complete | Focus mode, active list limit, check-in enabled |
 | - Navigation Updates | Complete | 4-tab bottom nav, sidebar Library section |
-| - Unified Library | Complete | All/Thoughts/Notes/Sources/Archive tabs |
+| - Unified Library | Complete | All/Thoughts/Notes/Sources/Archive tabs, lazy loading |
 | - Context Chips Filter | Complete | Horizontal scrollable filter |
 | - Quick Actions | Complete | AI Capture, New Moment, Discover shortcuts |
 | - Floating Moment Button | Complete | Phase 5: FAB with scroll visibility, calendar picker |
@@ -1357,3 +1360,4 @@ className="transition-all duration-200 hover:bg-accent/50"
 | - Microsoft Calendar | Partial | Phase 7: Placeholder service, UI prepared, awaiting Azure AD |
 | - Enhanced Discovery | Complete | Phase 8: Tabs, saved discoveries, bookmark workflow |
 | - Focus Mode Settings | Complete | Phase 9: Active list limit slider, check-in toggle |
+| - Polish & Launch | Complete | Phase 10: Tests, caching, performance optimizations |

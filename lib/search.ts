@@ -1,6 +1,72 @@
 import { createClient } from "@/lib/supabase/client"
 import { SearchResult, SearchFilters, SearchResponse } from "@/lib/types/search"
 
+// Simple in-memory cache for search results
+// TTL: 30 seconds, clears on new content creation
+interface CacheEntry {
+  data: SearchResponse
+  timestamp: number
+}
+
+const searchCache = new Map<string, CacheEntry>()
+const CACHE_TTL_MS = 30 * 1000 // 30 seconds
+
+/**
+ * Generate a cache key from query and filters
+ */
+function getCacheKey(query: string, filters?: SearchFilters): string {
+  return JSON.stringify({
+    q: query.trim().toLowerCase(),
+    type: filters?.type || null,
+    contextId: filters?.contextId || null,
+    limit: filters?.limit || 20,
+    offset: filters?.offset || 0,
+  })
+}
+
+/**
+ * Clear the search cache (call when new content is created)
+ */
+export function clearSearchCache(): void {
+  searchCache.clear()
+}
+
+/**
+ * Get cached result if valid
+ */
+function getCachedResult(key: string): SearchResponse | null {
+  const entry = searchCache.get(key)
+  if (!entry) return null
+
+  const now = Date.now()
+  if (now - entry.timestamp > CACHE_TTL_MS) {
+    searchCache.delete(key)
+    return null
+  }
+
+  return entry.data
+}
+
+/**
+ * Store result in cache
+ */
+function cacheResult(key: string, data: SearchResponse): void {
+  // Limit cache size to prevent memory issues
+  if (searchCache.size > 100) {
+    // Remove oldest entries
+    const entries = Array.from(searchCache.entries())
+    entries.sort((a, b) => a[1].timestamp - b[1].timestamp)
+    for (let i = 0; i < 50; i++) {
+      searchCache.delete(entries[i][0])
+    }
+  }
+
+  searchCache.set(key, {
+    data,
+    timestamp: Date.now(),
+  })
+}
+
 /**
  * Search across thoughts, notes, and sources using full-text search
  */
@@ -26,6 +92,13 @@ export async function search(
     }
   }
 
+  // Check cache first
+  const cacheKey = getCacheKey(query, filters)
+  const cachedResult = getCachedResult(cacheKey)
+  if (cachedResult) {
+    return { data: cachedResult, error: null }
+  }
+
   const limit = filters?.limit || 20
   const offset = filters?.offset || 0
 
@@ -41,7 +114,7 @@ export async function search(
   if (error) {
     // If the function doesn't exist, fall back to basic search
     if (error.code === "42883") {
-      return fallbackSearch(query, filters, user.id)
+      return fallbackSearch(query, filters, user.id, cacheKey)
     }
     return {
       data: { results: [], total: 0, query },
@@ -68,12 +141,17 @@ export async function search(
     rank: row.rank,
   }))
 
+  const response: SearchResponse = {
+    results,
+    total: results.length,
+    query
+  }
+
+  // Cache successful result
+  cacheResult(cacheKey, response)
+
   return {
-    data: {
-      results,
-      total: results.length,
-      query
-    },
+    data: response,
     error: null
   }
 }
@@ -84,7 +162,8 @@ export async function search(
 async function fallbackSearch(
   query: string,
   filters: SearchFilters | undefined,
-  userId: string
+  userId: string,
+  cacheKey: string
 ): Promise<{ data: SearchResponse; error: string | null }> {
   const supabase = createClient()
   const searchPattern = `%${query}%`
@@ -169,12 +248,17 @@ async function fallbackSearch(
     .sort((a, b) => a.rank - b.rank)
     .slice(0, limit)
 
+  const response: SearchResponse = {
+    results: sortedResults,
+    total: sortedResults.length,
+    query,
+  }
+
+  // Cache successful result
+  cacheResult(cacheKey, response)
+
   return {
-    data: {
-      results: sortedResults,
-      total: sortedResults.length,
-      query,
-    },
+    data: response,
     error: null,
   }
 }

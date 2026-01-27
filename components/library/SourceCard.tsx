@@ -1,10 +1,11 @@
 "use client"
 
+import { memo } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Source, SOURCE_TYPE_LABELS, SOURCE_TYPE_ICONS } from "@/lib/types/source"
-import { BookOpen, Gem } from "lucide-react"
+import { Gem } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface SourceCardProps {
@@ -14,7 +15,7 @@ interface SourceCardProps {
   onClick?: () => void
 }
 
-export function SourceCard({
+export const SourceCard = memo(function SourceCard({
   source,
   linkedThoughtsCount = 0,
   className,
@@ -86,4 +87,4 @@ export function SourceCard({
       {content}
     </Link>
   )
-}
+})
