@@ -10,7 +10,7 @@ This document defines coding conventions, patterns, and practices for the Though
 
 | Layer | Technology |
 |-------|------------|
-| Framework | Next.js 14+ (App Router) |
+| Framework | Next.js 16.1.4 (App Router) |
 | Language | TypeScript (strict mode) |
 | Styling | Tailwind CSS |
 | Components | shadcn/ui |

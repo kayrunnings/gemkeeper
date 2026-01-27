@@ -50,17 +50,24 @@ gemkeeper/
 │   ├── auth/                     # Auth actions
 │   ├── checkin/                  # Evening check-in page
 │   ├── daily/                    # Daily prompt page
-│   ├── dashboard/                # Main dashboard
+│   ├── home/                     # Main dashboard (primary)
+│   ├── dashboard/                # Dashboard (legacy alias)
 │   ├── thoughts/                 # Thought management (alias: gems/)
 │   │   └── [id]/                 # Thought detail page
+│   ├── notes/                    # Notes feature
+│   │   └── actions.ts            # Note CRUD operations
+│   ├── folders/                  # Folder organization for notes
+│   │   └── actions.ts            # Folder management
 │   ├── retired/                  # Retired thoughts page
 │   ├── moments/                  # Moments feature
-│   │   ├── page.tsx              # Moments history
+│   │   ├── page.tsx              # Moments history (filterable by source)
+│   │   ├── MomentsHistoryClient.tsx  # Client component with filters
 │   │   └── [id]/prepare/         # Moment prep card
 │   ├── login/                    # Authentication
 │   ├── onboarding/               # First-time setup
 │   ├── settings/                 # User preferences + contexts
 │   ├── trophy-case/              # Graduated thoughts (ThoughtBank)
+│   ├── thought-bank/             # Alternative view for graduated thoughts
 │   ├── layout.tsx                # Root layout
 │   └── page.tsx                  # Home page
 ├── components/                   # React components
@@ -76,6 +83,16 @@ gemkeeper/
 │   │   └── SaveDiscoveryModal.tsx # Save flow modal
 │   ├── schedules/                # Schedule components
 │   ├── moments/                  # Moment components
+│   │   ├── MomentFAB.tsx         # Floating action button (Cmd+M shortcut)
+│   │   ├── MomentEntryModal.tsx  # Create moment modal
+│   │   ├── PrepCard.tsx          # Matched thoughts display
+│   │   ├── RecentMoments.tsx     # Dashboard widget
+│   │   └── MomentBanner.tsx      # Moment header banner
+│   ├── notes/                    # Notes components
+│   │   ├── note-editor.tsx       # Note editing with markdown
+│   │   ├── note-card.tsx         # Note display card
+│   │   └── notes-list.tsx        # Notes list view
+│   ├── extract-from-note-modal.tsx  # Extract thoughts from notes
 │   ├── settings/                 # Settings components
 │   └── ...                       # Other components
 ├── lib/                          # Utilities and services
@@ -89,7 +106,7 @@ gemkeeper/
 │   │   ├── thought.ts            # Thought types
 │   │   ├── context.ts            # Context types
 │   │   ├── discovery.ts          # Discovery types
-│   │   └── ...                   # Other types
+│   │   └── gem.ts                # Legacy gem types (backward compat)
 │   ├── contexts.ts               # Context service functions
 │   ├── thoughts.ts               # Thought service functions
 │   ├── discovery.ts              # Discovery service functions
@@ -100,6 +117,10 @@ gemkeeper/
 │   ├── matching.ts               # AI thought matching
 │   └── utils.ts                  # Utility helpers
 ├── types/                        # Additional type definitions
+│   ├── moments.ts                # Moment types (MomentSource, MomentStatus, etc.)
+│   ├── matching.ts               # AI matching types and constants
+│   ├── schedules.ts              # Schedule types
+│   └── calendar.ts               # Calendar integration types
 ├── __tests__/                    # Test files
 ├── public/                       # Static assets
 ├── middleware.ts                 # Auth middleware
@@ -422,6 +443,22 @@ Track skipped content to avoid re-suggesting.
 | source_url | TEXT | Original URL |
 | skipped_at | TIMESTAMPTZ | |
 
+#### `notes`
+Standalone long-form notes, separate from thoughts. Notes can contain markdown content and be organized into folders.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| user_id | UUID | FK → auth.users |
+| title | TEXT | Note title |
+| content | TEXT | Markdown content (no length limit) |
+| tags | TEXT[] | User-defined tags for organization |
+| is_favorite | BOOLEAN | Starred/favorite note |
+| created_at | TIMESTAMPTZ | |
+| updated_at | TIMESTAMPTZ | |
+
+**Note:** Notes are a separate feature from "thought reflections" (which are attached to individual thoughts). Notes are standalone documents that can be organized into folders and have thoughts extracted from them.
+
 ---
 
 ## 5. API Routes
@@ -564,8 +601,42 @@ Permanently delete a thought (hard delete).
 #### POST `/api/moments`
 Create moment and trigger AI matching.
 
+**Request:**
+```typescript
+{
+  description: string;           // Max 500 characters
+  source?: 'manual' | 'calendar';
+  calendarData?: {
+    event_id: string;
+    title: string;
+    start_time: string;
+  };
+}
+```
+
+**Response:**
+```typescript
+{
+  moment: MomentWithThoughts;  // Includes matched_thoughts array
+}
+```
+
+#### GET `/api/moments`
+List user's moments.
+
+**Query Parameters:**
+- `limit`: Number of moments to return (default: 10)
+- `source`: Filter by source ('manual' | 'calendar')
+
 #### POST `/api/moments/match`
 Match thoughts to moment using AI. Searches ALL thoughts with `status IN ('active', 'passive')` across ALL contexts.
+
+**Rate Limiting:** 20 matches per hour per user.
+
+**Matching Constants:**
+- `MAX_GEMS_TO_MATCH = 5` — Maximum thoughts returned
+- `MIN_RELEVANCE_SCORE = 0.5` — Minimum score threshold (0.0-1.0)
+- `MATCHING_TIMEOUT_MS = 5000` — AI timeout in milliseconds
 
 ### Calendar
 
@@ -667,8 +738,19 @@ Get user's discovery usage for today.
 ### Moment Components
 | Component | File | Purpose |
 |-----------|------|---------|
-| Moment Entry | `components/moments/MomentEntryModal.tsx` | Quick creation |
-| Prep Card | `components/moments/PrepCard.tsx` | Matched thoughts display |
+| Moment FAB | `components/moments/MomentFAB.tsx` | Floating action button (Cmd+M / Ctrl+M) |
+| Moment Entry | `components/moments/MomentEntryModal.tsx` | Quick creation with states (idle/loading/success/empty/error) |
+| Prep Card | `components/moments/PrepCard.tsx` | Matched thoughts with relevance scores |
+| Recent Moments | `components/moments/RecentMoments.tsx` | Dashboard widget |
+| Moment Banner | `components/moments/MomentBanner.tsx` | Moment header display |
+
+### Notes Components
+| Component | File | Purpose |
+|-----------|------|---------|
+| Note Editor | `components/note-editor.tsx` | Markdown note editing |
+| Note Card | `components/note-card.tsx` | Note display in lists |
+| Notes List | `components/notes-list.tsx` | List of user's notes |
+| Extract from Note | `components/extract-from-note-modal.tsx` | Extract thoughts from note content |
 
 ### Discovery Components
 | Component | File | Purpose |
@@ -725,6 +807,29 @@ updateDiscoveryStatus(id: string, status: string, savedGemId?: string): Promise<
 addSkippedContent(userId: string, url: string): Promise<void>
 incrementUsage(userId: string, sessionType: 'curated' | 'directed'): Promise<void>
 ```
+
+### Moments Service (`lib/moments.ts`)
+```typescript
+createMoment(description: string, source?: MomentSource, calendarData?: CalendarEventData): Promise<{ moment: Moment | null; error: string | null }>
+getMoment(momentId: string): Promise<{ moment: MomentWithThoughts | null; error: string | null }>
+getRecentMoments(limit?: number): Promise<{ moments: Moment[]; error: string | null }>
+getAllMoments(sourceFilter?: MomentSource): Promise<{ moments: Moment[]; error: string | null }>
+updateMomentStatus(momentId: string, status: MomentStatus): Promise<{ error: string | null }>
+updateMomentMatchResults(momentId: string, thoughtsMatchedCount: number, processingTimeMs: number): Promise<{ error: string | null }>
+recordMomentThoughtFeedback(momentGemId: string, wasHelpful: boolean): Promise<{ error: string | null }>
+markThoughtReviewed(momentGemId: string): Promise<{ error: string | null }>
+addMomentThoughts(momentId: string, matches: GemMatch[]): Promise<{ error: string | null }>
+```
+
+### Matching Service (`lib/matching.ts`)
+```typescript
+matchGemsToMoment(momentDescription: string, gems: GemForMatching[]): Promise<MatchingResponse>
+```
+
+**Constants (from `types/matching.ts`):**
+- `MAX_GEMS_TO_MATCH = 5`
+- `MIN_RELEVANCE_SCORE = 0.5`
+- `MATCHING_TIMEOUT_MS = 5000`
 
 ### URL Extractor Service (`lib/url-extractor.ts`)
 ```typescript
@@ -891,8 +996,9 @@ className="transition-all duration-200 hover:bg-accent/50"
 | Core Thoughts | Complete | CRUD, contexts, Active List |
 | Daily Prompts | Complete | Morning surfacing from Active List |
 | Check-ins | Complete | Evening reflection, graduation |
-| Moments (Epic 8) | Complete | AI matching, calendar integration |
+| Moments (Epic 8) | Complete | AI matching, calendar integration, rate limiting (20/hr) |
 | Discovery (Epic 12) | Complete | Web search, save/skip workflow |
+| Notes | Complete | Standalone notes with tags, folders, extract-to-thoughts |
 | Glassmorphism UI | Complete | Dark/light theme support |
 | Contexts System | Complete | 8 defaults + custom creation |
 | Trophy Case | Complete | Graduated thoughts display |

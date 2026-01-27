@@ -32,8 +32,9 @@ Before starting work, read these files in `Claude Context/`:
 ## Current State (January 2026)
 
 ### Completed Features
-- **Epic 8: Moments** - Individual scheduling, moments matching, calendar integration
+- **Epic 8: Moments** - Individual scheduling, moments matching (Cmd+M shortcut), calendar integration, rate limiting (20/hr)
 - **Epic 12: Discovery** - AI-powered content discovery with Google Search grounding
+- **Notes System** - Standalone long-form notes with tags, folders, and extract-to-thoughts capability
 - **Contexts System** - Life areas for organizing thoughts (8 defaults + custom)
 - **Glassmorphism UI** - Modern UI overhaul with dark/light theme support
 - **Graduation System** - Trophy case for mastered thoughts
@@ -72,7 +73,10 @@ Captured insights/knowledge. Each thought belongs to one context. Thoughts have 
 Curated subset of up to 10 thoughts that appear in daily prompts. Controlled by `is_on_active_list` boolean, separate from status. Preserves the original constraint-based accountability model while allowing unlimited total thoughts across contexts.
 
 ### Moments
-On-demand thought matching for upcoming situations. Moments search ALL thoughts with `status IN ('active', 'passive')` across ALL contexts, returning the most relevant with explanations.
+On-demand thought matching for upcoming situations. Moments search ALL thoughts with `status IN ('active', 'passive')` across ALL contexts, returning the most relevant with explanations. Rate limited to 20 matches/hour. Keyboard shortcut: Cmd+M / Ctrl+M.
+
+### Notes
+Standalone long-form content separate from atomic thoughts. Notes have titles, markdown content (no character limit), tags, and can be organized into folders. Users can **extract thoughts from notes**, creating a bridge between detailed note-taking and atomic insights. Notes are NOT the same as "thought reflections" (which are attached to individual thoughts).
 
 ### Discover
 AI-powered content discovery from the web. Dashboard card with three paths: free-text search, context chips, or "Surprise Me". Returns 4 discoveries per session. Daily limits: 4 curated + 4 directed = 8 max. User edits thought before saving (preserves "user's words" principle).
