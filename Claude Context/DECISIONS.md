@@ -548,6 +548,59 @@ This document tracks key product and technical decisions with their rationale. C
 
 ---
 
+### 2026-01-27: ThoughtFolio 2.0 PKM Pivot - Phase 7, 8, 9 (Settings & Discovery)
+
+**Decision:** Implement Focus Mode settings, enhanced Discovery with saved discoveries, and Microsoft Calendar placeholder.
+
+**Rationale:**
+- Users need control over Active List limit (Focus Mode allows 10-25)
+- Users want to bookmark discoveries for later processing
+- Microsoft Calendar prep enables future enterprise adoption
+- Check-in toggle gives users control over dashboard experience
+
+**Implementation (Phase 7 - Microsoft Calendar):**
+1. Created `lib/calendar-microsoft.ts` placeholder service
+2. Updated `CalendarSettings.tsx` with Microsoft section (Coming Soon badge)
+3. Created API routes `/api/calendar/microsoft/auth` and `/callback`
+4. All functions return appropriate errors until Azure AD configured
+
+**Implementation (Phase 8 - Enhanced Discovery):**
+1. Created `DiscoverTabs.tsx` with For You, Explore, Saved tabs
+2. Created `SavedDiscoveriesTab.tsx` for bookmarked discoveries list
+3. Added bookmark button to `DiscoveryCard.tsx` with optimistic UI
+4. Created API routes `/api/discover/bookmark` (POST/DELETE) and `/api/discover/saved`
+5. Added save/unsave functions to `lib/discovery.ts`
+6. Updated `Discovery` type with `saved_at` field
+7. Created `/app/discover/page.tsx` with tabbed interface
+
+**Implementation (Phase 9 - Focus Mode Settings):**
+1. Added server actions: `updateFocusMode`, `updateActiveListLimit`, `updateCheckinEnabled`
+2. Created `components/ui/slider.tsx` (Radix UI slider)
+3. Updated Settings page with Focus Mode toggle, Active List limit slider, Check-in toggle
+4. Updated `toggleActiveList` and `createMultipleThoughts` to respect profile's `active_list_limit`
+5. Updated dashboard to conditionally show DailyThoughtCard based on `checkin_enabled`
+
+**Key Design Choices:**
+- Focus Mode is opt-in (default limit remains 10)
+- Active List limit range 10-25 allows flexibility without removing constraint
+- Saved discoveries persist until manually removed
+- Microsoft Calendar uses same interface as Google for future parity
+- Check-in toggle hides dashboard card but doesn't disable check-in functionality
+
+**Alternatives Considered:**
+- Unlimited Active List → Rejected: violates constraint-based design principle
+- Auto-expire saved discoveries → Rejected: users want control
+- Full Microsoft implementation → Deferred: requires Azure AD credentials
+
+**Consequences:**
+- New profile fields: `focus_mode_enabled`, `active_list_limit`, `checkin_enabled`
+- New discovery field: `saved_at`
+- New components: DiscoverTabs, SavedDiscoveriesTab, Slider
+- New API routes: /api/discover/bookmark, /api/discover/saved, /api/calendar/microsoft/*
+- New service: lib/calendar-microsoft.ts
+
+---
+
 ## Deferred Decisions
 
 Items we've discussed but intentionally not decided yet:

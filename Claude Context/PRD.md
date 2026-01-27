@@ -141,7 +141,7 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 
 ### 3. Active List Management
 
-**Description:** Users curate up to 10 thoughts for Daily Check-in surfacing.
+**Description:** Users curate up to 10 thoughts (configurable via Focus Mode) for Daily Check-in surfacing.
 
 **User Story:** As a user, I want to mark specific thoughts as "Active" so they appear in my Daily Check-in while keeping other thoughts available for Moments.
 
@@ -150,21 +150,25 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 | ID | Requirement | Testable Criteria |
 |----|-------------|-------------------|
 | FR-3.1 | Thoughts have `is_on_active_list` boolean | Column exists, default false |
-| FR-3.2 | Maximum 10 thoughts on Active List | 11th toggle returns error |
+| FR-3.2 | Maximum thoughts on Active List (default 10, configurable 10-25) | Toggle returns error at limit |
 | FR-3.3 | User can toggle Active status from card | Toggle updates database |
 | FR-3.4 | User can toggle Active status from detail page | Toggle updates database |
 | FR-3.5 | Active status visually distinct | Star/badge indicator on cards |
 | FR-3.6 | Filter by Active/Passive available | Filter tabs work in UI |
 | FR-3.7 | Only active/passive thoughts can be on Active List | Retired/graduated excluded |
+| FR-3.8 | Focus Mode enables expanded Active List limit | Profile setting controls limit |
+| FR-3.9 | Active List limit configurable between 10-25 | Slider in Settings controls limit |
 
 **Acceptance Criteria:**
-- [ ] User can toggle any thought's Active status from card (star icon)
-- [ ] User can toggle Active status from thought detail page
-- [ ] Maximum 10 Active thoughts enforced with error toast
-- [ ] Active status has visual indicator (filled star = active)
-- [ ] Filter tabs: All / Active List / Passive
-- [ ] Active count shown in header ("Active: 7/10")
-- [ ] Cannot add retired/graduated thoughts to Active List
+- [x] User can toggle any thought's Active status from card (star icon)
+- [x] User can toggle Active status from thought detail page
+- [x] Maximum Active thoughts enforced with error toast
+- [x] Active status has visual indicator (filled star = active)
+- [x] Filter tabs: All / Active List / Passive
+- [x] Active count shown in header ("Active: 7/10")
+- [x] Cannot add retired/graduated thoughts to Active List
+- [x] Focus Mode toggle in Settings to enable expanded limit
+- [x] Active List limit slider (10-25) when Focus Mode enabled
 
 ---
 
@@ -222,6 +226,7 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 | FR-5.4 | User can mark as "not applied" (No) | Increments `skip_count` |
 | FR-5.5 | User can add optional reflection | Note saved with check-in record |
 | FR-5.6 | One check-in per day enforced | Subsequent visits show "already checked in" state |
+| FR-5.7 | User can disable daily check-in card | Profile setting `checkin_enabled` hides dashboard card |
 
 **Acceptance Criteria:**
 - [x] User sees daily thought on dashboard with "Check In" button
@@ -482,6 +487,10 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 | FR-11.22 | Fresh discoveries generated daily | No persistence of unseen discoveries |
 | FR-11.23 | Empty state shown when both sessions used | Message with "come back tomorrow" |
 | FR-11.24 | Bootstrap state guides new users | Prompts to add contexts/thoughts |
+| FR-11.25 | User can bookmark discovery for later | Bookmark icon saves to reading list |
+| FR-11.26 | Saved discoveries accessible via Saved tab | Tab shows bookmarked discoveries |
+| FR-11.27 | User can remove discovery from saved list | Remove button unsaves discovery |
+| FR-11.28 | Tabbed interface: For You, Explore, Saved | Navigation between discovery modes |
 
 **Discovery Response Schema:**
 
@@ -501,21 +510,25 @@ interface Discovery {
 ```
 
 **Acceptance Criteria:**
-- [ ] Dashboard shows "Discover Something New!" card
-- [ ] User can type any topic and get 4 relevant discoveries
-- [ ] User can tap context chip and get 4 discoveries for that context
-- [ ] User can tap "Surprise Me" and get 4 curated discoveries
-- [ ] Grid displays 4 discovery cards with preview info
-- [ ] Tapping card opens expanded view with full detail
-- [ ] User can save discovery with editable thought text
-- [ ] User can change context before saving
-- [ ] User can create new context during save flow
-- [ ] User can skip discoveries without penalty
-- [ ] Skipped discoveries don't reappear
-- [ ] Daily limits enforced (4 curated + 4 directed)
-- [ ] Used sessions show "come back tomorrow" state
-- [ ] New users see bootstrap guidance
-- [ ] Mix of trending and evergreen content shown
+- [x] Dashboard shows "Discover Something New!" card
+- [x] User can type any topic and get 4 relevant discoveries
+- [x] User can tap context chip and get 4 discoveries for that context
+- [x] User can tap "Surprise Me" and get 4 curated discoveries
+- [x] Grid displays 4 discovery cards with preview info
+- [x] Tapping card opens expanded view with full detail
+- [x] User can save discovery with editable thought text
+- [x] User can change context before saving
+- [x] User can create new context during save flow
+- [x] User can skip discoveries without penalty
+- [x] Skipped discoveries don't reappear
+- [x] Daily limits enforced (4 curated + 4 directed)
+- [x] Used sessions show "come back tomorrow" state
+- [x] New users see bootstrap guidance
+- [x] Mix of trending and evergreen content shown
+- [x] Tabbed interface with For You, Explore, Saved tabs
+- [x] User can bookmark discoveries for later processing
+- [x] User can view saved discoveries in Saved tab
+- [x] User can remove discoveries from saved list
 
 ---
 
