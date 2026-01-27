@@ -17,6 +17,7 @@ interface ToastContextType {
   showToast: (toast: Omit<Toast, "id">) => void
   showError: (error: unknown, fallbackMessage?: string) => void
   showSuccess: (title: string, message?: string) => void
+  showInfo: (title: string, message?: string) => void
 }
 
 const ToastContext = createContext<ToastContextType | null>(null)
@@ -231,12 +232,16 @@ export function ToastProvider({ children }: ToastProviderProps) {
     showToast({ type: "success", title, message })
   }
 
+  const showInfo = (title: string, message?: string) => {
+    showToast({ type: "info", title, message })
+  }
+
   const dismissToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }
 
   return (
-    <ToastContext.Provider value={{ showToast, showError, showSuccess }}>
+    <ToastContext.Provider value={{ showToast, showError, showSuccess, showInfo }}>
       {children}
 
       {/* Offline indicator */}

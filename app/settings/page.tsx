@@ -8,15 +8,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, LogOut, RefreshCw, Settings as SettingsIcon, Sparkles, AlertCircle, Palette } from "lucide-react"
+import { Loader2, LogOut, RefreshCw, Settings as SettingsIcon, Sparkles, Palette, Focus, Sun } from "lucide-react"
+import { Slider } from "@/components/ui/slider"
+import { getActiveListCount } from "@/lib/thoughts"
 import { createClient } from "@/lib/supabase/client"
-import { grantAIConsent, revokeAIConsent } from "./actions"
+import { grantAIConsent, revokeAIConsent, updateFocusMode, updateActiveListLimit, updateCheckinEnabled } from "./actions"
 import { AIConsentModal } from "@/components/ai-consent-modal"
 import { LayoutShell } from "@/components/layout-shell"
 import { CalendarSettings } from "@/components/settings/CalendarSettings"
 import { ContextSettings } from "@/components/settings/ContextSettings"
 import { useToast } from "@/components/error-toast"
-import { useUITheme, UI_THEMES, UI_THEME_INFO, UITheme } from "@/lib/ui-theme-context"
+import { useUITheme, UI_THEMES, UI_THEME_INFO } from "@/lib/ui-theme-context"
 import { useTheme, THEMES, THEME_INFO, Theme } from "@/components/theme-provider"
 import { useSidebar } from "@/lib/sidebar-context"
 import { cn } from "@/lib/utils"
@@ -167,6 +169,13 @@ export default function SettingsPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [showAIConsentModal, setShowAIConsentModal] = useState(false)
   const [isRevokingAI, setIsRevokingAI] = useState(false)
+  const [activeListCount, setActiveListCount] = useState(0)
+  const [focusModeEnabled, setFocusModeEnabled] = useState(true)
+  const [activeListLimit, setActiveListLimit] = useState(10)
+  const [checkinEnabled, setCheckinEnabled] = useState(true)
+  const [isSavingFocusMode, setIsSavingFocusMode] = useState(false)
+  const [isSavingLimit, setIsSavingLimit] = useState(false)
+  const [isSavingCheckin, setIsSavingCheckin] = useState(false)
 
   // Form state
   const [name, setName] = useState("")
@@ -205,6 +214,13 @@ export default function SettingsPage() {
           setTimezone(data.timezone || "America/New_York")
           setDailyPromptTime(data.daily_prompt_time || "08:00")
           setCheckinTime(data.checkin_time || "20:00")
+          setFocusModeEnabled(data.focus_mode_enabled ?? true)
+          setActiveListLimit(data.active_list_limit ?? 10)
+          setCheckinEnabled(data.checkin_enabled ?? true)
+
+          // Fetch active list count
+          const { count: currentActiveCount } = await getActiveListCount()
+          setActiveListCount(currentActiveCount)
         } else {
           // Create profile if it doesn't exist
           const { data: newProfile, error: createError } = await supabase
@@ -323,6 +339,75 @@ export default function SettingsPage() {
     })
   }
 
+  const handleFocusModeToggle = async (enabled: boolean) => {
+    setIsSavingFocusMode(true)
+    try {
+      const result = await updateFocusMode(enabled)
+      if (result.error) {
+        showError(result.error)
+      } else if (result.data) {
+        setProfile(result.data)
+        setFocusModeEnabled(result.data.focus_mode_enabled)
+        setActiveListLimit(result.data.active_list_limit)
+        showSuccess(
+          enabled ? "Focus Mode enabled" : "Focus Mode disabled",
+          enabled
+            ? "Active List limited to 10 thoughts"
+            : `Active List limit set to ${result.data.active_list_limit} thoughts`
+        )
+      }
+    } catch (err) {
+      showError(err, "Failed to update Focus Mode")
+    } finally {
+      setIsSavingFocusMode(false)
+    }
+  }
+
+  const handleLimitChange = async (newLimit: number) => {
+    setActiveListLimit(newLimit)
+  }
+
+  const handleLimitCommit = async () => {
+    if (focusModeEnabled) return // Don't save if focus mode is on
+    setIsSavingLimit(true)
+    try {
+      const result = await updateActiveListLimit(activeListLimit)
+      if (result.error) {
+        showError(result.error)
+      } else if (result.data) {
+        setProfile(result.data)
+        showSuccess("Limit updated", `Active List now limited to ${activeListLimit} thoughts`)
+      }
+    } catch (err) {
+      showError(err, "Failed to update limit")
+    } finally {
+      setIsSavingLimit(false)
+    }
+  }
+
+  const handleCheckinToggle = async (enabled: boolean) => {
+    setIsSavingCheckin(true)
+    try {
+      const result = await updateCheckinEnabled(enabled)
+      if (result.error) {
+        showError(result.error)
+      } else if (result.data) {
+        setProfile(result.data)
+        setCheckinEnabled(result.data.checkin_enabled)
+        showSuccess(
+          enabled ? "Daily Check-in enabled" : "Daily Check-in disabled",
+          enabled
+            ? "Today's Focus card will appear on your dashboard"
+            : "Today's Focus card will be hidden"
+        )
+      }
+    } catch (err) {
+      showError(err, "Failed to update check-in setting")
+    } finally {
+      setIsSavingCheckin(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -429,6 +514,114 @@ export default function SettingsPage() {
                 <p className="text-xs text-muted-foreground">
                   When you&apos;ll be reminded to check in on your gem
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Focus Mode Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Focus className="h-5 w-5" />
+                Focus Mode
+              </CardTitle>
+              <CardDescription>
+                Control how many thoughts can be on your Active List
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Focus Mode Toggle */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Focus Mode</Label>
+                  <p className="text-sm text-muted-foreground">
+                    When enabled, Active List is limited to 10 thoughts
+                  </p>
+                </div>
+                <Button
+                  variant={focusModeEnabled ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleFocusModeToggle(!focusModeEnabled)}
+                  disabled={isSavingFocusMode}
+                >
+                  {isSavingFocusMode ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : focusModeEnabled ? (
+                    "On"
+                  ) : (
+                    "Off"
+                  )}
+                </Button>
+              </div>
+
+              {/* Active List Limit Slider (only shown when Focus Mode is OFF) */}
+              {!focusModeEnabled && (
+                <div className="space-y-3 pt-2 border-t">
+                  <div className="flex items-center justify-between">
+                    <Label>Active List Limit</Label>
+                    <span className="text-sm font-medium">{activeListLimit} thoughts</span>
+                  </div>
+                  <Slider
+                    value={[activeListLimit]}
+                    min={10}
+                    max={25}
+                    step={1}
+                    onValueChange={(value) => handleLimitChange(value[0])}
+                    onValueCommit={handleLimitCommit}
+                    disabled={isSavingLimit}
+                    className="py-2"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Adjust how many thoughts can be on your Active List (10-25)
+                  </p>
+                </div>
+              )}
+
+              {/* Current Active List Count */}
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Current Active List</span>
+                  <span className="font-medium">
+                    {activeListCount} / {focusModeEnabled ? 10 : activeListLimit} thoughts
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Daily Check-in Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sun className="h-5 w-5" />
+                Daily Check-in
+              </CardTitle>
+              <CardDescription>
+                Manage your daily thought prompts
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Show Today&apos;s Focus</Label>
+                  <p className="text-sm text-muted-foreground">
+                    When disabled, the Today&apos;s Focus card is hidden from your dashboard
+                  </p>
+                </div>
+                <Button
+                  variant={checkinEnabled ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleCheckinToggle(!checkinEnabled)}
+                  disabled={isSavingCheckin}
+                >
+                  {isSavingCheckin ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : checkinEnabled ? (
+                    "On"
+                  ) : (
+                    "Off"
+                  )}
+                </Button>
               </div>
             </CardContent>
           </Card>
