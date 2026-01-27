@@ -42,6 +42,7 @@ export default function HomePage() {
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [userName, setUserName] = useState<string | null>(null)
   const [calendarConnected, setCalendarConnected] = useState(false)
+  const [checkinEnabled, setCheckinEnabled] = useState(true)
   const router = useRouter()
   const supabase = createClient()
   const { showError } = useToast()
@@ -56,16 +57,18 @@ export default function HomePage() {
         }
         setUserEmail(user.email ?? null)
 
-        // Fetch profile for name
+        // Fetch profile for name and checkin settings
         const { data: profile } = await supabase
           .from("profiles")
-          .select("name")
+          .select("name, checkin_enabled")
           .eq("id", user.id)
           .single()
 
         if (profile?.name) {
           setUserName(profile.name)
         }
+        // Set checkin_enabled, default to true if not set
+        setCheckinEnabled(profile?.checkin_enabled ?? true)
 
         // Fetch all data in parallel
         const [thoughtResult, momentsResult, contextsResult, activeGemsResult, graduatedGemsResult, calendarResult] = await Promise.all([
@@ -164,8 +167,10 @@ export default function HomePage() {
         {/* Quick Actions - At the very top */}
         <QuickActionsRow className="mb-6" />
 
-        {/* Today's Thought */}
-        <DailyThoughtCard thought={dailyThought} alreadyCheckedIn={alreadyCheckedIn} contexts={contexts} className="mb-6" />
+        {/* Today's Thought - only show if checkin is enabled */}
+        {checkinEnabled && (
+          <DailyThoughtCard thought={dailyThought} alreadyCheckedIn={alreadyCheckedIn} contexts={contexts} className="mb-6" />
+        )}
 
         {/* Discover Something New */}
         <div className="mb-6">

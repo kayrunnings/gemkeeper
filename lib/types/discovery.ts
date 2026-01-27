@@ -29,6 +29,8 @@ export interface Discovery {
   suggested_context_name?: string
   status: DiscoveryStatus
   saved_gem_id: string | null
+  // Save for later feature - timestamp when saved to reading list
+  saved_at: string | null
   created_at: string
   updated_at: string
 }

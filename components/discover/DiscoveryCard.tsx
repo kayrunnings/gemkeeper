@@ -1,9 +1,10 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ExternalLink, Check, X } from "lucide-react"
+import { ExternalLink, Check, X, Bookmark, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Discovery } from "@/lib/types/discovery"
 import type { ContextWithCount } from "@/lib/types/context"
@@ -12,6 +13,8 @@ interface DiscoveryCardProps {
   discovery: Discovery
   contexts: ContextWithCount[]
   onClick?: () => void
+  onBookmarkChange?: (discovery: Discovery) => void
+  showBookmark?: boolean
   className?: string
 }
 
@@ -19,17 +22,48 @@ export function DiscoveryCard({
   discovery,
   contexts,
   onClick,
+  onBookmarkChange,
+  showBookmark = true,
   className,
 }: DiscoveryCardProps) {
+  const [isBookmarking, setIsBookmarking] = useState(false)
+
   const suggestedContext = contexts.find((c) => c.id === discovery.suggested_context_id)
   const isSaved = discovery.status === "saved"
   const isSkipped = discovery.status === "skipped"
   const isProcessed = isSaved || isSkipped
+  const isBookmarked = !!discovery.saved_at
+
+  const handleBookmarkClick = async (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click
+    if (isBookmarking) return
+
+    setIsBookmarking(true)
+    try {
+      const method = isBookmarked ? "DELETE" : "POST"
+      const response = await fetch("/api/discover/bookmark", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discovery_id: discovery.id }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (onBookmarkChange && data.discovery) {
+          onBookmarkChange(data.discovery)
+        }
+      }
+    } catch (error) {
+      console.error("Bookmark error:", error)
+    } finally {
+      setIsBookmarking(false)
+    }
+  }
 
   return (
     <Card
       className={cn(
-        "cursor-pointer transition-all hover:shadow-md",
+        "cursor-pointer transition-all hover:shadow-md relative",
         isProcessed && "opacity-60",
         isSkipped && "bg-muted/30",
         className
@@ -37,6 +71,26 @@ export function DiscoveryCard({
       onClick={!isProcessed ? onClick : undefined}
     >
       <CardContent className="p-4">
+        {/* Bookmark button */}
+        {showBookmark && !isProcessed && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "absolute top-2 right-2 h-8 w-8",
+              isBookmarked && "text-primary"
+            )}
+            onClick={handleBookmarkClick}
+            disabled={isBookmarking}
+          >
+            {isBookmarking ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-current")} />
+            )}
+          </Button>
+        )}
+
         {/* Status badge */}
         {isSaved && (
           <Badge variant="default" className="mb-2 gap-1 bg-green-600">
@@ -67,7 +121,7 @@ export function DiscoveryCard({
 
         {/* Thought content */}
         <p className={cn(
-          "text-sm font-medium line-clamp-3 mb-2",
+          "text-sm font-medium line-clamp-3 mb-2 pr-8",
           isProcessed && "text-muted-foreground"
         )}>
           {discovery.thought_content}

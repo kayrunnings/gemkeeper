@@ -150,3 +150,110 @@ export async function revokeAIConsent(): Promise<{ data: Profile | null; error: 
   revalidatePath("/settings")
   return { data, error: null }
 }
+
+export async function updateFocusMode(
+  enabled: boolean,
+  limit?: number
+): Promise<{ data: Profile | null; error: string | null }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { data: null, error: "Not authenticated" }
+  }
+
+  const updateData: Record<string, unknown> = {
+    focus_mode_enabled: enabled,
+    updated_at: new Date().toISOString(),
+  }
+
+  // Only update limit if focus mode is disabled and a limit is provided
+  if (!enabled && limit !== undefined) {
+    // Validate limit is between 10 and 25
+    const validLimit = Math.max(10, Math.min(25, limit))
+    updateData.active_list_limit = validLimit
+  }
+
+  // If enabling focus mode, reset limit to 10
+  if (enabled) {
+    updateData.active_list_limit = 10
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update(updateData)
+    .eq("id", user.id)
+    .select()
+    .single()
+
+  if (error) {
+    return { data: null, error: error.message }
+  }
+
+  revalidatePath("/settings")
+  revalidatePath("/home")
+  revalidatePath("/thoughts")
+  return { data, error: null }
+}
+
+export async function updateActiveListLimit(
+  limit: number
+): Promise<{ data: Profile | null; error: string | null }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { data: null, error: "Not authenticated" }
+  }
+
+  // Validate limit is between 10 and 25
+  const validLimit = Math.max(10, Math.min(25, limit))
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({
+      active_list_limit: validLimit,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id)
+    .select()
+    .single()
+
+  if (error) {
+    return { data: null, error: error.message }
+  }
+
+  revalidatePath("/settings")
+  revalidatePath("/home")
+  revalidatePath("/thoughts")
+  return { data, error: null }
+}
+
+export async function updateCheckinEnabled(
+  enabled: boolean
+): Promise<{ data: Profile | null; error: string | null }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { data: null, error: "Not authenticated" }
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({
+      checkin_enabled: enabled,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id)
+    .select()
+    .single()
+
+  if (error) {
+    return { data: null, error: error.message }
+  }
+
+  revalidatePath("/settings")
+  revalidatePath("/home")
+  return { data, error: null }
+}

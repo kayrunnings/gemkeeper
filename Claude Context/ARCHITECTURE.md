@@ -76,7 +76,7 @@ gemkeeper/
 │   ├── layout.tsx                # Root layout
 │   └── page.tsx                  # Home page
 ├── components/                   # React components
-│   ├── ui/                       # shadcn/ui components
+│   ├── ui/                       # shadcn/ui components (includes slider.tsx)
 │   ├── gems/                     # Thought-related components
 │   ├── contexts/                 # Context management components
 │   ├── discover/                 # Discovery components
@@ -259,6 +259,9 @@ User preferences and settings.
 | calendar_connected | BOOLEAN | Calendar integration status |
 | onboarding_completed | BOOLEAN | Completed onboarding |
 | ai_consent_given | BOOLEAN | AI feature consent |
+| focus_mode_enabled | BOOLEAN | Enable expanded Active List limit |
+| active_list_limit | INTEGER | Active List limit (10-25, default 10) |
+| checkin_enabled | BOOLEAN | Show daily check-in card (default true) |
 | created_at | TIMESTAMPTZ | |
 | updated_at | TIMESTAMPTZ | |
 
@@ -382,7 +385,7 @@ OAuth tokens for connected calendars.
 |--------|------|-------------|
 | id | UUID | Primary key |
 | user_id | UUID | FK → auth.users |
-| provider | VARCHAR(20) | 'google' |
+| provider | VARCHAR(20) | 'google' or 'microsoft' |
 | email | VARCHAR(255) | Calendar account email |
 | access_token | TEXT | OAuth access token |
 | refresh_token | TEXT | OAuth refresh token |
@@ -393,6 +396,8 @@ OAuth tokens for connected calendars.
 | last_sync_at | TIMESTAMPTZ | Last sync time |
 | created_at | TIMESTAMPTZ | |
 | updated_at | TIMESTAMPTZ | |
+
+**Note:** Microsoft Calendar integration is prepared but pending Azure AD credentials configuration.
 
 #### `calendar_events_cache`
 Cached calendar events for moment generation.
@@ -458,6 +463,7 @@ AI-generated discovery suggestions for users.
 | suggested_context_id | UUID | FK → contexts |
 | status | VARCHAR(20) | pending/saved/skipped |
 | saved_gem_id | UUID | FK → gems (if saved) |
+| saved_at | TIMESTAMPTZ | When bookmarked for later |
 | created_at | TIMESTAMPTZ | |
 | updated_at | TIMESTAMPTZ | |
 
@@ -780,6 +786,45 @@ Get user's discovery usage for today.
 }
 ```
 
+#### POST `/api/discover/bookmark`
+Save a discovery for later (bookmark to reading list).
+
+**Request:**
+```typescript
+{
+  discovery_id: string;
+}
+```
+
+#### DELETE `/api/discover/bookmark`
+Remove a discovery from the reading list.
+
+**Request:**
+```typescript
+{
+  discovery_id: string;
+}
+```
+
+#### GET `/api/discover/saved`
+Get all saved discoveries (reading list).
+
+**Response:**
+```typescript
+{
+  discoveries: Discovery[];
+  count: number;
+}
+```
+
+### Microsoft Calendar (Placeholder)
+
+#### GET `/api/calendar/microsoft/auth`
+Initiate Microsoft OAuth flow. Returns 503 until Azure AD credentials are configured.
+
+#### GET `/api/calendar/microsoft/callback`
+Handle Microsoft OAuth callback. Placeholder for future implementation.
+
 ### AI Quick Capture (ThoughtFolio 2.0)
 
 #### POST `/api/capture/analyze`
@@ -962,9 +1007,11 @@ interface SearchResult {
 | Discover Card | `components/discover/DiscoverCard.tsx` | Dashboard entry point |
 | Context Chip | `components/discover/ContextChip.tsx` | Context selector |
 | Discovery Grid | `components/discover/DiscoveryGrid.tsx` | 2x2 grid view |
-| Discovery Card | `components/discover/DiscoveryCard.tsx` | Individual card |
+| Discovery Card | `components/discover/DiscoveryCard.tsx` | Individual card with bookmark |
 | Discovery Detail | `components/discover/DiscoveryDetail.tsx` | Expanded view |
 | Save Modal | `components/discover/SaveDiscoveryModal.tsx` | Save flow |
+| Discover Tabs | `components/discover/DiscoverTabs.tsx` | Tab navigation (For You, Explore, Saved) |
+| Saved Discoveries Tab | `components/discover/SavedDiscoveriesTab.tsx` | Bookmarked discoveries list |
 
 ### Search Components (ThoughtFolio 2.0)
 | Component | File | Purpose |
@@ -1020,6 +1067,21 @@ createDiscoveries(userId: string, discoveries: Discovery[]): Promise<Discovery[]
 updateDiscoveryStatus(id: string, status: string, savedGemId?: string): Promise<void>
 addSkippedContent(userId: string, url: string): Promise<void>
 incrementUsage(userId: string, sessionType: 'curated' | 'directed'): Promise<void>
+saveDiscoveryForLater(discoveryId: string, userId: string): Promise<{ discovery: Discovery | null; error: string | null }>
+unsaveDiscovery(discoveryId: string, userId: string): Promise<{ discovery: Discovery | null; error: string | null }>
+getSavedDiscoveries(userId: string): Promise<{ discoveries: Discovery[]; error: string | null }>
+getSavedDiscoveriesCount(userId: string): Promise<{ count: number; error: string | null }>
+```
+
+### Microsoft Calendar Service (`lib/calendar-microsoft.ts`)
+Placeholder service for Microsoft Calendar integration (pending Azure AD configuration).
+```typescript
+getMicrosoftAuthUrl(): string
+isMicrosoftConfigured(): boolean
+handleMicrosoftCallback(code: string, redirectUri: string): Promise<CallbackResult>
+getMicrosoftEvents(accessToken: string, startDate: Date, endDate: Date): Promise<EventsResult>
+refreshMicrosoftToken(refreshToken: string): Promise<RefreshResult>
+syncMicrosoftCalendar(connectionId: string, userId: string): Promise<{ error: string | null }>
 ```
 
 ### Moments Service (`lib/moments.ts`)
@@ -1292,3 +1354,6 @@ className="transition-all duration-200 hover:bg-accent/50"
 | - Quick Actions | Complete | AI Capture, New Moment, Discover shortcuts |
 | - Floating Moment Button | Complete | Phase 5: FAB with scroll visibility, calendar picker |
 | - AI Quick Capture | Complete | Phase 6: Cmd+N modal, content analysis, multi-item save |
+| - Microsoft Calendar | Partial | Phase 7: Placeholder service, UI prepared, awaiting Azure AD |
+| - Enhanced Discovery | Complete | Phase 8: Tabs, saved discoveries, bookmark workflow |
+| - Focus Mode Settings | Complete | Phase 9: Active list limit slider, check-in toggle |

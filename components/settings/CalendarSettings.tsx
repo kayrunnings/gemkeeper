@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Check,
   Loader2,
+  Clock,
 } from "lucide-react"
 import type { CalendarConnection } from "@/types/calendar"
 import { LEAD_TIME_OPTIONS, EVENT_FILTER_OPTIONS } from "@/types/calendar"
@@ -24,6 +25,7 @@ import {
   updateCalendarSettings,
   syncCalendarEvents,
 } from "@/lib/calendar-client"
+import { useToast } from "@/components/error-toast"
 
 interface CalendarSettingsProps {
   className?: string
@@ -35,6 +37,7 @@ export function CalendarSettings({ className }: CalendarSettingsProps) {
   const [isSyncing, setIsSyncing] = useState<string | null>(null)
   const [isDisconnecting, setIsDisconnecting] = useState<string | null>(null)
   const [customKeyword, setCustomKeyword] = useState("")
+  const { showInfo } = useToast()
 
   useEffect(() => {
     loadConnections()
@@ -341,6 +344,42 @@ export function CalendarSettings({ className }: CalendarSettingsProps) {
             Connect Google Calendar
           </Button>
         )}
+
+        {/* Microsoft Calendar Section */}
+        <div className="pt-4 border-t">
+          <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-blue-900/20 flex items-center justify-center">
+                <Calendar className="h-5 w-5 text-blue-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">Microsoft Outlook</p>
+                  <Badge variant="secondary" className="text-xs">
+                    <Clock className="h-3 w-3 mr-1" />
+                    Coming Soon
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Connect your Microsoft 365 calendar
+                </p>
+              </div>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            className="w-full mt-3 gap-2"
+            onClick={() => {
+              showInfo(
+                "Microsoft Calendar integration coming soon",
+                "We're working on adding Microsoft Outlook calendar support. Stay tuned!"
+              )
+            }}
+          >
+            <Calendar className="h-4 w-4" />
+            Connect Microsoft Calendar
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )

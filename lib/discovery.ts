@@ -475,3 +475,115 @@ export async function getBootstrapStatus(userId: string): Promise<{
     error: null,
   }
 }
+
+/**
+ * Save a discovery for later (adds to reading list)
+ */
+export async function saveDiscoveryForLater(
+  discoveryId: string,
+  userId: string
+): Promise<{ discovery: Discovery | null; error: string | null }> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("discoveries")
+    .update({
+      saved_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", discoveryId)
+    .eq("user_id", userId)
+    .select()
+    .single()
+
+  if (error) {
+    return { discovery: null, error: error.message }
+  }
+
+  return { discovery: data, error: null }
+}
+
+/**
+ * Unsave a discovery (removes from reading list)
+ */
+export async function unsaveDiscovery(
+  discoveryId: string,
+  userId: string
+): Promise<{ discovery: Discovery | null; error: string | null }> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("discoveries")
+    .update({
+      saved_at: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", discoveryId)
+    .eq("user_id", userId)
+    .select()
+    .single()
+
+  if (error) {
+    return { discovery: null, error: error.message }
+  }
+
+  return { discovery: data, error: null }
+}
+
+/**
+ * Get all saved discoveries for user (reading list)
+ */
+export async function getSavedDiscoveries(userId: string): Promise<{
+  discoveries: Discovery[]
+  error: string | null
+}> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("discoveries")
+    .select(`
+      *,
+      contexts:suggested_context_id (name)
+    `)
+    .eq("user_id", userId)
+    .not("saved_at", "is", null)
+    .order("saved_at", { ascending: false })
+
+  if (error) {
+    return { discoveries: [], error: error.message }
+  }
+
+  // Add context names to discoveries
+  const discoveriesWithNames = (data || []).map((d) => {
+    const contextData = d.contexts as { name: string } | null
+    return {
+      ...d,
+      suggested_context_name: contextData?.name,
+      contexts: undefined,
+    } as Discovery
+  })
+
+  return { discoveries: discoveriesWithNames, error: null }
+}
+
+/**
+ * Get count of saved discoveries
+ */
+export async function getSavedDiscoveriesCount(userId: string): Promise<{
+  count: number
+  error: string | null
+}> {
+  const supabase = await createClient()
+
+  const { count, error } = await supabase
+    .from("discoveries")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .not("saved_at", "is", null)
+
+  if (error) {
+    return { count: 0, error: error.message }
+  }
+
+  return { count: count || 0, error: null }
+}

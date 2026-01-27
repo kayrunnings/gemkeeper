@@ -26,17 +26,29 @@ export async function createMultipleThoughts(
   // If any thoughts want to be on Active List, check the limit
   const wantActiveCount = thoughts.filter(t => t.is_on_active_list).length
   if (wantActiveCount > 0) {
+    // Get user's profile to check their active list limit
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("focus_mode_enabled, active_list_limit")
+      .eq("id", user.id)
+      .single()
+
+    // Determine the effective limit based on focus mode
+    const effectiveLimit = profile?.focus_mode_enabled
+      ? MAX_ACTIVE_LIST
+      : (profile?.active_list_limit ?? MAX_ACTIVE_LIST)
+
     const { count: currentActiveListCount } = await supabase
       .from("gems")
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id)
       .eq("is_on_active_list", true)
 
-    const availableActiveSlots = MAX_ACTIVE_LIST - (currentActiveListCount || 0)
+    const availableActiveSlots = effectiveLimit - (currentActiveListCount || 0)
     if (wantActiveCount > availableActiveSlots) {
       return {
         thoughts: [],
-        error: `Active List is limited to ${MAX_ACTIVE_LIST} thoughts. You have ${availableActiveSlots} slot${availableActiveSlots === 1 ? "" : "s"} available.`
+        error: `Active List is limited to ${effectiveLimit} thoughts. You have ${availableActiveSlots} slot${availableActiveSlots === 1 ? "" : "s"} available.`
       }
     }
   }
@@ -243,7 +255,7 @@ export async function getDailyThought(): Promise<{ thought: Thought | null; alre
 
 /**
  * Toggle a thought's Active List status
- * Returns error if trying to add when Active List is at limit (10)
+ * Returns error if trying to add when Active List is at user's configured limit
  */
 export async function toggleActiveList(
   thoughtId: string
@@ -254,6 +266,18 @@ export async function toggleActiveList(
   if (!user) {
     return { thought: null, error: "Not authenticated" }
   }
+
+  // Get user's profile to check their active list limit
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("focus_mode_enabled, active_list_limit")
+    .eq("id", user.id)
+    .single()
+
+  // Determine the effective limit based on focus mode
+  const effectiveLimit = profile?.focus_mode_enabled
+    ? MAX_ACTIVE_LIST
+    : (profile?.active_list_limit ?? MAX_ACTIVE_LIST)
 
   // Get current thought to check its status
   const { data: currentThought, error: fetchError } = await supabase
@@ -280,10 +304,10 @@ export async function toggleActiveList(
       .eq("user_id", user.id)
       .eq("is_on_active_list", true)
 
-    if ((count || 0) >= MAX_ACTIVE_LIST) {
+    if ((count || 0) >= effectiveLimit) {
       return {
         thought: null,
-        error: `Active List is limited to ${MAX_ACTIVE_LIST} thoughts. Remove one before adding another.`
+        error: `Active List is limited to ${effectiveLimit} thoughts. Remove one before adding another.`
       }
     }
   }
