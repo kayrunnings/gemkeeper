@@ -8,8 +8,9 @@ import { LayoutShell } from "@/components/layout-shell"
 import { DiscoverTabs, type DiscoverTab } from "@/components/discover/DiscoverTabs"
 import { DiscoverCard } from "@/components/discover"
 import { SavedDiscoveriesTab } from "@/components/discover/SavedDiscoveriesTab"
+import { ExploreTab } from "@/components/discover/ExploreTab"
 import { useToast } from "@/components/error-toast"
-import { Sparkles, Compass } from "lucide-react"
+import { Sparkles } from "lucide-react"
 import type { ContextWithCount } from "@/lib/types/context"
 
 export default function DiscoverPage() {
@@ -109,15 +110,7 @@ export default function DiscoverPage() {
         )}
 
         {activeTab === "explore" && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mb-4">
-              <Compass className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h3 className="font-medium text-lg mb-2">Explore Coming Soon</h3>
-            <p className="text-muted-foreground text-sm max-w-sm">
-              Browse curated content by topic, author, or category. This feature is under development.
-            </p>
-          </div>
+          <ExploreTab contexts={contexts} />
         )}
 
         {activeTab === "saved" && (
