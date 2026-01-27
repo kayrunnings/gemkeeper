@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Gem, CONTEXT_TAG_LABELS, ContextTag } from "@/lib/types/gem"
+import { Thought, CONTEXT_TAG_LABELS, ContextTag } from "@/lib/types/thought"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import {
-  Gem as GemIcon,
+  Lightbulb,
   Loader2,
   Moon,
   Check,
@@ -20,7 +20,7 @@ import {
   RotateCcw,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { getDailyGem, logCheckin, retireGem, resetSkipCount } from "@/lib/gems"
+import { getDailyThought, logCheckin, retireThought, resetSkipCount } from "@/lib/thoughts"
 import Link from "next/link"
 import { LayoutShell } from "@/components/layout-shell"
 import { useToast } from "@/components/error-toast"
@@ -40,7 +40,7 @@ const contextTagVariant: Record<ContextTag, string> = {
 }
 
 export default function CheckinPage() {
-  const [gem, setGem] = useState<Gem | null>(null)
+  const [thought, setThought] = useState<Thought | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -51,7 +51,7 @@ export default function CheckinPage() {
   const supabase = createClient()
   const { showError, showSuccess } = useToast()
 
-  // Stale gem threshold (21 skips = 3 weeks)
+  // Stale thought threshold (21 skips = 3 weeks)
   const STALE_THRESHOLD = 21
 
   useEffect(() => {
@@ -64,14 +64,14 @@ export default function CheckinPage() {
         }
         setUserEmail(user.email ?? null)
 
-        const result = await getDailyGem()
+        const result = await getDailyThought()
         if (result.alreadyCheckedIn) {
           // User already did their check-in today
           setCheckinState("already_done")
-        } else if (result.gem) {
-          setGem(result.gem)
-          // Check if gem is stale
-          if (result.gem.skip_count >= STALE_THRESHOLD) {
+        } else if (result.thought) {
+          setThought(result.thought)
+          // Check if thought is stale
+          if (result.thought.skip_count >= STALE_THRESHOLD) {
             setCheckinState("stale")
           }
         }
@@ -86,12 +86,12 @@ export default function CheckinPage() {
   }, [router, supabase, showError])
 
   const handleYes = async () => {
-    if (!gem || isSubmitting) return
+    if (!thought || isSubmitting) return
 
     setIsSubmitting(true)
 
     try {
-      const result = await logCheckin(gem.id, "evening_checkin", "yes", reflectionNote || undefined)
+      const result = await logCheckin(thought.id, "evening_checkin", "yes", reflectionNote || undefined)
 
       if (result.error) {
         showError(result.error)
@@ -99,7 +99,7 @@ export default function CheckinPage() {
         return
       }
 
-      setNewApplicationCount(gem.application_count + 1)
+      setNewApplicationCount(thought.application_count + 1)
       setCheckinState("success")
       showSuccess("Great job!", "Your progress has been recorded.")
     } catch (err) {
@@ -110,12 +110,12 @@ export default function CheckinPage() {
   }
 
   const handleNo = async () => {
-    if (!gem || isSubmitting) return
+    if (!thought || isSubmitting) return
 
     setIsSubmitting(true)
 
     try {
-      const result = await logCheckin(gem.id, "evening_checkin", "no", reflectionNote || undefined)
+      const result = await logCheckin(thought.id, "evening_checkin", "no", reflectionNote || undefined)
 
       if (result.error) {
         showError(result.error)
@@ -124,10 +124,10 @@ export default function CheckinPage() {
       }
 
       // Check if this skip brings it to stale
-      const newSkipCount = gem.skip_count + 1
+      const newSkipCount = thought.skip_count + 1
       if (newSkipCount >= STALE_THRESHOLD) {
-        // Update local gem state and show stale prompt
-        setGem({ ...gem, skip_count: newSkipCount })
+        // Update local thought state and show stale prompt
+        setThought({ ...thought, skip_count: newSkipCount })
         setCheckinState("stale")
       } else {
         setCheckinState("skip")
@@ -140,12 +140,12 @@ export default function CheckinPage() {
   }
 
   const handleKeep = async () => {
-    if (!gem || isSubmitting) return
+    if (!thought || isSubmitting) return
 
     setIsSubmitting(true)
 
     try {
-      const result = await resetSkipCount(gem.id)
+      const result = await resetSkipCount(thought.id)
 
       if (result.error) {
         showError(result.error)
@@ -155,7 +155,7 @@ export default function CheckinPage() {
 
       // Treat as a skip acknowledgment
       setCheckinState("skip")
-      showSuccess("Gem kept!", "We'll keep reminding you about this gem.")
+      showSuccess("Thought kept!", "We'll keep reminding you about this thought.")
     } catch (err) {
       showError(err, "Failed to reset skip count")
     } finally {
@@ -164,12 +164,12 @@ export default function CheckinPage() {
   }
 
   const handleRelease = async () => {
-    if (!gem || isSubmitting) return
+    if (!thought || isSubmitting) return
 
     setIsSubmitting(true)
 
     try {
-      const result = await retireGem(gem.id, "release")
+      const result = await retireThought(thought.id, "release")
 
       if (result.error) {
         showError(result.error)
@@ -177,10 +177,10 @@ export default function CheckinPage() {
         return
       }
 
-      showSuccess("Gem released", "Making room for new wisdom.")
+      showSuccess("Thought released", "Making room for new knowledge.")
       router.push("/thoughts")
     } catch (err) {
-      showError(err, "Failed to release gem")
+      showError(err, "Failed to release thought")
     }
   }
 
@@ -228,12 +228,12 @@ export default function CheckinPage() {
                 </Link>
               </CardContent>
             </Card>
-          ) : !gem ? (
+          ) : !thought ? (
             // No thoughts available
             <Card className="border-dashed border-2">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mb-4">
-                  <GemIcon className="h-7 w-7 text-muted-foreground" />
+                  <Lightbulb className="h-7 w-7 text-muted-foreground" />
                 </div>
                 <h3 className="font-semibold mb-2">No active thoughts</h3>
                 <p className="text-sm text-muted-foreground mb-6 max-w-sm">
@@ -241,14 +241,14 @@ export default function CheckinPage() {
                 </p>
                 <Link href="/thoughts">
                   <Button className="gap-2">
-                    <GemIcon className="h-4 w-4" />
+                    <Lightbulb className="h-4 w-4" />
                     Add a Thought
                   </Button>
                 </Link>
               </CardContent>
             </Card>
           ) : checkinState === "stale" ? (
-            // Stale gem prompt
+            // Stale thought prompt
             <Card className="border-warning/30">
               <CardContent className="py-8 space-y-6">
                 <div className="flex justify-center">
@@ -260,19 +260,19 @@ export default function CheckinPage() {
                 <div className="text-center">
                   <h3 className="text-xl font-bold mb-2">Time to Reflect</h3>
                   <p className="text-muted-foreground">
-                    It&apos;s been 3 weeks since you&apos;ve applied this gem. Is it still useful to you?
+                    It&apos;s been 3 weeks since you&apos;ve applied this thought. Is it still useful to you?
                   </p>
                 </div>
 
-                {/* Gem preview */}
+                {/* Thought preview */}
                 <div className="p-4 bg-secondary/50 rounded-xl space-y-3">
-                  <Badge variant={contextTagVariant[gem.context_tag] as "meetings" | "feedback" | "conflict" | "focus" | "health" | "relationships" | "parenting" | "other"}>
-                    {gem.context_tag === "other" && gem.custom_context
-                      ? gem.custom_context
-                      : CONTEXT_TAG_LABELS[gem.context_tag]}
+                  <Badge variant={contextTagVariant[thought.context_tag] as "meetings" | "feedback" | "conflict" | "focus" | "health" | "relationships" | "parenting" | "other"}>
+                    {thought.context_tag === "other" && thought.custom_context
+                      ? thought.custom_context
+                      : CONTEXT_TAG_LABELS[thought.context_tag]}
                   </Badge>
                   <p className="text-sm">
-                    {gem.content.length > 100 ? gem.content.substring(0, 100) + "..." : gem.content}
+                    {thought.content.length > 100 ? thought.content.substring(0, 100) + "..." : thought.content}
                   </p>
                 </div>
 
@@ -311,11 +311,11 @@ export default function CheckinPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-2">Great job!</h3>
                 <p className="text-muted-foreground mb-2">
-                  That&apos;s {newApplicationCount} {newApplicationCount === 1 ? "time" : "times"} you&apos;ve applied this gem.
+                  That&apos;s {newApplicationCount} {newApplicationCount === 1 ? "time" : "times"} you&apos;ve applied this thought.
                 </p>
                 {newApplicationCount >= 5 && (
                   <p className="text-success font-medium mb-4">
-                    This gem is ready to graduate!
+                    This thought is ready to graduate!
                   </p>
                 )}
                 <div className="flex gap-3 justify-center mt-8">
@@ -323,7 +323,7 @@ export default function CheckinPage() {
                     <Button variant="outline">View Thoughts</Button>
                   </Link>
                   {newApplicationCount >= 5 && (
-                    <Link href={`/thoughts/${gem.id}`}>
+                    <Link href={`/thoughts/${thought.id}`}>
                       <Button>Graduate Thought</Button>
                     </Link>
                   )}
@@ -352,29 +352,29 @@ export default function CheckinPage() {
               <CardContent className="py-8 space-y-6">
                 {/* Badge */}
                 <div className="flex justify-center">
-                  <Badge variant={contextTagVariant[gem.context_tag] as "meetings" | "feedback" | "conflict" | "focus" | "health" | "relationships" | "parenting" | "other"}>
-                    {gem.context_tag === "other" && gem.custom_context
-                      ? gem.custom_context
-                      : CONTEXT_TAG_LABELS[gem.context_tag]}
+                  <Badge variant={contextTagVariant[thought.context_tag] as "meetings" | "feedback" | "conflict" | "focus" | "health" | "relationships" | "parenting" | "other"}>
+                    {thought.context_tag === "other" && thought.custom_context
+                      ? thought.custom_context
+                      : CONTEXT_TAG_LABELS[thought.context_tag]}
                   </Badge>
                 </div>
 
-                {/* Gem content */}
+                {/* Thought content */}
                 <p className="text-xl leading-relaxed text-center whitespace-pre-wrap font-medium">
-                  {gem.content}
+                  {thought.content}
                 </p>
 
                 {/* Source */}
-                {gem.source && (
+                {thought.source && (
                   <p className="text-sm text-center text-muted-foreground">
-                    — {gem.source}
+                    — {thought.source}
                   </p>
                 )}
 
                 {/* Question */}
                 <div className="pt-6 border-t space-y-4">
                   <p className="text-center font-semibold text-lg">
-                    Did you apply this gem today?
+                    Did you apply this thought today?
                   </p>
 
                   {/* Optional reflection note */}

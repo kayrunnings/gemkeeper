@@ -270,21 +270,66 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 
 ---
 
-### 7. Thought Notes
+### 7. Thought Reflections
 
-**Description:** Users can add personal notes and reflections to thoughts.
+**Description:** Users can add personal reflections to individual thoughts (attached notes).
 
 **Features:**
-- Add notes to any thought
-- Multiple notes per thought (threaded)
+- Add reflections to any thought
+- Multiple reflections per thought (threaded)
 - Timestamped entries
-- Notes visible on thought detail view
+- Reflections visible on thought detail view
 
 **Acceptance Criteria:**
-- [ ] User can add note to thought
-- [ ] User can view all notes on a thought
-- [ ] Notes show timestamp
-- [ ] User can delete notes
+- [x] User can add reflection to thought
+- [x] User can view all reflections on a thought
+- [x] Reflections show timestamp
+- [x] User can delete reflections
+
+**Note:** This is different from the standalone Notes feature (Section 7.5). Thought reflections are attached to specific thoughts, while Notes are independent long-form documents.
+
+---
+
+### 7.5. Notes System
+
+**Description:** Standalone long-form notes for capturing detailed content, separate from atomic thoughts.
+
+**User Story:** As a user, I want to write longer notes that aren't limited to 200 characters so I can capture detailed information and later extract key thoughts from them.
+
+**Features:**
+- Create, read, update, delete notes
+- Markdown content support (no character limit)
+- Tag notes for organization
+- Mark notes as favorites
+- Organize notes into folders
+- Extract thoughts from notes (AI-powered)
+
+**Functional Requirements:**
+
+| ID | Requirement | Testable Criteria |
+|----|-------------|-------------------|
+| FR-7.5.1 | User can create notes with title and content | Note saved to database |
+| FR-7.5.2 | User can add tags to notes | Tags saved as TEXT[] |
+| FR-7.5.3 | User can mark notes as favorites | is_favorite toggle works |
+| FR-7.5.4 | User can organize notes into folders | Folder assignment persists |
+| FR-7.5.5 | User can extract thoughts from notes | AI returns extracted insights |
+| FR-7.5.6 | Extracted thoughts can be saved to thought library | Thoughts created with note as source |
+
+**Acceptance Criteria:**
+- [x] User can create note with title and markdown content
+- [x] User can edit existing notes
+- [x] User can delete notes
+- [x] User can tag notes
+- [x] User can mark notes as favorites
+- [x] User can organize notes into folders
+- [x] User can extract thoughts from note content via AI
+- [x] Extracted thoughts preserve note as source
+
+**Relationship to Thoughts:**
+- Notes are standalone documents (unlimited length)
+- Thoughts are atomic insights (max 200 chars)
+- Users can extract multiple thoughts from a single note
+- This creates a "note → thoughts" workflow complementing "content → thoughts"
 
 ---
 
@@ -316,20 +361,39 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 
 | ID | Requirement | Testable Criteria |
 |----|-------------|-------------------|
-| FR-9.1 | User can describe moment via text | Text field accepts input |
+| FR-9.1 | User can describe moment via text | Text field accepts input (max 500 chars) |
 | FR-9.2 | AI searches thoughts with status IN ('active', 'passive') | Query includes active and passive only |
 | FR-9.3 | AI searches ALL contexts | No context filter applied |
-| FR-9.4 | AI returns ranked relevant thoughts | Top 3-5 with scores |
+| FR-9.4 | AI returns ranked relevant thoughts | Top 5 max with scores ≥ 0.5 |
 | FR-9.5 | Each match includes explanation | Relevance reason provided |
 | FR-9.6 | Matching completes within 5 seconds | Timeout enforced |
+| FR-9.7 | Rate limiting enforced | 20 matches per hour per user |
+| FR-9.8 | Keyboard shortcut available | Cmd+M / Ctrl+M opens modal |
+
+**Implementation Constants:**
+- `MAX_MOMENT_DESCRIPTION_LENGTH = 500`
+- `MAX_GEMS_TO_MATCH = 5`
+- `MIN_RELEVANCE_SCORE = 0.5`
+- `MATCHING_TIMEOUT_MS = 5000`
+- Rate limit: 20 matches/hour/user
 
 **Acceptance Criteria:**
-- [ ] User can describe moment via text
-- [ ] User can set when moment will occur
-- [ ] AI returns ranked relevant thoughts from ALL contexts
-- [ ] AI searches both Active and Passive thoughts (not retired/graduated)
-- [ ] Each match includes relevance explanation
-- [ ] User can log reflection after moment
+- [x] User can describe moment via text (max 500 chars)
+- [x] User can set when moment will occur (calendar integration)
+- [x] AI returns ranked relevant thoughts from ALL contexts
+- [x] AI searches both Active and Passive thoughts (not retired/graduated)
+- [x] Each match includes relevance explanation
+- [x] User can log reflection after moment
+- [x] Keyboard shortcut (Cmd+M / Ctrl+M) opens moment modal
+- [x] Moments history page with filter by source (all/manual/calendar)
+- [x] User can give feedback on matched thoughts (helpful/not helpful)
+
+**UI States:**
+- `idle` — Ready for input
+- `loading` — AI matching in progress (shimmer animation)
+- `success` — Matches found, redirect to prep card
+- `empty` — No matches found, encouraging message
+- `error` — Error occurred, retry option
 
 ---
 

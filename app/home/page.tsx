@@ -33,6 +33,7 @@ function getGreeting(): string {
 
 export default function HomePage() {
   const [dailyThought, setDailyThought] = useState<Thought | null>(null)
+  const [alreadyCheckedIn, setAlreadyCheckedIn] = useState(false)
   const [moments, setMoments] = useState<Moment[]>([])
   const [contexts, setContexts] = useState<ContextWithCount[]>([])
   const [stats, setStats] = useState<Stats>({ activeGems: 0, graduatedGems: 0, totalApplications: 0 })
@@ -83,6 +84,9 @@ export default function HomePage() {
 
         if (thoughtResult.thought) {
           setDailyThought(thoughtResult.thought)
+        }
+        if (thoughtResult.alreadyCheckedIn) {
+          setAlreadyCheckedIn(true)
         }
 
         if (momentsResult.moments) {
@@ -147,7 +151,7 @@ export default function HomePage() {
         {/* Main grid */}
         <div className="grid gap-6 md:grid-cols-2">
           {/* Today's Thought - Full width */}
-          <DailyThoughtCard thought={dailyThought} contexts={contexts} className="md:col-span-2" />
+          <DailyThoughtCard thought={dailyThought} alreadyCheckedIn={alreadyCheckedIn} contexts={contexts} className="md:col-span-2" />
 
           {/* Discover Something New - Full width */}
           <DiscoverCard contexts={contexts} className="md:col-span-2" />

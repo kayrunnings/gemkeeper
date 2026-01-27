@@ -246,6 +246,43 @@ This document tracks key product and technical decisions with their rationale. C
 
 ---
 
+### 2026-01-XX: Notes as Standalone Feature
+
+**Decision:** Implement Notes as a standalone long-form content feature, separate from atomic thoughts, with ability to extract thoughts from notes.
+
+**Rationale:**
+- Atomic thoughts are limited to 200 chars — users need a place for longer content
+- Many workflows start with detailed notes, then distill key insights
+- "Extract from notes" creates a bridge between note-taking and thought capture
+- Folder organization provides structure for long-form content
+- Tags and favorites enable quick access patterns
+
+**Key Design Choices:**
+1. **Separate from thoughts** — Notes are not attached to thoughts; they're standalone documents
+2. **Markdown support** — Rich formatting for detailed content
+3. **No character limit** — Unlike thoughts (200 chars), notes have unlimited length
+4. **Extract-to-thoughts** — AI can identify key insights in notes and create thoughts from them
+5. **Folder organization** — Hierarchical structure for note management
+6. **Tags + favorites** — Quick access patterns without rigid structure
+
+**Alternatives Considered:**
+- Notes as thought attachments only → Rejected: too limiting for standalone note-taking use case
+- No notes feature, just longer thoughts → Rejected: violates constraint-based design principle
+- Third-party note integration (Notion, etc.) → Rejected: fragmented experience, loses extract capability
+
+**Consequences:**
+- New database table: `notes` (with tags, is_favorite fields)
+- New components: note-editor, note-card, notes-list, extract-from-note-modal
+- New server actions in `app/notes/actions.ts`
+- Folder system via `app/folders/actions.ts`
+
+**Important Distinction:**
+- **Notes** = standalone documents (this feature)
+- **Thought Reflections** = notes attached to individual thoughts (Section 7 in PRD)
+- These are different features serving different purposes
+
+---
+
 ### 2026-01-26: Bug Fix - Total Thought Limit Removal
 
 **Decision:** Remove the incorrect total thought limit from thought creation endpoints.

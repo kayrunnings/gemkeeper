@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils"
 
 interface DailyThoughtCardProps {
   thought: Thought | null
+  alreadyCheckedIn?: boolean
   contexts?: ContextWithCount[]
   className?: string
 }
@@ -27,7 +28,7 @@ const contextTagVariant: Record<ContextTag, string> = {
   other: "other",
 }
 
-export function DailyThoughtCard({ thought, contexts = [], className }: DailyThoughtCardProps) {
+export function DailyThoughtCard({ thought, alreadyCheckedIn = false, contexts = [], className }: DailyThoughtCardProps) {
   const [isDismissed, setIsDismissed] = useState(false)
 
   // Look up context by ID or by slug matching context_tag
@@ -101,14 +102,22 @@ export function DailyThoughtCard({ thought, contexts = [], className }: DailyTho
               <p className="text-sm text-muted-foreground">— {thought.source}</p>
             )}
           </div>
+        ) : alreadyCheckedIn ? (
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mb-3">
+              <Sun className="h-6 w-6 text-white" />
+            </div>
+            <p className="text-muted-foreground mb-2">You&apos;ve completed your check-in for today!</p>
+            <p className="text-sm text-muted-foreground">Come back tomorrow for a new thought.</p>
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-6 text-center">
             <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center mb-3">
               <Lightbulb className="h-6 w-6 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground mb-4">No active thoughts yet</p>
+            <p className="text-muted-foreground mb-4">No thoughts on your Active List yet</p>
             <Link href="/thoughts">
-              <Button size="sm">Add Your First Thought</Button>
+              <Button size="sm">Add Thoughts to Active List</Button>
             </Link>
           </div>
         )}
