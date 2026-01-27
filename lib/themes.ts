@@ -6,6 +6,9 @@ export const THEMES = [
   "amethyst",
   "ocean",
   "ruby",
+  "forest",
+  "rose",
+  "nord",
   "sunrise",
 ] as const
 
@@ -31,6 +34,18 @@ export const THEME_INFO: Record<Theme, { name: string; description: string }> = 
   ruby: {
     name: "Ruby",
     description: "Dark warm gray with ruby red accents",
+  },
+  forest: {
+    name: "Forest",
+    description: "Deep forest green with gold accents",
+  },
+  rose: {
+    name: "Rose",
+    description: "Dark charcoal with soft rose pink accents",
+  },
+  nord: {
+    name: "Nord",
+    description: "Arctic blue-gray Nordic palette",
   },
   sunrise: {
     name: "Sunrise",
