@@ -307,6 +307,29 @@ This document tracks key product and technical decisions with their rationale. C
 
 ---
 
+### 2026-01-27: Bug Fix - Dashboard Check-in State Display
+
+**Decision:** Update DailyThoughtCard to show three distinct states based on `alreadyCheckedIn` flag from `getDailyThought()`.
+
+**Bug Description:** The dashboard "Today's Thought" card showed "No active thoughts yet" even when the user had active thoughts on their Active List. This occurred when the user had already completed their evening check-in for the day.
+
+**Root Cause:** `getDailyThought()` returns `{ thought: null, alreadyCheckedIn: true }` after the user completes their evening check-in. The home page and `DailyThoughtCard` component weren't using the `alreadyCheckedIn` value — they only checked if `thought` was null and displayed a misleading message.
+
+**Files Fixed:**
+- `app/home/page.tsx` - Track and pass `alreadyCheckedIn` state to DailyThoughtCard
+- `components/home/DailyThoughtCard.tsx` - Handle three distinct states
+
+**Correct Behavior (now):**
+| State | Condition | Display |
+|-------|-----------|---------|
+| Thought available | `thought` exists | Shows thought with context badge, content, source |
+| Already checked in | `thought: null, alreadyCheckedIn: true` | "You've completed your check-in for today!" |
+| No Active thoughts | `thought: null, alreadyCheckedIn: false` | "No thoughts on your Active List yet" |
+
+**Lesson Learned:** When functions return multiple state signals (thought + alreadyCheckedIn + error), ensure all consuming components use all relevant signals to display accurate UI states.
+
+---
+
 ## Technical Decisions
 
 ### 2024-XX-XX: Google Gemini API Over Anthropic
