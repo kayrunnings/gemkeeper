@@ -3,6 +3,15 @@
 > **Usage:** Copy the prompt for each session into a new Claude Code conversation.
 > **Important:** Complete and test each session before starting the next.
 
+
+Session	Phases	Tasks	What Gets Built
+1	1 + 2	24	Types, services, search API, Cmd+K search UI
+2	3 + 4	14	4-tab navigation, unified Library with tabs
+3	5 + 6	14	Floating 🎯 button, AI Capture modal (Cmd+N)
+4	7 + 8 + 9	10	Focus Mode settings, Discovery tabs, Microsoft Calendar UI
+5	10	8	Tests, performance, documentation, polish
+
+
 ---
 
 ## Pre-Session Checklist
