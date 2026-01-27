@@ -55,6 +55,10 @@ interface ImageInput {
   data: string
 }
 
+// Validation constants
+const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024 // 4MB
+const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -77,8 +81,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // If we have images, use multimodal analysis
+    // If we have images, validate and use multimodal analysis
     if (hasImages) {
+      // Validate each image
+      for (let i = 0; i < images.length; i++) {
+        const image = images[i]
+
+        // Validate MIME type
+        if (!SUPPORTED_IMAGE_TYPES.includes(image.mimeType)) {
+          return NextResponse.json(
+            { error: `Image ${i + 1}: Unsupported format "${image.mimeType}". Please use JPEG, PNG, GIF, or WebP.` },
+            { status: 400 }
+          )
+        }
+
+        // Validate size (base64 is ~33% larger than binary)
+        const estimatedSize = (image.data.length * 3) / 4
+        if (estimatedSize > MAX_IMAGE_SIZE_BYTES) {
+          const sizeMB = (estimatedSize / 1024 / 1024).toFixed(1)
+          return NextResponse.json(
+            { error: `Image ${i + 1}: Too large (${sizeMB}MB). Maximum size is 4MB.` },
+            { status: 400 }
+          )
+        }
+      }
+
       return handleImageAnalysis(content?.trim() || '', images)
     }
 
@@ -317,8 +344,21 @@ Return valid JSON only:
     } satisfies CaptureAnalyzeResponse)
   } catch (error) {
     console.error("Image analysis error:", error)
+
+    // Provide more specific error message
+    let errorMessage = "Failed to analyze images"
+    if (error instanceof Error) {
+      if (error.message.includes("SAFETY")) {
+        errorMessage = "Image was blocked by safety filters. Please try a different image."
+      } else if (error.message.includes("quota") || error.message.includes("rate")) {
+        errorMessage = "API rate limit reached. Please try again in a moment."
+      } else if (error.message.includes("Invalid") || error.message.includes("invalid")) {
+        errorMessage = "Invalid image data. Please try pasting the image again."
+      }
+    }
+
     return NextResponse.json(
-      { error: "Failed to analyze images" },
+      { error: errorMessage },
       { status: 500 }
     )
   }
