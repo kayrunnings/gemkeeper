@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Gem, CONTEXT_TAG_LABELS, ContextTag } from "@/lib/types/gem"
+import { Thought, CONTEXT_TAG_LABELS, ContextTag } from "@/lib/types/thought"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
-  Gem as GemIcon,
+  Lightbulb,
   Sun,
   Check,
   HelpCircle,
@@ -15,7 +15,7 @@ import {
   Sparkles,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { getDailyGem, logCheckin } from "@/lib/gems"
+import { getDailyThought, logCheckin } from "@/lib/thoughts"
 import Link from "next/link"
 import { LayoutShell } from "@/components/layout-shell"
 import { useToast } from "@/components/error-toast"
@@ -35,7 +35,7 @@ const contextTagVariant: Record<ContextTag, string> = {
 }
 
 export default function DailyPage() {
-  const [gem, setGem] = useState<Gem | null>(null)
+  const [thought, setThought] = useState<Thought | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -54,12 +54,12 @@ export default function DailyPage() {
         }
         setUserEmail(user.email ?? null)
 
-        const result = await getDailyGem()
-        if (result.gem) {
-          setGem(result.gem)
+        const result = await getDailyThought()
+        if (result.thought) {
+          setThought(result.thought)
         }
       } catch (err) {
-        showError(err, "Failed to load daily gem")
+        showError(err, "Failed to load daily thought")
       } finally {
         setIsLoading(false)
       }
@@ -69,12 +69,12 @@ export default function DailyPage() {
   }, [router, supabase, showError])
 
   const handleResponse = async (selectedResponse: ResponseType) => {
-    if (!gem || isSubmitting) return
+    if (!thought || isSubmitting) return
 
     setIsSubmitting(true)
 
     try {
-      const result = await logCheckin(gem.id, "morning_prompt", selectedResponse)
+      const result = await logCheckin(thought.id, "morning_prompt", selectedResponse)
 
       if (result.error) {
         showError(result.error)
@@ -125,7 +125,7 @@ export default function DailyPage() {
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center ai-glow">
             <Sun className="h-8 w-8 text-white" />
           </div>
-          <p className="text-muted-foreground">Loading your daily gem...</p>
+          <p className="text-muted-foreground">Loading your daily thought...</p>
         </div>
       </div>
     )
@@ -143,17 +143,17 @@ export default function DailyPage() {
               <Sun className="h-7 w-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Daily Gem</h1>
+              <h1 className="text-2xl font-bold">Daily Thought</h1>
               <p className="text-muted-foreground text-sm">Start your day with intention</p>
             </div>
           </div>
 
-          {!gem ? (
+          {!thought ? (
             // No thoughts available
             <Card className="border-dashed border-2">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mb-4">
-                  <GemIcon className="h-7 w-7 text-muted-foreground" />
+                  <Lightbulb className="h-7 w-7 text-muted-foreground" />
                 </div>
                 <h3 className="font-semibold mb-2">No active thoughts</h3>
                 <p className="text-sm text-muted-foreground mb-6 max-w-sm">
@@ -161,7 +161,7 @@ export default function DailyPage() {
                 </p>
                 <Link href="/thoughts">
                   <Button className="gap-2">
-                    <GemIcon className="h-4 w-4" />
+                    <Lightbulb className="h-4 w-4" />
                     Add a Thought
                   </Button>
                 </Link>
@@ -187,34 +187,34 @@ export default function DailyPage() {
               </CardContent>
             </Card>
           ) : (
-            // Gem prompt
+            // Thought prompt
             <Card className="overflow-hidden">
               <CardContent className="py-8 space-y-6">
                 {/* Badge */}
                 <div className="flex justify-center">
-                  <Badge variant={contextTagVariant[gem.context_tag] as "meetings" | "feedback" | "conflict" | "focus" | "health" | "relationships" | "parenting" | "other"}>
-                    {gem.context_tag === "other" && gem.custom_context
-                      ? gem.custom_context
-                      : CONTEXT_TAG_LABELS[gem.context_tag]}
+                  <Badge variant={contextTagVariant[thought.context_tag] as "meetings" | "feedback" | "conflict" | "focus" | "health" | "relationships" | "parenting" | "other"}>
+                    {thought.context_tag === "other" && thought.custom_context
+                      ? thought.custom_context
+                      : CONTEXT_TAG_LABELS[thought.context_tag]}
                   </Badge>
                 </div>
 
-                {/* Gem content - large and prominent */}
+                {/* Thought content - large and prominent */}
                 <p className="text-xl leading-relaxed text-center whitespace-pre-wrap font-medium">
-                  {gem.content}
+                  {thought.content}
                 </p>
 
                 {/* Source */}
-                {gem.source && (
+                {thought.source && (
                   <p className="text-sm text-center text-muted-foreground">
-                    — {gem.source}
+                    — {thought.source}
                   </p>
                 )}
 
                 {/* Question */}
                 <div className="pt-6 border-t space-y-4">
                   <p className="text-center font-semibold text-lg">
-                    Will you apply this gem today?
+                    Will you apply this thought today?
                   </p>
 
                   {/* Response buttons */}

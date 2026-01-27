@@ -1,6 +1,9 @@
+/**
+ * @deprecated Use /api/thoughts/bulk instead. This endpoint is maintained for backward compatibility.
+ */
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { ContextTag } from "@/lib/types/gem"
+import { ContextTag } from "@/lib/types/thought"
 
 interface BulkGemInput {
   content: string
@@ -10,6 +13,8 @@ interface BulkGemInput {
 }
 
 export async function POST(request: NextRequest) {
+  // Log deprecation warning
+  console.warn("DEPRECATED: /api/gems/bulk is deprecated. Use /api/thoughts/bulk instead.")
   const supabase = await createClient()
   const {
     data: { user },
@@ -69,8 +74,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     gems: data,
     count: data?.length || 0,
   })
+  response.headers.set("X-Deprecated", "Use /api/thoughts/bulk instead")
+  return response
 }

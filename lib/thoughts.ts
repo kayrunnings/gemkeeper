@@ -192,12 +192,31 @@ export async function graduateThought(
  * IMPORTANT: Only returns thoughts on the Active List (is_on_active_list = true)
  * This is the core accountability feature - only Active List thoughts surface in daily prompts
  */
-export async function getDailyThought(): Promise<{ thought: Thought | null; error: string | null }> {
+export async function getDailyThought(): Promise<{ thought: Thought | null; alreadyCheckedIn: boolean; error: string | null }> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return { thought: null, error: "Not authenticated" }
+    return { thought: null, alreadyCheckedIn: false, error: "Not authenticated" }
+  }
+
+  // Check if user has already done an evening check-in today
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const todayISO = today.toISOString()
+
+  const { data: todayCheckin } = await supabase
+    .from("gem_checkins")
+    .select("id, response")
+    .eq("user_id", user.id)
+    .eq("checkin_type", "evening_checkin")
+    .gte("created_at", todayISO)
+    .limit(1)
+    .maybeSingle()
+
+  if (todayCheckin) {
+    // User already checked in today - return null thought but mark as done
+    return { thought: null, alreadyCheckedIn: true, error: null }
   }
 
   // Only get thoughts that are on the Active List with active or passive status
@@ -214,12 +233,12 @@ export async function getDailyThought(): Promise<{ thought: Thought | null; erro
   if (error) {
     if (error.code === "PGRST116") {
       // No thoughts found on Active List
-      return { thought: null, error: null }
+      return { thought: null, alreadyCheckedIn: false, error: null }
     }
-    return { thought: null, error: error.message }
+    return { thought: null, alreadyCheckedIn: false, error: error.message }
   }
 
-  return { thought: data, error: null }
+  return { thought: data, alreadyCheckedIn: false, error: null }
 }
 
 /**
