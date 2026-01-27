@@ -10,7 +10,7 @@ ThoughtFolio is a knowledge accountability partner that helps users capture insi
 
 **Last Updated:** January 2026
 
-**Feature Status:** All core features complete (Contexts, Active List, Daily Prompts, Check-ins, Moments, Discovery, Calendar Integration, Graduation System)
+**Feature Status:** All core features complete (Contexts, Active List, Daily Check-in, Moments, Discovery, Calendar Integration, Graduation System)
 
 ---
 
@@ -56,16 +56,16 @@ Captured insights/knowledge. Each thought belongs to one context. Thoughts have 
 | `graduated` | Applied 5+ times, mastered | ThoughtBank |
 
 ### Active List
-Curated subset of up to 10 thoughts (fixed limit) that appear in daily prompts. Controlled by `is_on_active_list` boolean, separate from status. Only thoughts with `status IN ('active', 'passive')` can be on the Active List. Represents "what I'm working on applying right now."
+Curated subset of up to 10 thoughts (fixed limit) that are surfaced in the Daily Check-in. Controlled by `is_on_active_list` boolean, separate from status. Only thoughts with `status IN ('active', 'passive')` can be on the Active List. Represents "what I'm working on applying right now."
 
 ### Passive Thoughts
-Thoughts with `is_on_active_list = false`. Still searchable, still available for Moments, but excluded from daily prompts. This is the "knowledge library" — always there when needed.
+Thoughts with `is_on_active_list = false`. Still searchable, still available for Moments, but excluded from Daily Check-in. This is the "knowledge library" — always there when needed.
 
 ### Retired Thoughts
-Thoughts the user has archived. Kept for historical reference but excluded from Thoughts page, Moments, and daily prompts. Visible on dedicated Retired page. Can be restored to active status.
+Thoughts the user has archived. Kept for historical reference but excluded from Thoughts page, Moments, and Daily Check-in. Visible on dedicated Retired page. Can be restored to active status.
 
 ### Graduated Thoughts
-Thoughts applied 5+ times. Automatically moved to ThoughtBank as "mastered knowledge." Excluded from daily prompts but celebrated as achievements.
+Thoughts applied 5+ times. Automatically moved to ThoughtBank as "mastered knowledge." Excluded from Daily Check-in but celebrated as achievements.
 
 ### Moments
 User-described upcoming situations that trigger AI matching against ALL thoughts with `status IN ('active', 'passive')` across ALL contexts. Returns the most relevant thoughts with explanations.
@@ -141,9 +141,9 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 
 ### 3. Active List Management
 
-**Description:** Users curate up to 10 thoughts for daily prompt surfacing.
+**Description:** Users curate up to 10 thoughts for Daily Check-in surfacing.
 
-**User Story:** As a user, I want to mark specific thoughts as "Active" so they appear in my daily prompts while keeping other thoughts available for Moments.
+**User Story:** As a user, I want to mark specific thoughts as "Active" so they appear in my Daily Check-in while keeping other thoughts available for Moments.
 
 **Functional Requirements:**
 

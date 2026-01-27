@@ -252,7 +252,7 @@ Core feature table for knowledge/insights. Note: Database table is named `gems` 
 | source_url | TEXT | URL to source |
 | context_tag | ENUM | Legacy field (deprecated) |
 | custom_context | TEXT | Legacy field (deprecated) |
-| is_on_active_list | BOOLEAN | On Active List for daily prompts (max 10) |
+| is_on_active_list | BOOLEAN | On Active List for Daily Check-in (max 10) |
 | status | ENUM | active/passive/retired/graduated |
 | application_count | INTEGER | Times applied |
 | skip_count | INTEGER | Times skipped |
@@ -804,7 +804,7 @@ toggleActiveList(id: string): Promise<Thought>
 getActiveListCount(): Promise<number>
 getDailyThought(): Promise<{ thought: Thought | null; alreadyCheckedIn: boolean; error: string | null }>
   // Only Active List (is_on_active_list = true AND status IN ('active', 'passive'))
-  // Returns alreadyCheckedIn: true if user completed evening check-in today
+  // Returns alreadyCheckedIn: true if user completed daily check-in today
 getAllThoughtsForMoments(): Promise<Thought[]>  // ALL thoughts with status IN ('active', 'passive')
 getRetiredThoughts(): Promise<Thought[]> // status = 'retired'
 ```

@@ -32,6 +32,7 @@ Before starting work, read these files in `Claude Context/`:
 ## Current State (January 2026)
 
 ### Completed Features
+- **Daily Check-in** - Single daily touchpoint for thought accountability and graduation tracking
 - **Epic 8: Moments** - Individual scheduling, moments matching (Cmd+M shortcut), calendar integration, rate limiting (20/hr)
 - **Epic 12: Discovery** - AI-powered content discovery with Google Search grounding
 - **Notes System** - Standalone long-form notes with tags, folders, and extract-to-thoughts capability
@@ -70,7 +71,10 @@ Captured insights/knowledge. Each thought belongs to one context. Thoughts have 
 - `graduated` - Applied 5+ times, mastered (Trophy Case)
 
 ### Active List
-Curated subset of up to 10 thoughts that appear in daily prompts. Controlled by `is_on_active_list` boolean, separate from status. Preserves the original constraint-based accountability model while allowing unlimited total thoughts across contexts.
+Curated subset of up to 10 thoughts that are surfaced in the Daily Check-in. Controlled by `is_on_active_list` boolean, separate from status. Preserves the original constraint-based accountability model while allowing unlimited total thoughts across contexts.
+
+### Daily Check-in
+Single daily touchpoint at `/checkin`. Surfaces one thought from the Active List and asks "Did you apply this thought today?". User responds Yes/No with optional reflection. Tracks application count (toward graduation) and skip count (stale detection at 21+ skips).
 
 ### Moments
 On-demand thought matching for upcoming situations. Moments search ALL thoughts with `status IN ('active', 'passive')` across ALL contexts, returning the most relevant with explanations. Rate limited to 20 matches/hour. Keyboard shortcut: Cmd+M / Ctrl+M.
