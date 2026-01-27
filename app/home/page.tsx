@@ -14,7 +14,6 @@ import { ActivityStatsCard } from "@/components/home/ActivityStatsCard"
 import { QuickActionsRow } from "@/components/home/QuickActionsRow"
 import { UpcomingMomentsCard } from "@/components/home/UpcomingMomentsCard"
 import { RecentActivityCard } from "@/components/home/RecentActivityCard"
-import { ContextChipsFilter } from "@/components/ui/ContextChipsFilter"
 import { DiscoverCard } from "@/components/discover"
 import { useToast } from "@/components/error-toast"
 import { Home as HomeIcon } from "lucide-react"
@@ -42,7 +41,6 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [userName, setUserName] = useState<string | null>(null)
-  const [selectedContextId, setSelectedContextId] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
   const { showError } = useToast()
@@ -151,46 +149,25 @@ export default function HomePage() {
           </p>
         </div>
 
+        {/* Quick Actions - At the very top */}
+        <QuickActionsRow className="mb-6" />
+
         {/* Today's Thought */}
         <DailyThoughtCard thought={dailyThought} alreadyCheckedIn={alreadyCheckedIn} contexts={contexts} className="mb-6" />
 
-        {/* Discover Something New - Featured at top */}
+        {/* Discover Something New */}
         <div className="mb-6">
           <DiscoverCard contexts={contexts} />
         </div>
 
-        {/* Upcoming Moments - Near the top */}
+        {/* Upcoming Moments */}
         <UpcomingMomentsCard moments={moments} className="mb-6" />
 
-        {/* Quick Actions Row */}
-        <QuickActionsRow className="mb-6" />
-
-        {/* Context Chips Filter */}
-        <div className="mb-6">
-          <h2 className="text-sm font-medium text-muted-foreground mb-3">Filter by Context</h2>
-          <ContextChipsFilter
-            contexts={contexts}
-            selectedContextId={selectedContextId}
-            onSelect={setSelectedContextId}
-            showCounts
-            counts={contexts.reduce((acc, ctx) => {
-              acc[ctx.id] = ctx.thought_count
-              return acc
-            }, {} as Record<string, number>)}
-          />
-        </div>
-
-        {/* Stats and Activity */}
-        <div className="grid gap-6 md:grid-cols-2 mb-6">
-          {/* Activity Stats */}
-          <ActivityStatsCard stats={stats} className="md:col-span-2" />
-        </div>
+        {/* Activity Stats */}
+        <ActivityStatsCard stats={stats} className="mb-6" />
 
         {/* Recent Activity - At the bottom */}
-        <RecentActivityCard
-          contexts={contexts}
-          selectedContextId={selectedContextId}
-        />
+        <RecentActivityCard contexts={contexts} />
       </div>
     </LayoutShell>
   )

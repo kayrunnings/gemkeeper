@@ -232,7 +232,7 @@ export function LibraryAllTab({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {items.map((item) => {
         const config = typeConfig[item.type]
         const Icon = config.icon

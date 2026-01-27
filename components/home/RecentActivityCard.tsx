@@ -169,13 +169,13 @@ export function RecentActivityCard({
         }
       }
 
-      // Sort by updated_at and take top 8
+      // Sort by updated_at and take top 6
       recentItems.sort(
         (a, b) =>
           new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
       )
 
-      setItems(recentItems.slice(0, 8))
+      setItems(recentItems.slice(0, 6))
       setIsLoading(false)
     }
 
