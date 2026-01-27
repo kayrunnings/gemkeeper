@@ -17,11 +17,14 @@ import {
   X,
   Home,
   Archive,
+  Search,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { useSidebar } from "@/lib/sidebar-context"
+import { GlobalSearch } from "@/components/search/GlobalSearch"
+import { useGlobalShortcuts } from "@/lib/hooks/useGlobalShortcuts"
 
 interface NavItem {
   href: string
@@ -60,6 +63,7 @@ export function LayoutShell({
   const { isCollapsedByDefault } = useSidebar()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(isCollapsedByDefault)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { isSearchOpen, setIsSearchOpen } = useGlobalShortcuts()
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -108,6 +112,17 @@ export function LayoutShell({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Search button */}
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setIsSearchOpen(true)}
+              title="Search (Cmd+K)"
+              className="hidden sm:flex"
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+
             {/* Right panel toggle */}
             {rightPanel && (
               <Button
@@ -293,6 +308,9 @@ export function LayoutShell({
           </aside>
         )}
       </div>
+
+      {/* Global Search Modal */}
+      <GlobalSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </div>
   )
 }

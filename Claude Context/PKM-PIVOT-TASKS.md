@@ -80,39 +80,39 @@
 
 ### 1.3 TypeScript Types
 
-- [ ] **T1.3.1** Create Source type
+- [x] **T1.3.1** Create Source type
   - File: `lib/types/source.ts`
   - Interface: Source, CreateSourceInput, UpdateSourceInput
   - Type constants
 
-- [ ] **T1.3.2** Update Profile type
+- [x] **T1.3.2** Update Profile type
   - File: `lib/types.ts`
   - Add: focus_mode_enabled, active_list_limit, checkin_enabled
 
-- [ ] **T1.3.3** Update CalendarConnection type
+- [x] **T1.3.3** Update CalendarConnection type
   - File: `types/calendar.ts`
   - Add: provider field ('google' | 'microsoft')
 
-- [ ] **T1.3.4** Create NoteThoughtLink type
+- [x] **T1.3.4** Create NoteThoughtLink type
   - File: `lib/types/note-link.ts`
   - Interface: NoteThoughtLink
 
-- [ ] **T1.3.5** Create SearchResult type
+- [x] **T1.3.5** Create SearchResult type
   - File: `lib/types/search.ts`
   - Interface: SearchResult, SearchFilters
 
 ### 1.4 Services
 
-- [ ] **T1.4.1** Create sources service
+- [x] **T1.4.1** Create sources service
   - File: `lib/sources.ts`
   - Functions: createSource, getSource, getSources, updateSource, deleteSource
   - Include search vector updates
 
-- [ ] **T1.4.2** Create note-links service
+- [x] **T1.4.2** Create note-links service
   - File: `lib/note-links.ts`
   - Functions: linkThoughtToNote, unlinkThought, getLinkedThoughts, getLinkedNotes
 
-- [ ] **T1.4.3** Create search service
+- [x] **T1.4.3** Create search service
   - File: `lib/search.ts`
   - Functions: search, searchByType
   - Use ts_rank for relevance
@@ -127,43 +127,43 @@
 
 ### 2.1 Search Components
 
-- [ ] **T2.1.1** Create GlobalSearch component
+- [x] **T2.1.1** Create GlobalSearch component
   - File: `components/search/GlobalSearch.tsx`
   - Cmd+K keyboard shortcut listener
   - Modal with search input
   - Debounced search (300ms)
 
-- [ ] **T2.1.2** Create SearchResults component
+- [x] **T2.1.2** Create SearchResults component
   - File: `components/search/SearchResults.tsx`
   - Result cards by type
   - Keyboard navigation
   - Highlighting
 
-- [ ] **T2.1.3** Create SearchResultCard component
+- [x] **T2.1.3** Create SearchResultCard component
   - File: `components/search/SearchResultCard.tsx`
   - Type icon, content preview, metadata
   - Highlighted search terms
 
-- [ ] **T2.1.4** Create SearchFilters component
+- [x] **T2.1.4** Create SearchFilters component
   - File: `components/search/SearchFilters.tsx`
   - Filter buttons: All, Thoughts, Notes, Sources
   - Active state styling
 
 ### 2.2 Search API
 
-- [ ] **T2.2.1** Create search API endpoint
+- [x] **T2.2.1** Create search API endpoint
   - File: `app/api/search/route.ts`
   - GET with query params: q, type, limit, offset
   - Returns ranked results
 
 ### 2.3 Search Integration
 
-- [ ] **T2.3.1** Add search to header
-  - File: `components/layout/Header.tsx`
+- [x] **T2.3.1** Add search to header
+  - File: `components/layout-shell.tsx`
   - Search icon that opens GlobalSearch
   - Tooltip with keyboard shortcut
 
-- [ ] **T2.3.2** Add keyboard shortcut handler
+- [x] **T2.3.2** Add keyboard shortcut handler
   - File: `lib/hooks/useGlobalShortcuts.ts`
   - Cmd+K / Ctrl+K binding
   - Prevent default browser behavior

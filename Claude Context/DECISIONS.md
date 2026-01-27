@@ -451,6 +451,55 @@ This document tracks key product and technical decisions with their rationale. C
 
 ---
 
+### 2026-01-27: ThoughtFolio 2.0 PKM Pivot - Phase 1 & 2
+
+**Decision:** Implement the foundation for ThoughtFolio 2.0 PKM Pivot with full-text search infrastructure and supporting types/services.
+
+**Rationale:**
+- Users need to quickly find content across their knowledge base (thoughts, notes, sources)
+- Cmd+K search is an expected pattern in modern productivity apps
+- Sources as first-class entities enables better organization and discovery
+- Bi-directional note-thought linking creates a knowledge graph
+- PostgreSQL full-text search provides fast, scalable search without external services
+
+**Implementation (Phase 1 - Foundation):**
+1. TypeScript types for Source, NoteThoughtLink, Search
+2. Updated Profile type with focus_mode_enabled, active_list_limit, checkin_enabled
+3. Updated CalendarConnection type with Microsoft provider support
+4. CRUD services for sources and note-thought links
+5. Full-text search service with FTS and ILIKE fallback
+
+**Implementation (Phase 2 - Search UI):**
+1. GlobalSearch modal component with Cmd+K shortcut
+2. SearchResults with grouped display by type
+3. SearchResultCard with term highlighting
+4. SearchFilters for type filtering
+5. useGlobalShortcuts hook for keyboard shortcuts
+6. Search API endpoint (/api/search)
+7. Integration in layout-shell.tsx
+
+**Key Design Choices:**
+- PostgreSQL FTS first (simpler, cheaper) with ILIKE fallback
+- Search modal (Spotlight-style) rather than search page
+- Type filtering via filter buttons, not dropdown
+- Keyboard navigation with arrow keys and Enter
+- Grouped results by type (Thoughts, Notes, Sources)
+
+**Alternatives Considered:**
+- External search service (Algolia, etc.) → Rejected: adds complexity and cost
+- Search page instead of modal → Rejected: more friction, less discoverable
+- AI-powered semantic search → Deferred: can add later with pgvector
+
+**Consequences:**
+- New files: lib/types/source.ts, lib/types/note-link.ts, lib/types/search.ts
+- New services: lib/sources.ts, lib/note-links.ts, lib/search.ts
+- New API: app/api/search/route.ts
+- New components: components/search/*
+- New hook: lib/hooks/useGlobalShortcuts.ts
+- Updated: layout-shell.tsx, lib/types.ts, types/calendar.ts
+
+---
+
 ## Deferred Decisions
 
 Items we've discussed but intentionally not decided yet:
