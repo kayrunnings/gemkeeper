@@ -221,11 +221,21 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 | FR-5.5 | User can add reflection | Note saved to thought |
 
 **Acceptance Criteria:**
-- [ ] User receives daily prompt with Active thought only
-- [ ] Prompt includes actionable suggestion
-- [ ] User can mark prompt as completed
-- [ ] User can add reflection note
+- [x] User receives daily prompt with Active thought only
+- [x] Prompt includes actionable suggestion
+- [x] User can mark prompt as completed
+- [x] User can add reflection note
 - [ ] User can view prompt history
+
+**Dashboard "Today's Thought" Card States:**
+
+| State | Condition | Display |
+|-------|-----------|---------|
+| Thought available | Active List thought found | Shows thought with context badge, content, source |
+| Already checked in | User completed evening check-in today | "You've completed your check-in for today!" |
+| No Active thoughts | Active List is empty | "No thoughts on your Active List yet" + add button |
+
+**Note:** The dashboard card uses `getDailyThought()` which checks evening check-in status first. If user has already checked in today, no thought is returned even if Active List has thoughts — this is intentional to prevent re-prompting after check-in.
 
 ---
 

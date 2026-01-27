@@ -735,6 +735,19 @@ Get user's discovery usage for today.
 | Extract Modal | `components/extract-gems-modal.tsx` | AI extraction wizard |
 | Active Badge | `components/gems/ActiveBadge.tsx` | Active List indicator |
 
+### Home/Dashboard Components
+| Component | File | Purpose |
+|-----------|------|---------|
+| Daily Thought Card | `components/home/DailyThoughtCard.tsx` | Today's thought display with 3 states |
+| Activity Stats | `components/home/ActivityStatsCard.tsx` | Usage statistics |
+| Quick Actions | `components/home/QuickActionsCard.tsx` | Navigation shortcuts |
+| Upcoming Moments | `components/home/UpcomingMomentsCard.tsx` | Recent moments widget |
+
+**DailyThoughtCard States:**
+- **Thought available** — Shows the thought with context badge, content, and source
+- **Already checked in** — Shows "You've completed your check-in for today!" (green icon)
+- **No thoughts on Active List** — Shows "No thoughts on your Active List yet" with add button
+
 ### Moment Components
 | Component | File | Purpose |
 |-----------|------|---------|
@@ -789,7 +802,9 @@ restoreThought(id: string): Promise<Thought> // Sets status = 'active', clears r
 graduateThought(id: string): Promise<Thought>
 toggleActiveList(id: string): Promise<Thought>
 getActiveListCount(): Promise<number>
-getDailyThought(): Promise<Thought | null>  // Only Active List (is_on_active_list = true AND status IN ('active', 'passive'))
+getDailyThought(): Promise<{ thought: Thought | null; alreadyCheckedIn: boolean; error: string | null }>
+  // Only Active List (is_on_active_list = true AND status IN ('active', 'passive'))
+  // Returns alreadyCheckedIn: true if user completed evening check-in today
 getAllThoughtsForMoments(): Promise<Thought[]>  // ALL thoughts with status IN ('active', 'passive')
 getRetiredThoughts(): Promise<Thought[]> // status = 'retired'
 ```
