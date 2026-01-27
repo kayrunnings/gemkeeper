@@ -23,7 +23,6 @@ import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { LayoutShell } from "@/components/layout-shell"
 import { useToast } from "@/components/error-toast"
-import { MomentFAB } from "@/components/moments/MomentFAB"
 import { toggleActiveList, getActiveListCount } from "@/lib/thoughts"
 import { getContexts } from "@/lib/contexts"
 
@@ -502,8 +501,6 @@ export default function ThoughtsPage() {
         hasAIConsent={hasAIConsent}
       />
 
-      {/* Moment FAB */}
-      <MomentFAB />
     </LayoutShell>
   )
 }
