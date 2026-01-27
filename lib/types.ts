@@ -65,6 +65,10 @@ export interface Profile {
   onboarding_completed: boolean
   ai_consent_given: boolean
   ai_consent_date: string | null
+  // ThoughtFolio 2.0 settings
+  focus_mode_enabled: boolean
+  active_list_limit: number
+  checkin_enabled: boolean
   created_at: string
   updated_at: string
 }

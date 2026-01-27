@@ -92,6 +92,11 @@ gemkeeper/
 │   │   ├── note-editor.tsx       # Note editing with markdown
 │   │   ├── note-card.tsx         # Note display card
 │   │   └── notes-list.tsx        # Notes list view
+│   ├── search/                   # Search components (ThoughtFolio 2.0)
+│   │   ├── GlobalSearch.tsx      # Cmd+K search modal
+│   │   ├── SearchResults.tsx     # Grouped search results
+│   │   ├── SearchResultCard.tsx  # Individual result card
+│   │   └── SearchFilters.tsx     # Type filter buttons
 │   ├── extract-from-note-modal.tsx  # Extract thoughts from notes
 │   ├── settings/                 # Settings components
 │   └── ...                       # Other components
@@ -106,13 +111,21 @@ gemkeeper/
 │   │   ├── thought.ts            # Thought types
 │   │   ├── context.ts            # Context types
 │   │   ├── discovery.ts          # Discovery types
+│   │   ├── source.ts             # Source entity types (ThoughtFolio 2.0)
+│   │   ├── note-link.ts          # Note-thought link types (ThoughtFolio 2.0)
+│   │   ├── search.ts             # Search types (ThoughtFolio 2.0)
 │   │   └── gem.ts                # Legacy gem types (backward compat)
+│   ├── hooks/                    # React hooks
+│   │   └── useGlobalShortcuts.ts # Global keyboard shortcuts (Cmd+K)
 │   ├── contexts.ts               # Context service functions
 │   ├── thoughts.ts               # Thought service functions
 │   ├── discovery.ts              # Discovery service functions
 │   ├── schedules.ts              # Schedule service functions
 │   ├── moments.ts                # Moment service functions
 │   ├── calendar.ts               # Calendar service functions
+│   ├── sources.ts                # Source CRUD service (ThoughtFolio 2.0)
+│   ├── note-links.ts             # Note-thought linking service (ThoughtFolio 2.0)
+│   ├── search.ts                 # Full-text search service (ThoughtFolio 2.0)
 │   ├── url-extractor.ts          # URL content extraction
 │   ├── matching.ts               # AI thought matching
 │   └── utils.ts                  # Utility helpers
@@ -459,6 +472,37 @@ Standalone long-form notes, separate from thoughts. Notes can contain markdown c
 
 **Note:** Notes are a separate feature from "thought reflections" (which are attached to individual thoughts). Notes are standalone documents that can be organized into folders and have thoughts extracted from them.
 
+#### `sources` (ThoughtFolio 2.0)
+First-class source entities representing books, articles, podcasts, etc.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| user_id | UUID | FK → auth.users |
+| name | TEXT | Source title |
+| author | TEXT | Author/creator name |
+| type | TEXT | book/article/podcast/video/course/other |
+| url | TEXT | Source URL if applicable |
+| isbn | TEXT | ISBN for books |
+| cover_image_url | TEXT | Cover image URL |
+| metadata | JSONB | Additional metadata |
+| search_vector | TSVECTOR | Full-text search index |
+| created_at | TIMESTAMPTZ | |
+| updated_at | TIMESTAMPTZ | |
+
+#### `note_thought_links` (ThoughtFolio 2.0)
+Bi-directional linking between notes and thoughts.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| note_id | UUID | FK → notes |
+| gem_id | UUID | FK → gems |
+| position | INTEGER | Order position in note |
+| created_at | TIMESTAMPTZ | |
+
+**Constraints:** UNIQUE(note_id, gem_id), CASCADE delete on both FKs.
+
 ---
 
 ## 5. API Routes
@@ -707,6 +751,36 @@ Get user's discovery usage for today.
 }
 ```
 
+### Full-Text Search (ThoughtFolio 2.0)
+
+#### GET `/api/search`
+Search across thoughts, notes, and sources.
+
+**Query Parameters:**
+- `q`: Search query (required)
+- `type`: Filter by type (thought, note, source)
+- `limit`: Max results (default 20, max 100)
+- `offset`: Pagination offset (default 0)
+
+**Response:**
+```typescript
+{
+  results: SearchResult[];
+  total: number;
+  query: string;
+}
+
+interface SearchResult {
+  id: string;
+  type: 'thought' | 'note' | 'source';
+  text: string;
+  secondaryText: string | null;
+  contextId: string | null;
+  createdAt: string;
+  rank: number;
+}
+```
+
 ---
 
 ## 6. Key Components
@@ -774,6 +848,14 @@ Get user's discovery usage for today.
 | Discovery Card | `components/discover/DiscoveryCard.tsx` | Individual card |
 | Discovery Detail | `components/discover/DiscoveryDetail.tsx` | Expanded view |
 | Save Modal | `components/discover/SaveDiscoveryModal.tsx` | Save flow |
+
+### Search Components (ThoughtFolio 2.0)
+| Component | File | Purpose |
+|-----------|------|---------|
+| Global Search | `components/search/GlobalSearch.tsx` | Cmd+K search modal |
+| Search Results | `components/search/SearchResults.tsx` | Grouped results display |
+| Search Result Card | `components/search/SearchResultCard.tsx` | Individual result |
+| Search Filters | `components/search/SearchFilters.tsx` | Type filter buttons |
 
 ---
 
@@ -852,6 +934,32 @@ detectUrlType(url: string): 'article' | 'youtube' | 'unknown'
 extractArticleContent(url: string): Promise<ExtractedContent>
 extractYouTubeTranscript(url: string): Promise<ExtractedContent>
 ```
+
+### Sources Service (`lib/sources.ts`) (ThoughtFolio 2.0)
+```typescript
+createSource(input: CreateSourceInput): Promise<{ data: Source | null; error: string | null }>
+getSource(id: string): Promise<{ data: Source | null; error: string | null }>
+getSources(): Promise<{ data: Source[]; error: string | null }>
+getSourceByUrl(url: string): Promise<{ data: Source | null; error: string | null }>
+updateSource(id: string, input: UpdateSourceInput): Promise<{ data: Source | null; error: string | null }>
+deleteSource(id: string): Promise<{ error: string | null }>
+```
+
+### Note Links Service (`lib/note-links.ts`) (ThoughtFolio 2.0)
+```typescript
+linkThoughtToNote(noteId: string, gemId: string, position?: number): Promise<{ data: NoteThoughtLink | null; error: string | null }>
+unlinkThoughtFromNote(noteId: string, gemId: string): Promise<{ error: string | null }>
+getLinkedThoughts(noteId: string): Promise<{ data: Thought[]; error: string | null }>
+getLinkedNotes(gemId: string): Promise<{ data: Note[]; error: string | null }>
+reorderLinks(noteId: string, links: ReorderLinkInput[]): Promise<{ error: string | null }>
+```
+
+### Search Service (`lib/search.ts`) (ThoughtFolio 2.0)
+```typescript
+search(query: string, filters?: SearchFilters): Promise<{ data: SearchResponse; error: string | null }>
+```
+
+Uses PostgreSQL full-text search with `tsvector` columns and falls back to ILIKE queries if the `search_knowledge` database function is unavailable.
 
 ### AI Service (`lib/ai/gemini.ts`)
 ```typescript
@@ -1020,3 +1128,8 @@ className="transition-all duration-200 hover:bg-accent/50"
 | Glassmorphism UI | Complete | Dark/light theme support |
 | Contexts System | Complete | 8 defaults + custom creation |
 | Trophy Case | Complete | Graduated thoughts display |
+| **ThoughtFolio 2.0** | In Progress | PKM Pivot implementation |
+| - Full-Text Search | Complete | Cmd+K modal, filters, keyboard nav |
+| - Sources Entity | Complete | Types and CRUD service |
+| - Note-Thought Links | Complete | Bi-directional linking service |
+| - Profile Settings | Complete | Focus mode, active list limit, check-in enabled |

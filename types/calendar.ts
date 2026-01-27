@@ -1,6 +1,6 @@
 // Calendar integration types
 
-export type CalendarProvider = 'google'
+export type CalendarProvider = 'google' | 'microsoft'
 
 export interface CalendarConnection {
   id: string
