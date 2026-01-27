@@ -72,7 +72,7 @@ Create these type files:
    }
 
    export interface UpdateSourceInput extends Partial<CreateSourceInput> {}
-   ```
+   
 
 2. **lib/types/note-link.ts** - Note-thought link types
    ```typescript
@@ -83,7 +83,7 @@ Create these type files:
      position: number
      created_at: string
    }
-   ```
+   
 
 3. **lib/types/search.ts** - Search types
    ```typescript
@@ -103,19 +103,19 @@ Create these type files:
      limit?: number
      offset?: number
    }
-   ```
+   
 
 4. **Update lib/types.ts** - Add to Profile interface:
    ```typescript
    focus_mode_enabled: boolean
    active_list_limit: number
    checkin_enabled: boolean
-   ```
+   
 
 5. **Update types/calendar.ts** - Add provider to CalendarConnection:
    ```typescript
    provider: 'google' | 'microsoft'
-   ```
+   
 
 ### Part B: Services (Phase 1.4)
 
@@ -220,7 +220,7 @@ After completing all tasks:
 ## Commit
 
 Create a commit with message:
-```
+
 feat: Add full-text search infrastructure and UI
 
 - Add Source, NoteThoughtLink, SearchResult types
@@ -230,7 +230,7 @@ feat: Add full-text search infrastructure and UI
 - Add SearchResults, SearchResultCard, SearchFilters components
 
 Phase 1 + 2 of PKM Pivot
-```
+
 ```
 
 ---
@@ -383,7 +383,7 @@ After completing:
 
 ## Commit
 
-```
+
 feat: Add unified Library and updated navigation
 
 - Update bottom nav to 4-tab layout (Home, Library, Active, Discover)
@@ -394,7 +394,7 @@ feat: Add unified Library and updated navigation
 - Add SourceCard component and source detail page
 
 Phase 3 + 4 of PKM Pivot
-```
+
 ```
 
 ---
