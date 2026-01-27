@@ -50,6 +50,11 @@ Return valid JSON only:
   ]
 }`
 
+interface ImageInput {
+  mimeType: string
+  data: string
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -60,16 +65,24 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { content } = body
+    const { content, images } = body as { content?: string; images?: ImageInput[] }
 
-    if (!content || typeof content !== "string") {
+    const hasText = content && typeof content === "string" && content.trim().length > 0
+    const hasImages = images && Array.isArray(images) && images.length > 0
+
+    if (!hasText && !hasImages) {
       return NextResponse.json(
-        { error: "Content is required" },
+        { error: "Content or images are required" },
         { status: 400 }
       )
     }
 
-    const trimmedContent = content.trim()
+    // If we have images, use multimodal analysis
+    if (hasImages) {
+      return handleImageAnalysis(content?.trim() || '', images)
+    }
+
+    const trimmedContent = content!.trim()
     const contentType = detectContentType(trimmedContent)
 
     // Handle URL content
@@ -218,6 +231,94 @@ export async function POST(request: NextRequest) {
     console.error("Capture analyze error:", error)
     return NextResponse.json(
       { error: "Failed to analyze content" },
+      { status: 500 }
+    )
+  }
+}
+
+async function handleImageAnalysis(textContent: string, images: ImageInput[]) {
+  const IMAGE_ANALYSIS_PROMPT = `You are a knowledge extraction assistant. Analyze the provided image(s) and any accompanying text to extract valuable insights.
+
+Identify:
+1. **Thoughts**: Key insights, quotes, or wisdom from the image (max 200 characters each)
+2. **Notes**: Longer observations, context, or commentary about the content
+3. **Sources**: Any books, articles, or references visible/mentioned
+
+For images of:
+- Book pages/highlights: Extract the key quotes and insights
+- Screenshots of articles: Extract main points
+- Notes/handwriting: Transcribe and organize the content
+- Diagrams/charts: Describe key takeaways
+- Social media posts: Extract notable quotes or insights
+
+Return valid JSON only:
+{
+  "items": [
+    {
+      "type": "thought|note|source",
+      "content": "The extracted content",
+      "source": "Author or source name if visible"
+    }
+  ]
+}`
+
+  try {
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash-001",
+      generationConfig: {
+        responseMimeType: "application/json",
+        maxOutputTokens: 2048,
+      },
+    })
+
+    // Build the content parts array
+    const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
+      { text: IMAGE_ANALYSIS_PROMPT },
+    ]
+
+    // Add images
+    for (const image of images) {
+      parts.push({
+        inlineData: {
+          mimeType: image.mimeType,
+          data: image.data,
+        },
+      })
+    }
+
+    // Add text content if present
+    if (textContent) {
+      parts.push({ text: `Additional context from user:\n${textContent}` })
+    }
+
+    const result = await model.generateContent(parts)
+    const response = result.response
+    const text = response.text()
+    const parsed = JSON.parse(text)
+
+    const suggestions: CaptureItem[] = (parsed.items || []).map((item: {
+      type?: string
+      content?: string
+      source?: string
+      sourceUrl?: string
+    }) => ({
+      id: randomUUID(),
+      type: item.type === 'note' ? 'note' : item.type === 'source' ? 'source' : 'thought',
+      content: String(item.content || '').slice(0, item.type === 'note' ? 5000 : 200),
+      source: item.source,
+      sourceUrl: item.sourceUrl,
+      selected: true,
+    }))
+
+    return NextResponse.json({
+      success: true,
+      contentType: 'mixed' as ContentType,
+      suggestions,
+    } satisfies CaptureAnalyzeResponse)
+  } catch (error) {
+    console.error("Image analysis error:", error)
+    return NextResponse.json(
+      { error: "Failed to analyze images" },
       { status: 500 }
     )
   }

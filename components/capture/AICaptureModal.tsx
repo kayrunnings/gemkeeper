@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { Sparkles, X, CheckCircle2 } from "lucide-react"
+import { Sparkles, X, CheckCircle2, Image as ImageIcon, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { CaptureEmptyState } from "./CaptureEmptyState"
 import { CaptureAnalyzing } from "./CaptureAnalyzing"
@@ -26,6 +26,12 @@ interface AICaptureModalProps {
 
 type ModalState = 'empty' | 'input' | 'analyzing' | 'suggestions' | 'saving' | 'success' | 'error'
 
+interface PastedImage {
+  data: string
+  mimeType: string
+  name: string
+}
+
 export function AICaptureModal({
   isOpen,
   onClose,
@@ -37,6 +43,8 @@ export function AICaptureModal({
   const [contentType, setContentType] = useState<ContentType | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [savedCount, setSavedCount] = useState({ thoughts: 0, notes: 0, sources: 0 })
+  const [images, setImages] = useState<PastedImage[]>([])
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -46,20 +54,55 @@ export function AICaptureModal({
       setSuggestions([])
       setContentType(null)
       setError(null)
+      setImages([])
     }
   }, [isOpen])
 
-  // Update state based on content
+  // Determine if we have content (text or images)
+  const hasContent = content.trim().length > 0 || images.length > 0
+
+  // Update state based on content - only transition between empty and input
   useEffect(() => {
-    if (content.trim()) {
+    if (state === 'empty' && hasContent) {
       setState('input')
-    } else if (state === 'input') {
+    } else if (state === 'input' && !hasContent) {
       setState('empty')
     }
-  }, [content, state])
+  }, [hasContent, state])
+
+  // Handle paste events for images
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault()
+        const file = item.getAsFile()
+        if (file) {
+          const reader = new FileReader()
+          reader.onload = (event) => {
+            const base64 = event.target?.result as string
+            // Extract the base64 data without the data URL prefix
+            const base64Data = base64.split(',')[1]
+            setImages(prev => [...prev, {
+              data: base64Data,
+              mimeType: item.type,
+              name: `image-${Date.now()}.${item.type.split('/')[1]}`
+            }])
+          }
+          reader.readAsDataURL(file)
+        }
+      }
+    }
+  }, [])
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index))
+  }
 
   const handleAnalyze = async () => {
-    if (!content.trim()) return
+    if (!hasContent) return
 
     setState('analyzing')
     setError(null)
@@ -68,7 +111,13 @@ export function AICaptureModal({
       const response = await fetch('/api/capture/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: content.trim() }),
+        body: JSON.stringify({
+          content: content.trim(),
+          images: images.length > 0 ? images.map(img => ({
+            mimeType: img.mimeType,
+            data: img.data,
+          })) : undefined,
+        }),
       })
 
       if (!response.ok) {
@@ -158,13 +207,41 @@ export function AICaptureModal({
           {/* Empty State */}
           {state === 'empty' && (
             <div className="space-y-4">
-              <Textarea
-                placeholder="Paste or type anything here..."
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="min-h-[120px] resize-none"
-                autoFocus
-              />
+              <div className="relative">
+                <Textarea
+                  ref={textareaRef}
+                  placeholder="Paste or type anything here... You can also paste images!"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  onPaste={handlePaste}
+                  className="min-h-[120px] resize-none"
+                  autoFocus
+                />
+                {images.length === 0 && (
+                  <div className="absolute bottom-2 right-2 pointer-events-none">
+                    <ImageIcon className="h-4 w-4 text-muted-foreground/50" />
+                  </div>
+                )}
+              </div>
+              {images.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {images.map((img, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={`data:${img.mimeType};base64,${img.data}`}
+                        alt={img.name}
+                        className="h-16 w-16 object-cover rounded-lg border border-border"
+                      />
+                      <button
+                        onClick={() => removeImage(index)}
+                        className="absolute -top-2 -right-2 h-5 w-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <CaptureEmptyState onExampleClick={handleExampleClick} />
             </div>
           )}
@@ -173,19 +250,40 @@ export function AICaptureModal({
           {state === 'input' && (
             <div className="space-y-4">
               <Textarea
-                placeholder="Paste or type anything here..."
+                ref={textareaRef}
+                placeholder="Paste or type anything here... You can also paste images!"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
+                onPaste={handlePaste}
                 className="min-h-[150px] resize-none"
                 autoFocus
               />
+              {images.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {images.map((img, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={`data:${img.mimeType};base64,${img.data}`}
+                        alt={img.name}
+                        className="h-16 w-16 object-cover rounded-lg border border-border"
+                      />
+                      <button
+                        onClick={() => removeImage(index)}
+                        className="absolute -top-2 -right-2 h-5 w-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="flex justify-between items-center">
                 <span className="text-xs text-muted-foreground">
-                  {content.length} characters
+                  {content.length} characters{images.length > 0 && ` + ${images.length} image${images.length > 1 ? 's' : ''}`}
                 </span>
                 <Button
                   onClick={handleAnalyze}
-                  disabled={!content.trim()}
+                  disabled={!hasContent}
                   className="gap-2"
                 >
                   <Sparkles className="h-4 w-4" />
