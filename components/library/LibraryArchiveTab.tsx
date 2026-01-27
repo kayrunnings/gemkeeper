@@ -151,7 +151,7 @@ export function LibraryArchiveTab({
 
   return (
     <>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {thoughts.map((thought) => {
           const context = getContext(thought.context_id)
 

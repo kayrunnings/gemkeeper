@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { getContexts } from "@/lib/contexts"
 import { LayoutShell } from "@/components/layout-shell"
-import { LibraryTabs, LibraryTab } from "@/components/library/LibraryTabs"
+import { LibraryTabs, LibraryTab, TabCounts } from "@/components/library/LibraryTabs"
 import { LibraryAllTab } from "@/components/library/LibraryAllTab"
 import { LibraryThoughtsTab } from "@/components/library/LibraryThoughtsTab"
 import { LibraryNotesTab } from "@/components/library/LibraryNotesTab"
@@ -29,6 +29,7 @@ function LibraryContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
+  const [tabCounts, setTabCounts] = useState<TabCounts>({})
   const [isLoading, setIsLoading] = useState(true)
   const { showError } = useToast()
 
@@ -55,8 +56,49 @@ function LibraryContent() {
 
         setUserEmail(user.email ?? null)
 
-        const { contexts: userContexts } = await getContexts()
-        setContexts(userContexts || [])
+        // Fetch contexts and counts in parallel
+        const [
+          contextsResult,
+          thoughtsCount,
+          notesCount,
+          sourcesCount,
+          archiveCount
+        ] = await Promise.all([
+          getContexts(),
+          supabase
+            .from("gems")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .in("status", ["active", "passive"]),
+          supabase
+            .from("notes")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id),
+          supabase
+            .from("sources")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id),
+          supabase
+            .from("gems")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .eq("status", "retired"),
+        ])
+
+        setContexts(contextsResult.contexts || [])
+
+        const thoughts = thoughtsCount.count ?? 0
+        const notes = notesCount.count ?? 0
+        const sources = sourcesCount.count ?? 0
+        const archive = archiveCount.count ?? 0
+
+        setTabCounts({
+          all: thoughts + notes + sources,
+          thoughts,
+          notes,
+          sources,
+          archive,
+        })
       } catch (err) {
         showError(err, "Failed to load library data")
       } finally {
@@ -165,7 +207,7 @@ function LibraryContent() {
         </div>
 
         {/* Tabs */}
-        <LibraryTabs activeTab={activeTab} className="mb-4" />
+        <LibraryTabs activeTab={activeTab} counts={tabCounts} className="mb-4" />
 
         {/* Context Filter - only show for tabs that support it (below tabs since contexts only apply to Thoughts) */}
         {(activeTab === "all" || activeTab === "thoughts" || activeTab === "archive") && (

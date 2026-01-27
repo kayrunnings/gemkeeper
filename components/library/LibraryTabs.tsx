@@ -20,12 +20,21 @@ const tabs: Tab[] = [
   { id: "archive", label: "Archive", icon: Archive },
 ]
 
+export interface TabCounts {
+  all?: number
+  thoughts?: number
+  notes?: number
+  sources?: number
+  archive?: number
+}
+
 interface LibraryTabsProps {
   activeTab: LibraryTab
+  counts?: TabCounts
   className?: string
 }
 
-export function LibraryTabs({ activeTab, className }: LibraryTabsProps) {
+export function LibraryTabs({ activeTab, counts, className }: LibraryTabsProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -46,6 +55,7 @@ export function LibraryTabs({ activeTab, className }: LibraryTabsProps) {
         {tabs.map((tab) => {
           const Icon = tab.icon
           const isActive = activeTab === tab.id
+          const count = counts?.[tab.id]
           return (
             <button
               key={tab.id}
@@ -59,6 +69,16 @@ export function LibraryTabs({ activeTab, className }: LibraryTabsProps) {
             >
               <Icon className="h-4 w-4" />
               {tab.label}
+              {count !== undefined && (
+                <span className={cn(
+                  "text-xs px-1.5 py-0.5 rounded-full",
+                  isActive
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted text-muted-foreground"
+                )}>
+                  {count}
+                </span>
+              )}
             </button>
           )
         })}
