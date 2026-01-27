@@ -738,7 +738,6 @@ Implement the UI and service structure; OAuth can be completed when Azure creden
 
 ## Commit
 
-```
 feat: Add focus mode settings and enhanced discovery
 
 - Add Focus Mode toggle with configurable Active List limit (10-25)
@@ -750,7 +749,7 @@ feat: Add focus mode settings and enhanced discovery
 - Add Microsoft Calendar UI (OAuth pending)
 
 Phase 7 + 8 + 9 of PKM Pivot
-```
+
 ```
 
 ---
@@ -874,7 +873,7 @@ Sessions 1-4 completed. All major features are implemented.
    npm run test
    npm run lint
    npm run build
-   ```
+   
 
 3. **Check for console errors:**
    - Open browser dev tools
@@ -899,7 +898,7 @@ Sessions 1-4 completed. All major features are implemented.
 
 ## Final Commit
 
-```
+
 feat: Complete PKM Pivot with tests and documentation
 
 - Add unit tests for search and sources services
@@ -911,7 +910,7 @@ feat: Complete PKM Pivot with tests and documentation
 - Final polish and cleanup
 
 Phase 10 of PKM Pivot - Implementation Complete
-```
+
 ```
 
 ---
