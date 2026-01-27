@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Gem,
-  Sun,
   Trophy,
   StickyNote,
   Settings,
@@ -23,7 +22,6 @@ import {
   Library,
   Zap,
   Target,
-  FileText,
   BookOpen,
   Plus,
 } from "lucide-react"
@@ -350,32 +348,6 @@ export function LayoutShell({
             })}
           </nav>
 
-          {/* Quick Actions */}
-          {!isSidebarCollapsed && (
-            <div className="p-3 border-t border-[var(--glass-sidebar-border)] space-y-2">
-              <Link href="/thoughts/extract">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  AI Capture
-                </Button>
-              </Link>
-              <Link href="/moments">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Target className="h-4 w-4" />
-                  New Moment
-                </Button>
-              </Link>
-            </div>
-          )}
-
           {/* Collapse toggle */}
           <div className="p-3 border-t border-[var(--glass-sidebar-border)]">
             <Button
@@ -502,29 +474,6 @@ export function LayoutShell({
             })}
           </nav>
 
-          {/* Quick Actions - Mobile */}
-          <div className="pt-4 mt-auto border-t border-[var(--glass-sidebar-border)] space-y-2">
-            <Link href="/thoughts/extract" onClick={() => setIsMobileMenuOpen(false)}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-              >
-                <Sparkles className="h-4 w-4" />
-                AI Capture
-              </Button>
-            </Link>
-            <Link href="/moments" onClick={() => setIsMobileMenuOpen(false)}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-              >
-                <Target className="h-4 w-4" />
-                New Moment
-              </Button>
-            </Link>
-          </div>
         </aside>
 
         {/* Main content area */}
@@ -550,8 +499,11 @@ export function LayoutShell({
         contexts={contexts}
       />
 
-      {/* Floating Moment Button */}
-      <FloatingMomentButton calendarConnected={calendarConnected} />
+      {/* Floating Quick Actions Button */}
+      <FloatingMomentButton
+        calendarConnected={calendarConnected}
+        onAICapture={() => setIsCaptureOpen(true)}
+      />
 
       {/* Mobile Bottom Navigation */}
       <BottomNavigation />

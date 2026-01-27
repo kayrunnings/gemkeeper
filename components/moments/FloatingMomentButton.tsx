@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
-import { Target } from "lucide-react"
+import { Plus, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useScrollVisibility } from "@/lib/hooks/useScrollVisibility"
 import { FloatingButtonMenu } from "./FloatingButtonMenu"
@@ -11,6 +11,7 @@ import { CalendarEventPicker } from "./CalendarEventPicker"
 
 interface FloatingMomentButtonProps {
   calendarConnected?: boolean
+  onAICapture?: () => void
   className?: string
 }
 
@@ -18,13 +19,14 @@ type ActivePanel = null | 'menu' | 'quick-entry' | 'calendar'
 
 export function FloatingMomentButton({
   calendarConnected = false,
+  onAICapture,
   className,
 }: FloatingMomentButtonProps) {
   const pathname = usePathname()
   const { isVisible } = useScrollVisibility({ showDelay: 500 })
   const [activePanel, setActivePanel] = useState<ActivePanel>(null)
 
-  // Hide on moments page
+  // Hide on moments page (moment entry is inline there)
   const shouldHide = pathname === "/moments" || pathname.startsWith("/moments/")
 
   // Close menu when clicking outside
@@ -71,8 +73,11 @@ export function FloatingMomentButton({
     setActivePanel(activePanel === null ? 'menu' : null)
   }
 
-  const handleMenuSelect = (option: 'calendar' | 'describe') => {
-    if (option === 'calendar') {
+  const handleMenuSelect = (option: 'capture' | 'calendar' | 'describe') => {
+    if (option === 'capture') {
+      setActivePanel(null)
+      onAICapture?.()
+    } else if (option === 'calendar') {
       setActivePanel('calendar')
     } else {
       setActivePanel('quick-entry')
@@ -121,17 +126,20 @@ export function FloatingMomentButton({
         onClick={handleButtonClick}
         className={cn(
           "w-14 h-14 rounded-full flex items-center justify-center",
-          "bg-gradient-to-br from-blue-500 to-cyan-600",
-          "shadow-lg hover:shadow-xl",
+          "ai-gradient shadow-lg hover:shadow-xl",
           "transition-all duration-200",
           "hover:scale-105 active:scale-95",
           // Semi-transparent when idle, solid when active
-          activePanel ? "opacity-100" : "opacity-70 hover:opacity-100"
+          activePanel ? "opacity-100" : "opacity-80 hover:opacity-100"
         )}
-        title="Create a moment"
-        aria-label="Create a moment"
+        title="Quick actions"
+        aria-label="Quick actions"
       >
-        <Target className="h-6 w-6 text-white" />
+        {activePanel === 'menu' ? (
+          <X className="h-6 w-6 text-white" />
+        ) : (
+          <Plus className="h-6 w-6 text-white" />
+        )}
       </button>
     </div>
   )

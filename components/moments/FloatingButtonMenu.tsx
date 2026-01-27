@@ -1,10 +1,10 @@
 "use client"
 
-import { Calendar, Pencil, X } from "lucide-react"
+import { Calendar, Pencil, Sparkles, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface FloatingButtonMenuProps {
-  onSelect: (option: 'calendar' | 'describe') => void
+  onSelect: (option: 'capture' | 'calendar' | 'describe') => void
   onClose: () => void
   showCalendarOption?: boolean
 }
@@ -19,13 +19,13 @@ export function FloatingButtonMenu({
       className={cn(
         "absolute bottom-16 right-0 mb-2",
         "bg-card border border-border rounded-xl shadow-xl",
-        "overflow-hidden min-w-[200px]",
+        "overflow-hidden min-w-[220px]",
         "animate-in slide-in-from-bottom-4 fade-in duration-200"
       )}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/50">
-        <span className="text-sm font-medium">New Moment</span>
+        <span className="text-sm font-medium">Quick Actions</span>
         <button
           onClick={onClose}
           className="p-1 rounded-md hover:bg-muted transition-colors"
@@ -37,6 +37,27 @@ export function FloatingButtonMenu({
 
       {/* Menu Options */}
       <div className="py-1">
+        {/* AI Capture */}
+        <button
+          onClick={() => onSelect('capture')}
+          className={cn(
+            "w-full flex items-center gap-3 px-4 py-3",
+            "text-left text-sm",
+            "hover:bg-muted transition-colors"
+          )}
+        >
+          <div className="w-9 h-9 rounded-lg ai-gradient flex items-center justify-center">
+            <Sparkles className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <div className="font-medium">AI Capture</div>
+            <div className="text-xs text-muted-foreground">Extract insights from content</div>
+          </div>
+        </button>
+
+        <div className="mx-4 my-1 border-t border-border" />
+
+        {/* Calendar Moment */}
         {showCalendarOption && (
           <button
             onClick={() => onSelect('calendar')}
@@ -56,6 +77,7 @@ export function FloatingButtonMenu({
           </button>
         )}
 
+        {/* Describe Moment */}
         <button
           onClick={() => onSelect('describe')}
           className={cn(
@@ -68,8 +90,8 @@ export function FloatingButtonMenu({
             <Pencil className="h-5 w-5 text-blue-500" />
           </div>
           <div>
-            <div className="font-medium">Describe It</div>
-            <div className="text-xs text-muted-foreground">Tell us what's coming up</div>
+            <div className="font-medium">New Moment</div>
+            <div className="text-xs text-muted-foreground">Prepare for what's coming up</div>
           </div>
         </button>
       </div>
