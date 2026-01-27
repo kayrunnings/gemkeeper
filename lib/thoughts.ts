@@ -200,7 +200,7 @@ export async function getDailyThought(): Promise<{ thought: Thought | null; alre
     return { thought: null, alreadyCheckedIn: false, error: "Not authenticated" }
   }
 
-  // Check if user has already done an evening check-in today
+  // Check if user has already done a daily check-in today (also check legacy evening_checkin)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const todayISO = today.toISOString()
@@ -209,7 +209,7 @@ export async function getDailyThought(): Promise<{ thought: Thought | null; alre
     .from("gem_checkins")
     .select("id, response")
     .eq("user_id", user.id)
-    .eq("checkin_type", "evening_checkin")
+    .in("checkin_type", ["daily_checkin", "evening_checkin"])
     .gte("created_at", todayISO)
     .limit(1)
     .maybeSingle()
@@ -362,7 +362,7 @@ export async function getAllThoughtsForMoments(): Promise<{ thoughts: Thought[];
 // Log a check-in for a thought
 export async function logCheckin(
   thoughtId: string,
-  type: "morning_prompt" | "evening_checkin",
+  type: "morning_prompt" | "evening_checkin" | "daily_checkin",
   response: "yes" | "no" | "maybe",
   note?: string
 ): Promise<{ error: string | null }> {
@@ -394,8 +394,8 @@ export async function logCheckin(
     updated_at: new Date().toISOString(),
   }
 
-  // If evening check-in with "yes", increment application_count and update last_applied_at
-  if (type === "evening_checkin" && response === "yes") {
+  // If daily check-in (or legacy evening check-in) with "yes", increment application_count and update last_applied_at
+  if ((type === "daily_checkin" || type === "evening_checkin") && response === "yes") {
     const { data: thought } = await supabase
       .from("gems")
       .select("application_count")
@@ -408,8 +408,8 @@ export async function logCheckin(
     }
   }
 
-  // If evening check-in with "no", increment skip_count
-  if (type === "evening_checkin" && response === "no") {
+  // If daily check-in (or legacy evening check-in) with "no", increment skip_count
+  if ((type === "daily_checkin" || type === "evening_checkin") && response === "no") {
     const { data: thought } = await supabase
       .from("gems")
       .select("skip_count")

@@ -10,7 +10,7 @@ ThoughtFolio is a knowledge accountability partner that helps users capture insi
 
 **Last Updated:** January 2026
 
-**Feature Status:** All core features complete (Contexts, Active List, Daily Prompts, Check-ins, Moments, Discovery, Calendar Integration, Graduation System)
+**Feature Status:** All core features complete (Contexts, Active List, Daily Check-in, Moments, Discovery, Calendar Integration, Graduation System)
 
 ---
 
@@ -56,16 +56,16 @@ Captured insights/knowledge. Each thought belongs to one context. Thoughts have 
 | `graduated` | Applied 5+ times, mastered | ThoughtBank |
 
 ### Active List
-Curated subset of up to 10 thoughts (fixed limit) that appear in daily prompts. Controlled by `is_on_active_list` boolean, separate from status. Only thoughts with `status IN ('active', 'passive')` can be on the Active List. Represents "what I'm working on applying right now."
+Curated subset of up to 10 thoughts (fixed limit) that are surfaced in the Daily Check-in. Controlled by `is_on_active_list` boolean, separate from status. Only thoughts with `status IN ('active', 'passive')` can be on the Active List. Represents "what I'm working on applying right now."
 
 ### Passive Thoughts
-Thoughts with `is_on_active_list = false`. Still searchable, still available for Moments, but excluded from daily prompts. This is the "knowledge library" — always there when needed.
+Thoughts with `is_on_active_list = false`. Still searchable, still available for Moments, but excluded from Daily Check-in. This is the "knowledge library" — always there when needed.
 
 ### Retired Thoughts
-Thoughts the user has archived. Kept for historical reference but excluded from Thoughts page, Moments, and daily prompts. Visible on dedicated Retired page. Can be restored to active status.
+Thoughts the user has archived. Kept for historical reference but excluded from Thoughts page, Moments, and Daily Check-in. Visible on dedicated Retired page. Can be restored to active status.
 
 ### Graduated Thoughts
-Thoughts applied 5+ times. Automatically moved to ThoughtBank as "mastered knowledge." Excluded from daily prompts but celebrated as achievements.
+Thoughts applied 5+ times. Automatically moved to ThoughtBank as "mastered knowledge." Excluded from Daily Check-in but celebrated as achievements.
 
 ### Moments
 User-described upcoming situations that trigger AI matching against ALL thoughts with `status IN ('active', 'passive')` across ALL contexts. Returns the most relevant thoughts with explanations.
@@ -141,9 +141,9 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 
 ### 3. Active List Management
 
-**Description:** Users curate up to 10 thoughts for daily prompt surfacing.
+**Description:** Users curate up to 10 thoughts for Daily Check-in surfacing.
 
-**User Story:** As a user, I want to mark specific thoughts as "Active" so they appear in my daily prompts while keeping other thoughts available for Moments.
+**User Story:** As a user, I want to mark specific thoughts as "Active" so they appear in my Daily Check-in while keeping other thoughts available for Moments.
 
 **Functional Requirements:**
 
@@ -206,36 +206,51 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 
 ---
 
-### 5. Daily Prompts
+### 5. Daily Check-in
 
-**Description:** System surfaces Active List thoughts with contextual prompts.
+**Description:** System surfaces one Active List thought per day. User checks in once to reflect on whether they applied it.
+
+**User Story:** As a user, I want to check in once daily on a surfaced thought so I can track my progress in applying knowledge without unnecessary friction.
 
 **Functional Requirements:**
 
 | ID | Requirement | Testable Criteria |
 |----|-------------|-------------------|
-| FR-5.1 | Daily prompts only surface Active thoughts | Query filters `is_on_active_list = true` AND `status IN ('active', 'passive')` |
-| FR-5.2 | Selection based on relevance and recency | Least recently surfaced prioritized |
-| FR-5.3 | AI generates contextual prompt | Prompt includes actionable suggestion |
-| FR-5.4 | User can mark as "applied" | Updates application count |
-| FR-5.5 | User can add reflection | Note saved to thought |
+| FR-5.1 | Daily check-in only surfaces Active thoughts | Query filters `is_on_active_list = true` AND `status IN ('active', 'passive')` |
+| FR-5.2 | Selection based on recency | Least recently surfaced prioritized |
+| FR-5.3 | User can mark as "applied" (Yes) | Increments `application_count`, updates `last_applied_at` |
+| FR-5.4 | User can mark as "not applied" (No) | Increments `skip_count` |
+| FR-5.5 | User can add optional reflection | Note saved with check-in record |
+| FR-5.6 | One check-in per day enforced | Subsequent visits show "already checked in" state |
 
 **Acceptance Criteria:**
-- [x] User receives daily prompt with Active thought only
-- [x] Prompt includes actionable suggestion
-- [x] User can mark prompt as completed
-- [x] User can add reflection note
-- [ ] User can view prompt history
+- [x] User sees daily thought on dashboard with "Check In" button
+- [x] User can check in once per day (Yes/No)
+- [x] User can add optional reflection note
+- [x] "Yes" increments application count toward graduation
+- [x] "No" increments skip count (21+ skips triggers stale prompt)
+- [x] After check-in, dashboard shows "completed" state
+- [ ] User can view check-in history
 
 **Dashboard "Today's Thought" Card States:**
 
 | State | Condition | Display |
 |-------|-----------|---------|
-| Thought available | Active List thought found | Shows thought with context badge, content, source |
-| Already checked in | User completed evening check-in today | "You've completed your check-in for today!" |
+| Thought available | Active List thought found | Shows thought with context badge, content, source, "Check In" button |
+| Already checked in | User completed check-in today | "You've completed your check-in for today!" |
 | No Active thoughts | Active List is empty | "No thoughts on your Active List yet" + add button |
 
-**Note:** The dashboard card uses `getDailyThought()` which checks evening check-in status first. If user has already checked in today, no thought is returned even if Active List has thoughts — this is intentional to prevent re-prompting after check-in.
+**Check-in Page (`/checkin`) States:**
+
+| State | Condition | Display |
+|-------|-----------|---------|
+| Prompt | Thought ready for check-in | Shows thought, Yes/No buttons, optional reflection |
+| Stale | Thought skipped 21+ times | "Keep or Release?" prompt |
+| Success | User answered Yes | Celebration, application count |
+| Skip | User answered No | Encouragement, "tomorrow is another chance" |
+| Already done | Already checked in today | "All done for today!" |
+
+**Note:** The previous two-step design (morning "Daily Prompt" + evening "Check-in") has been simplified to this single interaction. See DECISIONS.md for rationale.
 
 ---
 

@@ -48,8 +48,8 @@ gemkeeper/
 │   │   └── auth/                 # OAuth callbacks
 │   │       └── google-calendar/  # Google Calendar OAuth
 │   ├── auth/                     # Auth actions
-│   ├── checkin/                  # Evening check-in page
-│   ├── daily/                    # Daily prompt page
+│   ├── checkin/                  # Daily check-in page
+│   ├── daily/                    # Redirects to /checkin (legacy)
 │   ├── home/                     # Main dashboard (primary)
 │   ├── dashboard/                # Dashboard (legacy alias)
 │   ├── thoughts/                 # Thought management (alias: gems/)
@@ -252,7 +252,7 @@ Core feature table for knowledge/insights. Note: Database table is named `gems` 
 | source_url | TEXT | URL to source |
 | context_tag | ENUM | Legacy field (deprecated) |
 | custom_context | TEXT | Legacy field (deprecated) |
-| is_on_active_list | BOOLEAN | On Active List for daily prompts (max 10) |
+| is_on_active_list | BOOLEAN | On Active List for Daily Check-in (max 10) |
 | status | ENUM | active/passive/retired/graduated |
 | application_count | INTEGER | Times applied |
 | skip_count | INTEGER | Times skipped |
@@ -804,7 +804,7 @@ toggleActiveList(id: string): Promise<Thought>
 getActiveListCount(): Promise<number>
 getDailyThought(): Promise<{ thought: Thought | null; alreadyCheckedIn: boolean; error: string | null }>
   // Only Active List (is_on_active_list = true AND status IN ('active', 'passive'))
-  // Returns alreadyCheckedIn: true if user completed evening check-in today
+  // Returns alreadyCheckedIn: true if user completed daily check-in today
 getAllThoughtsForMoments(): Promise<Thought[]>  // ALL thoughts with status IN ('active', 'passive')
 getRetiredThoughts(): Promise<Thought[]> // status = 'retired'
 ```
@@ -881,16 +881,20 @@ generateDiscoveries(mode: 'curated' | 'directed', contexts: Context[], existingT
 8. User can add to Active List if desired
 ```
 
-### Daily Prompt Flow
+### Daily Check-in Flow
 ```
-1. Query thoughts with:
+1. Check if user already checked in today (query gem_checkins for daily_checkin)
+2. If already checked in, show "done for today" state
+3. Query thoughts with:
    - is_on_active_list = true
    - status IN ('active', 'passive')
-2. Select least recently surfaced
-3. Generate contextual prompt via AI
-4. User marks as applied (optional)
-5. Update application_count
-6. If application_count >= 5, prompt for graduation
+4. Select least recently surfaced
+5. Display thought with "Did you apply this today?" prompt
+6. User responds Yes or No (with optional reflection)
+7. If Yes: increment application_count, update last_applied_at
+8. If No: increment skip_count
+9. If skip_count >= 21, show "stale thought" prompt (keep or release)
+10. If application_count >= 5, thought eligible for graduation
 ```
 
 ### Moment Matching Flow
@@ -1009,8 +1013,7 @@ className="transition-all duration-200 hover:bg-accent/50"
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Core Thoughts | Complete | CRUD, contexts, Active List |
-| Daily Prompts | Complete | Morning surfacing from Active List |
-| Check-ins | Complete | Evening reflection, graduation |
+| Daily Check-in | Complete | Single daily touchpoint, thought surfacing, graduation tracking |
 | Moments (Epic 8) | Complete | AI matching, calendar integration, rate limiting (20/hr) |
 | Discovery (Epic 12) | Complete | Web search, save/skip workflow |
 | Notes | Complete | Standalone notes with tags, folders, extract-to-thoughts |
