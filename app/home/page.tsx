@@ -41,6 +41,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [userName, setUserName] = useState<string | null>(null)
+  const [calendarConnected, setCalendarConnected] = useState(false)
   const router = useRouter()
   const supabase = createClient()
   const { showError } = useToast()
@@ -67,7 +68,7 @@ export default function HomePage() {
         }
 
         // Fetch all data in parallel
-        const [thoughtResult, momentsResult, contextsResult, activeGemsResult, graduatedGemsResult] = await Promise.all([
+        const [thoughtResult, momentsResult, contextsResult, activeGemsResult, graduatedGemsResult, calendarResult] = await Promise.all([
           getDailyThought(),
           getRecentMoments(10),
           getContexts(),
@@ -81,7 +82,18 @@ export default function HomePage() {
             .select("application_count")
             .eq("user_id", user.id)
             .eq("status", "graduated"),
+          supabase
+            .from("calendar_connections")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("is_active", true)
+            .maybeSingle(),
         ])
+
+        // Check calendar connection
+        if (calendarResult.data) {
+          setCalendarConnected(true)
+        }
 
         if (thoughtResult.thought) {
           setDailyThought(thoughtResult.thought)
@@ -137,7 +149,7 @@ export default function HomePage() {
   const displayName = userName || userEmail?.split("@")[0] || "there"
 
   return (
-    <LayoutShell userEmail={userEmail}>
+    <LayoutShell userEmail={userEmail} contexts={contexts} calendarConnected={calendarConnected}>
       <div className="p-4 md:p-8 max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
