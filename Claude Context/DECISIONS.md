@@ -500,6 +500,54 @@ This document tracks key product and technical decisions with their rationale. C
 
 ---
 
+### 2026-01-27: ThoughtFolio 2.0 PKM Pivot - Phase 3 & 4 (Navigation & Library)
+
+**Decision:** Implement unified Library page and updated navigation as part of PKM Pivot.
+
+**Rationale:**
+- Users need a single place to browse all their content (thoughts, notes, sources)
+- Tabbed interface provides clear organization by content type
+- Context filter enables cross-content filtering
+- Mobile bottom navigation improves discoverability of key features
+- Sidebar Library section with sub-items matches information architecture
+- Quick actions reduce friction for common tasks
+
+**Implementation (Phase 3 - Navigation):**
+1. Updated BottomNavigation with 4 tabs: Home, Library, Active, Discover
+2. Sidebar Library section with expandable sub-items (All, Thoughts, Notes, Sources, Archive)
+3. Quick action buttons in sidebar (AI Capture, New Moment)
+4. QuickActionsRow on home page with three cards
+
+**Implementation (Phase 4 - Library):**
+1. /library page with URL-based tab state
+2. LibraryTabs component for tab navigation
+3. Five tab components: All, Thoughts, Notes, Sources, Archive
+4. ContextChipsFilter for cross-tab filtering
+5. SourceCard component for source display
+6. Source detail page at /library/sources/[id]
+
+**Key Design Choices:**
+- URL state for tabs (?tab=thoughts) enables deep linking
+- Context filter only shows for tabs that support it (All, Thoughts, Archive)
+- Load more button instead of infinite scroll (simpler implementation)
+- Archive tab includes restore and delete actions with confirmation
+- Sidebar remains collapsible, Library expands/collapses within
+
+**Alternatives Considered:**
+- Separate pages for each content type → Rejected: more fragmented, harder to discover
+- Infinite scroll → Rejected: load more is simpler and gives user control
+- Floating action button for Moments → Deferred: can add later
+
+**Consequences:**
+- New route: /library with tabbed layout
+- New route: /library/sources/[id] for source detail
+- Updated home page with QuickActionsRow and ContextChipsFilter
+- Updated sidebar with expandable Library section
+- Mobile bottom navigation added
+- Existing /thoughts and /notes pages still work (not replaced)
+
+---
+
 ## Deferred Decisions
 
 Items we've discussed but intentionally not decided yet:

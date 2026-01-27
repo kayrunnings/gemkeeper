@@ -11,8 +11,10 @@ import { getContexts } from "@/lib/contexts"
 import { LayoutShell } from "@/components/layout-shell"
 import { DailyThoughtCard } from "@/components/home/DailyThoughtCard"
 import { ActivityStatsCard } from "@/components/home/ActivityStatsCard"
-import { QuickActionsCard } from "@/components/home/QuickActionsCard"
+import { QuickActionsRow } from "@/components/home/QuickActionsRow"
 import { UpcomingMomentsCard } from "@/components/home/UpcomingMomentsCard"
+import { RecentActivityCard } from "@/components/home/RecentActivityCard"
+import { ContextChipsFilter } from "@/components/ui/ContextChipsFilter"
 import { DiscoverCard } from "@/components/discover"
 import { useToast } from "@/components/error-toast"
 import { Home as HomeIcon } from "lucide-react"
@@ -40,6 +42,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [userName, setUserName] = useState<string | null>(null)
+  const [selectedContextId, setSelectedContextId] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
   const { showError } = useToast()
@@ -148,22 +151,44 @@ export default function HomePage() {
           </p>
         </div>
 
+        {/* Today's Thought */}
+        <DailyThoughtCard thought={dailyThought} alreadyCheckedIn={alreadyCheckedIn} contexts={contexts} className="mb-6" />
+
+        {/* Quick Actions Row */}
+        <QuickActionsRow className="mb-6" />
+
+        {/* Context Chips Filter */}
+        <div className="mb-6">
+          <h2 className="text-sm font-medium text-muted-foreground mb-3">Filter by Context</h2>
+          <ContextChipsFilter
+            contexts={contexts}
+            selectedContextId={selectedContextId}
+            onSelect={setSelectedContextId}
+            showCounts
+            counts={contexts.reduce((acc, ctx) => {
+              acc[ctx.id] = ctx.thought_count
+              return acc
+            }, {} as Record<string, number>)}
+          />
+        </div>
+
         {/* Main grid */}
         <div className="grid gap-6 md:grid-cols-2">
-          {/* Today's Thought - Full width */}
-          <DailyThoughtCard thought={dailyThought} alreadyCheckedIn={alreadyCheckedIn} contexts={contexts} className="md:col-span-2" />
+          {/* Recent Activity - Full width */}
+          <RecentActivityCard
+            contexts={contexts}
+            selectedContextId={selectedContextId}
+            className="md:col-span-2"
+          />
 
-          {/* Discover Something New - Full width */}
-          <DiscoverCard contexts={contexts} className="md:col-span-2" />
-
-          {/* Quick Actions */}
-          <QuickActionsCard />
+          {/* Upcoming Moments - Full width */}
+          <UpcomingMomentsCard moments={moments} className="md:col-span-2" />
 
           {/* Activity Stats */}
           <ActivityStatsCard stats={stats} />
 
-          {/* Upcoming Moments - Full width */}
-          <UpcomingMomentsCard moments={moments} className="md:col-span-2" />
+          {/* Discover Something New */}
+          <DiscoverCard contexts={contexts} />
         </div>
       </div>
     </LayoutShell>

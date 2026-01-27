@@ -97,6 +97,16 @@ gemkeeper/
 │   │   ├── SearchResults.tsx     # Grouped search results
 │   │   ├── SearchResultCard.tsx  # Individual result card
 │   │   └── SearchFilters.tsx     # Type filter buttons
+│   ├── library/                  # Library components (ThoughtFolio 2.0)
+│   │   ├── LibraryTabs.tsx       # Tab navigation
+│   │   ├── LibraryAllTab.tsx     # Mixed content feed
+│   │   ├── LibraryThoughtsTab.tsx # Thoughts list
+│   │   ├── LibraryNotesTab.tsx   # Notes list
+│   │   ├── LibrarySourcesTab.tsx # Sources grid
+│   │   ├── LibraryArchiveTab.tsx # Archived thoughts
+│   │   └── SourceCard.tsx        # Source display card
+│   ├── layout/                   # Layout components
+│   │   └── BottomNavigation.tsx  # Mobile bottom tab bar
 │   ├── extract-from-note-modal.tsx  # Extract thoughts from notes
 │   ├── settings/                 # Settings components
 │   └── ...                       # Other components
@@ -1133,3 +1143,7 @@ className="transition-all duration-200 hover:bg-accent/50"
 | - Sources Entity | Complete | Types and CRUD service |
 | - Note-Thought Links | Complete | Bi-directional linking service |
 | - Profile Settings | Complete | Focus mode, active list limit, check-in enabled |
+| - Navigation Updates | Complete | 4-tab bottom nav, sidebar Library section |
+| - Unified Library | Complete | All/Thoughts/Notes/Sources/Archive tabs |
+| - Context Chips Filter | Complete | Horizontal scrollable filter |
+| - Quick Actions | Complete | AI Capture, New Moment, Discover shortcuts |
