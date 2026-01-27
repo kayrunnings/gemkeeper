@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { cn } from "@/lib/utils"
 import { SearchResult } from "@/lib/types/search"
 
@@ -38,7 +39,7 @@ function highlightText(text: string, query: string): React.ReactNode {
   )
 }
 
-export function SearchResultCard({
+export const SearchResultCard = memo(function SearchResultCard({
   result,
   isSelected,
   searchQuery,
@@ -76,4 +77,4 @@ export function SearchResultCard({
       </div>
     </button>
   )
-}
+})

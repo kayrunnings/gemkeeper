@@ -1,21 +1,32 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, Suspense, lazy } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { getContexts } from "@/lib/contexts"
 import { LayoutShell } from "@/components/layout-shell"
 import { LibraryTabs, LibraryTab, TabCounts } from "@/components/library/LibraryTabs"
-import { LibraryAllTab } from "@/components/library/LibraryAllTab"
-import { LibraryThoughtsTab } from "@/components/library/LibraryThoughtsTab"
-import { LibraryNotesTab } from "@/components/library/LibraryNotesTab"
-import { LibrarySourcesTab } from "@/components/library/LibrarySourcesTab"
-import { LibraryArchiveTab } from "@/components/library/LibraryArchiveTab"
 import { ContextChipsFilter } from "@/components/ui/ContextChipsFilter"
 import { Input } from "@/components/ui/input"
 import { Context } from "@/lib/types/context"
-import { Library as LibraryIcon, Search, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { Library as LibraryIcon, Search, Loader2, ArrowUp, ArrowDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
+
+// Lazy load tab components for better initial load performance
+const LibraryAllTab = lazy(() => import("@/components/library/LibraryAllTab").then(m => ({ default: m.LibraryAllTab })))
+const LibraryThoughtsTab = lazy(() => import("@/components/library/LibraryThoughtsTab").then(m => ({ default: m.LibraryThoughtsTab })))
+const LibraryNotesTab = lazy(() => import("@/components/library/LibraryNotesTab").then(m => ({ default: m.LibraryNotesTab })))
+const LibrarySourcesTab = lazy(() => import("@/components/library/LibrarySourcesTab").then(m => ({ default: m.LibrarySourcesTab })))
+const LibraryArchiveTab = lazy(() => import("@/components/library/LibraryArchiveTab").then(m => ({ default: m.LibraryArchiveTab })))
+
+// Loading component for tab switches
+function TabLoadingState() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    </div>
+  )
+}
 
 export type SortOrder = "desc" | "asc"
 import { useToast } from "@/components/error-toast"
@@ -220,8 +231,10 @@ function LibraryContent() {
           </div>
         )}
 
-        {/* Tab Content */}
-        {renderTabContent()}
+        {/* Tab Content - wrapped in Suspense for lazy loaded components */}
+        <Suspense fallback={<TabLoadingState />}>
+          {renderTabContent()}
+        </Suspense>
       </div>
     </LayoutShell>
   )

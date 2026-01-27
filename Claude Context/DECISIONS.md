@@ -601,6 +601,48 @@ This document tracks key product and technical decisions with their rationale. C
 
 ---
 
+### 2026-01-27: ThoughtFolio 2.0 PKM Pivot - Phase 10 (Polish & Launch)
+
+**Decision:** Complete the PKM Pivot with comprehensive testing, performance optimizations, and documentation updates.
+
+**Rationale:**
+- Tests ensure reliability and catch regressions
+- Search caching improves UX with faster repeated queries
+- Lazy loading reduces initial bundle size and improves TTI
+- React.memo reduces unnecessary re-renders in lists
+- Documentation ensures maintainability
+
+**Implementation:**
+
+1. **Testing**
+   - Unit tests for search service (empty queries, authentication, type filtering, pagination)
+   - Unit tests for sources service (CRUD operations, getSourceByUrl deduplication)
+   - Component tests for GlobalSearch (modal open/close, debouncing, keyboard nav)
+   - Component tests for AICaptureModal (states, content detection, save flow)
+
+2. **Performance Optimizations**
+   - Search result caching with 30s TTL and max 100 entries
+   - Library tabs lazy loaded with React.lazy and dynamic imports
+   - React.memo added to SearchResultCard, SourceCard, SearchFilters
+
+3. **Documentation**
+   - Updated ARCHITECTURE.md Feature Status
+   - Added search caching documentation
+   - Added decisions for full-text search, sources, library architecture
+
+**Key Design Choices:**
+- 30-second cache TTL balances freshness and performance
+- Cache limited to 100 entries to prevent memory issues
+- Lazy loading at tab level, not individual cards
+- React.memo for list items that receive stable props
+
+**Consequences:**
+- New test files in __tests__/lib/ and __tests__/components/
+- Search service exports clearSearchCache() for cache invalidation
+- Library page uses Suspense for tab loading states
+
+---
+
 ## Deferred Decisions
 
 Items we've discussed but intentionally not decided yet:
