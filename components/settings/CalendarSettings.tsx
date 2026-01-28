@@ -26,8 +26,21 @@ import {
   updateCalendarSettings,
   syncCalendarEvents,
 } from "@/lib/calendar-client"
-import { checkForUpcomingEvents } from "@/lib/calendar-sync"
 import { useToast } from "@/components/error-toast"
+
+async function checkForUpcomingEvents(): Promise<{ momentsCreated: number }> {
+  try {
+    const response = await fetch("/api/calendar/check-moments", {
+      method: "POST",
+    })
+    if (!response.ok) {
+      return { momentsCreated: 0 }
+    }
+    return await response.json()
+  } catch {
+    return { momentsCreated: 0 }
+  }
+}
 
 interface CalendarSettingsProps {
   className?: string

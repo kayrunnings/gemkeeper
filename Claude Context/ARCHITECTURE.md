@@ -759,7 +759,20 @@ Match thoughts to moment using AI. Searches ALL thoughts with `status IN ('activ
 OAuth callback for Google Calendar.
 
 #### POST `/api/calendar/sync`
-Sync calendar events.
+Sync calendar events from Google Calendar to cache.
+
+#### POST `/api/calendar/check-moments`
+Create moments from cached calendar events that are within lead time.
+
+**Response:**
+```typescript
+{
+  momentsCreated: number;
+  events: Array<{ event: CalendarEvent; momentId: string }>;
+}
+```
+
+**Note:** This endpoint should be called after `/api/calendar/sync` to convert cached events into moments.
 
 ### Discovery
 
