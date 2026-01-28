@@ -427,7 +427,259 @@
   --tag-other-foreground: #d6d3d1;
 }
 
-/* ===== THEME 6: SUNRISE (LIGHT THEME) ===== */
+/* ===== THEME 6: FOREST ===== */
+/* Deep forest green with gold accents - Natural, grounded, focused */
+[data-theme="forest"] {
+  /* Core backgrounds - Deep forest greens */
+  --background: #0d1510;
+  --foreground: #f0fdf4;
+
+  /* Card surfaces */
+  --card: #14201a;
+  --card-foreground: #f0fdf4;
+
+  /* Popover/Modal surfaces */
+  --popover: #1a2f24;
+  --popover-foreground: #f0fdf4;
+
+  /* Primary action color - Gold */
+  --primary: #eab308;
+  --primary-foreground: #0a0a0a;
+
+  /* Secondary/muted elements */
+  --secondary: #1a2f24;
+  --secondary-foreground: #d1d5db;
+
+  /* Muted text and backgrounds */
+  --muted: #2f4538;
+  --muted-foreground: #9ca3af;
+
+  /* Accents - Gold */
+  --accent: #eab308;
+  --accent-foreground: #0a0a0a;
+
+  /* Gem accent */
+  --thought: #365314;
+  --thought-foreground: #bef264;
+
+  /* Destructive actions */
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
+
+  /* Success states */
+  --success: #22c55e;
+  --success-foreground: #0a0a0a;
+
+  /* Warning states */
+  --warning: #f59e0b;
+  --warning-foreground: #0a0a0a;
+
+  /* Info states */
+  --info: #3b82f6;
+  --info-foreground: #f0fdf4;
+
+  /* Highlight */
+  --highlight: #84cc16;
+  --highlight-foreground: #f0fdf4;
+
+  /* Borders and inputs */
+  --border: #2f4538;
+  --input: #1a2f24;
+  --ring: #eab308;
+
+  /* AI gradient colors */
+  --ai-gradient-start: #eab308;
+  --ai-gradient-end: #22c55e;
+  --ai-glow: rgba(234, 179, 8, 0.3);
+
+  /* Context tag colors */
+  --tag-meetings: #1e3a5f;
+  --tag-meetings-foreground: #93c5fd;
+  --tag-feedback: #4c1d3d;
+  --tag-feedback-foreground: #f9a8d4;
+  --tag-conflict: #450a0a;
+  --tag-conflict-foreground: #fca5a5;
+  --tag-focus: #365314;
+  --tag-focus-foreground: #bef264;
+  --tag-health: #14532d;
+  --tag-health-foreground: #86efac;
+  --tag-relationships: #713f12;
+  --tag-relationships-foreground: #fde047;
+  --tag-parenting: #3b0764;
+  --tag-parenting-foreground: #d8b4fe;
+  --tag-other: #1a2f24;
+  --tag-other-foreground: #d1d5db;
+}
+
+/* ===== THEME 7: ROSE ===== */
+/* Dark charcoal with soft rose pink accents - Elegant, soft, modern */
+[data-theme="rose"] {
+  /* Core backgrounds - Dark charcoals */
+  --background: #141214;
+  --foreground: #fdf2f8;
+
+  /* Card surfaces */
+  --card: #1e1a1e;
+  --card-foreground: #fdf2f8;
+
+  /* Popover/Modal surfaces */
+  --popover: #2a252a;
+  --popover-foreground: #fdf2f8;
+
+  /* Primary action color - Rose pink */
+  --primary: #f472b6;
+  --primary-foreground: #0a0a0a;
+
+  /* Secondary/muted elements */
+  --secondary: #2a252a;
+  --secondary-foreground: #d1d5db;
+
+  /* Muted text and backgrounds */
+  --muted: #3f3640;
+  --muted-foreground: #9ca3af;
+
+  /* Accents - Rose pink */
+  --accent: #f472b6;
+  --accent-foreground: #0a0a0a;
+
+  /* Gem accent */
+  --thought: #831843;
+  --thought-foreground: #fbcfe8;
+
+  /* Destructive actions */
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
+
+  /* Success states */
+  --success: #10b981;
+  --success-foreground: #0a0a0a;
+
+  /* Warning states */
+  --warning: #f59e0b;
+  --warning-foreground: #0a0a0a;
+
+  /* Info states */
+  --info: #3b82f6;
+  --info-foreground: #fdf2f8;
+
+  /* Highlight */
+  --highlight: #ec4899;
+  --highlight-foreground: #fdf2f8;
+
+  /* Borders and inputs */
+  --border: #3f3640;
+  --input: #2a252a;
+  --ring: #f472b6;
+
+  /* AI gradient colors */
+  --ai-gradient-start: #f472b6;
+  --ai-gradient-end: #a855f7;
+  --ai-glow: rgba(244, 114, 182, 0.3);
+
+  /* Context tag colors */
+  --tag-meetings: #1e3a5f;
+  --tag-meetings-foreground: #93c5fd;
+  --tag-feedback: #831843;
+  --tag-feedback-foreground: #fbcfe8;
+  --tag-conflict: #450a0a;
+  --tag-conflict-foreground: #fca5a5;
+  --tag-focus: #312e81;
+  --tag-focus-foreground: #a5b4fc;
+  --tag-health: #064e3b;
+  --tag-health-foreground: #6ee7b7;
+  --tag-relationships: #451a03;
+  --tag-relationships-foreground: #fcd34d;
+  --tag-parenting: #701a75;
+  --tag-parenting-foreground: #f5d0fe;
+  --tag-other: #2a252a;
+  --tag-other-foreground: #d1d5db;
+}
+
+/* ===== THEME 8: NORD ===== */
+/* Arctic blue-gray Nordic palette - Clean, focused, popular */
+[data-theme="nord"] {
+  /* Nord Polar Night */
+  --background: #2e3440;
+  --foreground: #eceff4;
+
+  /* Card surfaces */
+  --card: #3b4252;
+  --card-foreground: #eceff4;
+
+  /* Popover/Modal surfaces */
+  --popover: #434c5e;
+  --popover-foreground: #eceff4;
+
+  /* Primary action color - Nord Frost blue */
+  --primary: #88c0d0;
+  --primary-foreground: #2e3440;
+
+  /* Secondary/muted elements */
+  --secondary: #434c5e;
+  --secondary-foreground: #d8dee9;
+
+  /* Muted text and backgrounds */
+  --muted: #4c566a;
+  --muted-foreground: #d8dee9;
+
+  /* Accents - Nord Frost */
+  --accent: #81a1c1;
+  --accent-foreground: #2e3440;
+
+  /* Gem accent */
+  --thought: #5e81ac;
+  --thought-foreground: #eceff4;
+
+  /* Destructive actions - Nord Aurora red */
+  --destructive: #bf616a;
+  --destructive-foreground: #eceff4;
+
+  /* Success states - Nord Aurora green */
+  --success: #a3be8c;
+  --success-foreground: #2e3440;
+
+  /* Warning states - Nord Aurora yellow */
+  --warning: #ebcb8b;
+  --warning-foreground: #2e3440;
+
+  /* Info states - Nord Frost */
+  --info: #5e81ac;
+  --info-foreground: #eceff4;
+
+  /* Highlight - Nord Aurora purple */
+  --highlight: #b48ead;
+  --highlight-foreground: #eceff4;
+
+  /* Borders and inputs */
+  --border: #4c566a;
+  --input: #434c5e;
+  --ring: #88c0d0;
+
+  /* AI gradient colors */
+  --ai-gradient-start: #88c0d0;
+  --ai-gradient-end: #81a1c1;
+  --ai-glow: rgba(136, 192, 208, 0.3);
+
+  /* Context tag colors - Nord palette */
+  --tag-meetings: #5e81ac;
+  --tag-meetings-foreground: #eceff4;
+  --tag-feedback: #b48ead;
+  --tag-feedback-foreground: #eceff4;
+  --tag-conflict: #bf616a;
+  --tag-conflict-foreground: #eceff4;
+  --tag-focus: #81a1c1;
+  --tag-focus-foreground: #eceff4;
+  --tag-health: #a3be8c;
+  --tag-health-foreground: #2e3440;
+  --tag-relationships: #ebcb8b;
+  --tag-relationships-foreground: #2e3440;
+  --tag-parenting: #d08770;
+  --tag-parenting-foreground: #2e3440;
+  --tag-other: #4c566a;
+  --tag-other-foreground: #d8dee9;
+}
+
+/* ===== THEME 9: SUNRISE (LIGHT THEME) ===== */
 /* Warm off-white with amber/orange accents - Bright, optimistic, easy daytime reading */
 [data-theme="sunrise"] {
   /* Core backgrounds - Warm off-whites */

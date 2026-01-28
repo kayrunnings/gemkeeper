@@ -79,9 +79,9 @@ export interface GeneratedDiscovery {
   suggested_context_slug: string
 }
 
-// Daily limits configuration
-export const DAILY_CURATED_LIMIT = 1  // 1 session of 4 discoveries
-export const DAILY_DIRECTED_LIMIT = 1 // 1 session of 4 discoveries
+// Daily limits configuration (effectively unlimited)
+export const DAILY_CURATED_LIMIT = 9999
+export const DAILY_DIRECTED_LIMIT = 9999
 export const DISCOVERIES_PER_SESSION = 4
 
 // Bootstrap thresholds

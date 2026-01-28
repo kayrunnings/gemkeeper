@@ -30,7 +30,13 @@ interface PastedImage {
   data: string
   mimeType: string
   name: string
+  size: number // size in bytes
 }
+
+// Validation constants
+const MAX_IMAGE_SIZE_MB = 4
+const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024
+const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
 export function AICaptureModal({
   isOpen,
@@ -44,6 +50,7 @@ export function AICaptureModal({
   const [error, setError] = useState<string | null>(null)
   const [savedCount, setSavedCount] = useState({ thoughts: 0, notes: 0, sources: 0 })
   const [images, setImages] = useState<PastedImage[]>([])
+  const [imageError, setImageError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Reset state when modal opens/closes
@@ -55,6 +62,7 @@ export function AICaptureModal({
       setContentType(null)
       setError(null)
       setImages([])
+      setImageError(null)
     }
   }, [isOpen])
 
@@ -75,12 +83,30 @@ export function AICaptureModal({
     const items = e.clipboardData?.items
     if (!items) return
 
+    setImageError(null)
+
     for (const item of items) {
       if (item.type.startsWith('image/')) {
         e.preventDefault()
+
+        // Validate MIME type
+        if (!SUPPORTED_IMAGE_TYPES.includes(item.type)) {
+          setImageError(`Unsupported image format. Please use JPEG, PNG, GIF, or WebP.`)
+          return
+        }
+
         const file = item.getAsFile()
         if (file) {
+          // Validate file size
+          if (file.size > MAX_IMAGE_SIZE_BYTES) {
+            setImageError(`Image too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is ${MAX_IMAGE_SIZE_MB}MB.`)
+            return
+          }
+
           const reader = new FileReader()
+          reader.onerror = () => {
+            setImageError('Failed to read image. Please try again.')
+          }
           reader.onload = (event) => {
             const base64 = event.target?.result as string
             // Extract the base64 data without the data URL prefix
@@ -88,7 +114,8 @@ export function AICaptureModal({
             setImages(prev => [...prev, {
               data: base64Data,
               mimeType: item.type,
-              name: `image-${Date.now()}.${item.type.split('/')[1]}`
+              name: `image-${Date.now()}.${item.type.split('/')[1]}`,
+              size: file.size,
             }])
           }
           reader.readAsDataURL(file)
@@ -242,6 +269,9 @@ export function AICaptureModal({
                   ))}
                 </div>
               )}
+              {imageError && (
+                <p className="text-sm text-destructive">{imageError}</p>
+              )}
               <CaptureEmptyState onExampleClick={handleExampleClick} />
             </div>
           )}
@@ -276,6 +306,9 @@ export function AICaptureModal({
                     </div>
                   ))}
                 </div>
+              )}
+              {imageError && (
+                <p className="text-sm text-destructive">{imageError}</p>
               )}
               <div className="flex justify-between items-center">
                 <span className="text-xs text-muted-foreground">

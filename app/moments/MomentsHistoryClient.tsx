@@ -15,7 +15,6 @@ import {
 } from "lucide-react"
 import type { Moment, MomentSource } from "@/types/moments"
 import { LayoutShell } from "@/components/layout-shell"
-import { MomentFAB } from "@/components/moments/MomentFAB"
 import { createClient } from "@/lib/supabase/client"
 
 interface MomentsHistoryClientProps {
@@ -146,8 +145,6 @@ export function MomentsHistoryClient({ initialMoments }: MomentsHistoryClientPro
       )}
       </div>
 
-      {/* Moment FAB */}
-      <MomentFAB />
     </LayoutShell>
   )
 }

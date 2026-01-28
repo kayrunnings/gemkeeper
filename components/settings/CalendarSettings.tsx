@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -37,18 +38,61 @@ export function CalendarSettings({ className }: CalendarSettingsProps) {
   const [isSyncing, setIsSyncing] = useState<string | null>(null)
   const [isDisconnecting, setIsDisconnecting] = useState<string | null>(null)
   const [customKeyword, setCustomKeyword] = useState("")
-  const { showInfo } = useToast()
+  const { showInfo, showSuccess, showError } = useToast()
+  const searchParams = useSearchParams()
+  const router = useRouter()
 
-  useEffect(() => {
-    loadConnections()
-  }, [])
-
-  async function loadConnections() {
+  const loadConnections = useCallback(async () => {
     setIsLoading(true)
     const { connections: conns } = await getCalendarConnections()
     setConnections(conns)
     setIsLoading(false)
-  }
+    return conns
+  }, [])
+
+  // Handle OAuth redirect results
+  useEffect(() => {
+    const connected = searchParams.get("calendar_connected")
+    const error = searchParams.get("calendar_error")
+
+    if (connected === "true") {
+      showSuccess("Google Calendar connected!", "Your calendar is now linked. Syncing events...")
+      // Remove the query param from URL without page reload
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete("calendar_connected")
+      window.history.replaceState({}, "", newUrl.toString())
+
+      // Reload connections and trigger initial sync
+      loadConnections().then((conns) => {
+        const googleConn = conns.find((c) => c.provider === "google")
+        if (googleConn) {
+          setIsSyncing(googleConn.id)
+          syncCalendarEvents(googleConn.id).then(() => {
+            loadConnections()
+            setIsSyncing(null)
+            showSuccess("Calendar synced!", "Your upcoming events are now available.")
+          })
+        }
+      })
+    } else if (error) {
+      const errorMessages: Record<string, string> = {
+        no_tokens: "Failed to get authorization tokens from Google.",
+        no_email: "Could not retrieve email from your Google account.",
+        db_error: "Failed to save calendar connection.",
+        oauth_failed: "OAuth authorization failed.",
+        access_denied: "You denied access to your calendar.",
+      }
+      showError(errorMessages[error] || `Calendar connection failed: ${error}`)
+      // Remove the query param from URL
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete("calendar_error")
+      window.history.replaceState({}, "", newUrl.toString())
+    }
+  }, [searchParams, loadConnections, showSuccess, showError])
+
+  useEffect(() => {
+    loadConnections()
+  }, [loadConnections])
 
   const handleConnect = () => {
     // Redirect to OAuth flow

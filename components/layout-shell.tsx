@@ -3,29 +3,34 @@
 import { useState, useEffect, ReactNode } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
+// Phosphor icons for navigation
 import {
-  Gem,
-  Sun,
+  House,
+  Books,
+  Lightning,
+  Compass,
   Trophy,
-  StickyNote,
-  Settings,
-  LogOut,
-  Menu,
-  ChevronLeft,
-  ChevronDown,
-  ChevronUp,
-  Sparkles,
-  PanelRight,
-  X,
-  Home,
+  GearSix,
+  Lightbulb,
+  NotePencil,
+  BookOpenText,
   Archive,
-  Search,
-  Library,
-  Zap,
-  Target,
-  FileText,
-  BookOpen,
+  List,
+  X as PhosphorX,
+  CaretLeft,
+  CaretDown,
+  CaretUp,
+  SignOut,
+  Sparkle,
+  MagnifyingGlass,
+  SidebarSimple,
   Plus,
+} from "@phosphor-icons/react"
+// Keep some Lucide icons for specific UI elements
+import {
+  Menu,
+  PanelRight,
+  X as LucideX,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -38,38 +43,41 @@ import { FloatingMomentButton } from "@/components/moments/FloatingMomentButton"
 import { AICaptureModal } from "@/components/capture/AICaptureModal"
 import type { ContextWithCount } from "@/lib/types/context"
 
+// Wrapper to make Phosphor icons compatible with our icon interface
+type PhosphorIcon = React.ComponentType<{ className?: string; weight?: "thin" | "light" | "regular" | "bold" | "fill" | "duotone" }>
+
 interface NavItem {
   href: string
   label: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: PhosphorIcon
   children?: NavItem[]
 }
 
 // Library sub-items
 const librarySubItems: NavItem[] = [
-  { href: "/library", label: "All", icon: Library },
-  { href: "/library?tab=thoughts", label: "Thoughts", icon: Gem },
-  { href: "/library?tab=notes", label: "Notes", icon: StickyNote },
-  { href: "/library?tab=sources", label: "Sources", icon: BookOpen },
+  { href: "/library", label: "All", icon: Books },
+  { href: "/library?tab=thoughts", label: "Thoughts", icon: Lightbulb },
+  { href: "/library?tab=notes", label: "Notes", icon: NotePencil },
+  { href: "/library?tab=sources", label: "Sources", icon: BookOpenText },
   { href: "/library?tab=archive", label: "Archive", icon: Archive },
 ]
 
 const navItems: NavItem[] = [
-  { href: "/home", label: "Home", icon: Home },
+  { href: "/home", label: "Home", icon: House },
   {
     href: "/library",
     label: "Library",
-    icon: Library,
+    icon: Books,
     children: librarySubItems,
   },
-  { href: "/checkin", label: "Active", icon: Zap },
-  { href: "/moments", label: "Moments", icon: Target },
-  { href: "/discover", label: "Discover", icon: Sparkles },
+  { href: "/checkin", label: "Active", icon: Lightning },
+  { href: "/moments", label: "Moments", icon: Lightning },
+  { href: "/discover", label: "Discover", icon: Compass },
   { href: "/thought-bank", label: "Trophy Case", icon: Trophy },
 ]
 
 const secondaryNavItems: NavItem[] = [
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/settings", label: "Settings", icon: GearSix },
 ]
 
 interface LayoutShellProps {
@@ -144,13 +152,13 @@ export function LayoutShell({
               className="md:hidden"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isMobileMenuOpen ? <LucideX className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
 
             {/* Logo */}
             <Link href="/home" className="flex items-center gap-3 group">
               <div className="w-9 h-9 rounded-xl ai-gradient flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                <Sparkles className="h-5 w-5 text-white" />
+                <Sparkle className="h-5 w-5 text-white" weight="fill" />
               </div>
               <span className="text-xl font-semibold hidden sm:inline">ThoughtFolio</span>
             </Link>
@@ -176,7 +184,7 @@ export function LayoutShell({
               title="Search (Cmd+K)"
               className="hidden sm:flex"
             >
-              <Search className="h-5 w-5" />
+              <MagnifyingGlass className="h-5 w-5" />
             </Button>
 
             {/* Right panel toggle */}
@@ -207,7 +215,7 @@ export function LayoutShell({
                 title="Sign out"
                 onClick={handleSignOut}
               >
-                <LogOut className="h-4 w-4" />
+                <SignOut className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -255,9 +263,9 @@ export function LayoutShell({
                         <span>{item.label}</span>
                       </div>
                       {isLibraryExpanded ? (
-                        <ChevronUp className="h-4 w-4" />
+                        <CaretUp className="h-4 w-4" />
                       ) : (
-                        <ChevronDown className="h-4 w-4" />
+                        <CaretDown className="h-4 w-4" />
                       )}
                     </button>
 
@@ -350,32 +358,6 @@ export function LayoutShell({
             })}
           </nav>
 
-          {/* Quick Actions */}
-          {!isSidebarCollapsed && (
-            <div className="p-3 border-t border-[var(--glass-sidebar-border)] space-y-2">
-              <Link href="/thoughts/extract">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  AI Capture
-                </Button>
-              </Link>
-              <Link href="/moments">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Target className="h-4 w-4" />
-                  New Moment
-                </Button>
-              </Link>
-            </div>
-          )}
-
           {/* Collapse toggle */}
           <div className="p-3 border-t border-[var(--glass-sidebar-border)]">
             <Button
@@ -387,7 +369,7 @@ export function LayoutShell({
               )}
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
             >
-              <ChevronLeft className={cn(
+              <CaretLeft className={cn(
                 "h-4 w-4 transition-transform duration-200",
                 isSidebarCollapsed && "rotate-180"
               )} />
@@ -426,9 +408,9 @@ export function LayoutShell({
                         <span>{item.label}</span>
                       </div>
                       {isLibraryExpanded ? (
-                        <ChevronUp className="h-4 w-4" />
+                        <CaretUp className="h-4 w-4" />
                       ) : (
-                        <ChevronDown className="h-4 w-4" />
+                        <CaretDown className="h-4 w-4" />
                       )}
                     </button>
 
@@ -502,29 +484,6 @@ export function LayoutShell({
             })}
           </nav>
 
-          {/* Quick Actions - Mobile */}
-          <div className="pt-4 mt-auto border-t border-[var(--glass-sidebar-border)] space-y-2">
-            <Link href="/thoughts/extract" onClick={() => setIsMobileMenuOpen(false)}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-              >
-                <Sparkles className="h-4 w-4" />
-                AI Capture
-              </Button>
-            </Link>
-            <Link href="/moments" onClick={() => setIsMobileMenuOpen(false)}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-              >
-                <Target className="h-4 w-4" />
-                New Moment
-              </Button>
-            </Link>
-          </div>
         </aside>
 
         {/* Main content area */}
@@ -550,8 +509,11 @@ export function LayoutShell({
         contexts={contexts}
       />
 
-      {/* Floating Moment Button */}
-      <FloatingMomentButton calendarConnected={calendarConnected} />
+      {/* Floating Quick Actions Button */}
+      <FloatingMomentButton
+        calendarConnected={calendarConnected}
+        onAICapture={() => setIsCaptureOpen(true)}
+      />
 
       {/* Mobile Bottom Navigation */}
       <BottomNavigation />
