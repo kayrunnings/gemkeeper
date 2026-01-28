@@ -13,7 +13,7 @@ interface NoteContext {
   slug: string
 }
 import { NoteCard } from "@/components/note-card"
-import { EnhancedNoteEditor } from "@/components/notes/enhanced-note-editor"
+import { EnhancedNoteEditor, type NoteDraft } from "@/components/notes/enhanced-note-editor"
 import { ExtractFromNoteModal } from "@/components/extract-from-note-modal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,6 +30,7 @@ import {
   Folder as FolderIcon,
   FolderPlus,
   FileX,
+  FilePenLine,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -45,8 +46,10 @@ import {
 import { moveNoteToFolder as moveNoteToFolderAction } from "@/app/notes/actions"
 import { useToast } from "@/components/error-toast"
 
-type FilterType = "all" | "unfiled" | { folderId: string }
+type FilterType = "all" | "unfiled" | "drafts" | { folderId: string }
 type SortOrder = "desc" | "asc"
+
+const DRAFT_STORAGE_KEY = "gemkeeper_note_draft"
 
 // Input context can have nullable color (from full Context type)
 interface InputContext {
@@ -76,6 +79,10 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
   const [hasAIConsent, setHasAIConsent] = useState(false)
   const [activeGemCount, setActiveGemCount] = useState(0)
 
+  // Draft management
+  const [draft, setDraft] = useState<NoteDraft | null>(null)
+  const [minimizedDraft, setMinimizedDraft] = useState<NoteDraft | null>(null)
+
   // Use passed contexts or local contexts, mapping to ensure correct format
   const contexts: NoteContext[] = useMemo(() => {
     if (propContexts) {
@@ -102,6 +109,34 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
   useEffect(() => {
     loadData()
   }, [sortOrder])
+
+  // Check for drafts in localStorage
+  useEffect(() => {
+    const checkForDraft = () => {
+      const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY)
+      if (savedDraft) {
+        try {
+          const parsedDraft: NoteDraft = JSON.parse(savedDraft)
+          // Only show draft if it has content
+          if (parsedDraft.title?.trim() || parsedDraft.content?.trim()) {
+            setDraft(parsedDraft)
+          } else {
+            setDraft(null)
+          }
+        } catch {
+          setDraft(null)
+        }
+      } else {
+        setDraft(null)
+      }
+    }
+
+    checkForDraft()
+    // Re-check when editor closes
+    if (!isEditorOpen) {
+      checkForDraft()
+    }
+  }, [isEditorOpen])
 
   async function loadData() {
     setIsLoading(true)
@@ -297,7 +332,27 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
 
   const handleNewNote = () => {
     setEditingNote(null)
+    setMinimizedDraft(null)
     setIsEditorOpen(true)
+  }
+
+  const handleOpenDraft = () => {
+    if (draft) {
+      setEditingNote(null)
+      setMinimizedDraft(draft)
+      setIsEditorOpen(true)
+    }
+  }
+
+  const handleMinimize = (minimizedDraft: NoteDraft) => {
+    setMinimizedDraft(minimizedDraft)
+    setDraft(minimizedDraft)
+  }
+
+  const handleClearDraft = () => {
+    localStorage.removeItem(DRAFT_STORAGE_KEY)
+    setDraft(null)
+    setMinimizedDraft(null)
   }
 
   const handleExtractGems = (note: Note) => {
@@ -393,6 +448,7 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
   const getFilterTitle = () => {
     if (selectedFilter === "all") return "All Notes"
     if (selectedFilter === "unfiled") return "Unfiled"
+    if (selectedFilter === "drafts") return "Drafts"
     if (typeof selectedFilter === "object" && selectedFilter.folderId) {
       const folder = folders.find((f) => f.id === selectedFilter.folderId)
       return folder?.name || "Folder"
@@ -598,6 +654,28 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
             {/* Divider */}
             <div className="my-2 border-t border-[var(--glass-sidebar-border)]" />
 
+            {/* Drafts - only show if there's a draft */}
+            {draft && (
+              <button
+                onClick={() => {
+                  setSelectedFilter("drafts")
+                  handleOpenDraft()
+                }}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 w-full text-left",
+                  isFilterSelected("drafts")
+                    ? "glass-button-primary text-primary-foreground shadow-sm"
+                    : "hover:bg-[var(--glass-hover-bg)] text-foreground bg-amber-500/10 border border-amber-500/20"
+                )}
+              >
+                <FilePenLine className="h-4 w-4 text-amber-500" />
+                <span className="flex-1 truncate">
+                  {draft.title?.trim() || "Untitled Draft"}
+                </span>
+                <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-500">1</span>
+              </button>
+            )}
+
             {/* Unfiled */}
             <button
               onClick={() => setSelectedFilter("unfiled")}
@@ -638,6 +716,9 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
                 const value = e.target.value
                 if (value === "all" || value === "unfiled") {
                   setSelectedFilter(value)
+                } else if (value === "drafts") {
+                  setSelectedFilter("drafts")
+                  handleOpenDraft()
                 } else if (value.startsWith("folder:")) {
                   setSelectedFilter({ folderId: value.replace("folder:", "") })
                 }
@@ -645,6 +726,9 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
               className="w-full h-10 rounded-xl glass-input px-3 text-sm"
             >
               <option value="all">All Notes ({notes.length})</option>
+              {draft && (
+                <option value="drafts">Draft: {draft.title?.trim() || "Untitled"}</option>
+              )}
               {folders.map((folder) => (
                 <option key={folder.id} value={`folder:${folder.id}`}>
                   {folder.name} ({noteCounts[folder.id] || 0})
@@ -702,11 +786,18 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
         onClose={() => {
           setIsEditorOpen(false)
           setEditingNote(null)
+          setMinimizedDraft(null)
         }}
-        onSave={handleSaveNote}
+        onSave={(noteInput, existingId) => {
+          handleSaveNote(noteInput, existingId)
+          // Clear draft after saving
+          handleClearDraft()
+        }}
         contexts={contexts}
         availableThoughts={availableThoughts}
         hasAIConsent={hasAIConsent}
+        onMinimize={handleMinimize}
+        minimizedDraft={minimizedDraft}
       />
 
       {/* Extract gems from note modal */}
