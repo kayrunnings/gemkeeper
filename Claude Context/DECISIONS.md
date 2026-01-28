@@ -643,13 +643,96 @@ This document tracks key product and technical decisions with their rationale. C
 
 ---
 
+### 2026-01-28: Major UX Overhaul - Themes, Glassmorphism, AI-Forward Design
+
+**Decision:** Implement comprehensive UX improvements including 16-theme system, enhanced glassmorphism, AI-forward components, and consistent state handling.
+
+**Rationale:**
+- App needed to feel like "the slickest newest AI supercharged app"
+- Single dark/light toggle was limiting for user personalization
+- AI features needed visual prominence to communicate value
+- Loading and empty states were inconsistent across the app
+- Navigation labels needed clarity ("Active" was confusing)
+
+**Implementation:**
+
+1. **16-Theme System (14 dark + 2 light)**
+   - New dark themes: Cyber, Copper, Slate, Aurora, Ember, Onyx
+   - New light theme: Daylight
+   - Theme picker dropdown in header with preview colors
+   - Theme metadata with categories (dark/light) in `lib/themes.ts`
+
+2. **Enhanced Glassmorphism**
+   - CSS custom properties for all glass effects (`--glass-card-*`)
+   - Increased blur (20px) with backdrop saturation (180%)
+   - Layered shadows for depth
+   - Top border highlight for 3D effect
+   - Hover states with glow effects
+   - Theme-specific glass utility classes
+
+3. **AI-Forward Components**
+   - `AIBadge` - "AI Powered" indicator in 3 variants
+   - `AICard` - Card wrapper with AI glow effects
+   - `AIThinking` - Animated thinking state with bouncing dots
+   - `AIShimmer` - Loading shimmer effect
+   - CSS classes: `.ai-gradient`, `.ai-glow`, `.ai-sparkle`
+
+4. **State Components**
+   - `LoadingState` with 3 variants (default, minimal, fullscreen)
+   - `CardSkeleton` and `ListSkeleton` for content loading
+   - `EmptyState` with 9 content-specific variants
+   - `InlineEmptyState` for compact spaces
+
+5. **Animations & Microinteractions**
+   - Entry: `bounce-in`, `slide-up`, `pop`
+   - Interactive: `wiggle`, `glow-pulse`
+   - Hover: `hover-lift`, `hover-scale`, `hover-glow`
+   - Touch: `press-effect`
+
+6. **Navigation Updates**
+   - "Active" → "Check-in" (clearer purpose)
+   - Consolidated on Phosphor icons
+   - CheckCircle for Check-in, CalendarCheck for Moments
+
+7. **Dashboard Improvements**
+   - Smart contextual greeting based on user state
+   - Reordered cards (DailyThought first, Stats last)
+   - AI styling on DiscoverCard
+
+**Files Created:**
+- `components/theme-picker.tsx` - Theme dropdown
+- `components/ui/ai-badge.tsx` - AI components
+- `components/ui/loading-state.tsx` - Loading components
+- `components/ui/empty-state.tsx` - Empty state components
+
+**Files Modified:**
+- `lib/themes.ts` - Theme definitions and metadata
+- `app/globals.css` - ~1500 lines for themes, glass, animations
+- `components/layout-shell.tsx` - Navigation, ThemePicker
+- `components/layout/BottomNavigation.tsx` - Icons, labels
+- `components/discover/DiscoverCard.tsx` - AI styling
+- `app/home/page.tsx` - Smart greeting, card order
+
+**Alternatives Considered:**
+- Keep simple dark/light toggle → Rejected: users want personalization
+- Use inline styles for glass effects → Rejected: CSS variables are more maintainable
+- AI features as subtle UI → Rejected: AI is key differentiator, should be prominent
+- Different animation library → Rejected: CSS animations are lighter weight
+
+**Consequences:**
+- 16 themes require maintenance when updating color palette
+- AI components should be used consistently across all AI features
+- Loading/empty states should replace ad-hoc implementations
+
+---
+
 ## Deferred Decisions
 
 Items we've discussed but intentionally not decided yet:
 
 - **Push notifications:** Deferred to future iOS app version
 - **Monetization model:** Deferred until product-market fit validated
-- **Multi-theme system:** Planned but not yet prioritized
+- ~~**Multi-theme system:** Planned but not yet prioritized~~ → COMPLETED (2026-01-28)
 - **Team/shared thoughts:** Out of scope for v1
 
 ---

@@ -1336,23 +1336,92 @@ Required in Vercel:
 
 ## 11. UI Design System
 
-The app uses a **glassmorphism design system** implemented in January 2026.
+The app uses a **glassmorphism design system** with AI-forward visual design, implemented and enhanced in January 2026.
 
-### Theme Support
-- Dark/light theme via `theme-provider.tsx` and `theme-toggle.tsx`
-- Theme persisted in localStorage
-- System preference detection
+### Theme Support (16 Themes)
+- **14 Dark themes:** Midnight, Obsidian, Amethyst, Ocean, Ruby, Forest, Rose, Nord, Cyber, Copper, Slate, Aurora, Ember, Onyx
+- **2 Light themes:** Sunrise, Daylight
+- Theme picker dropdown in header via `components/theme-picker.tsx`
+- Theme persisted in localStorage via `theme-provider.tsx`
+- System preference detection for initial theme
+- Theme categories with preview colors in `lib/themes.ts`
 
-### Glassmorphism Patterns
+### Enhanced Glassmorphism (CSS Variables)
+The design system uses CSS custom properties for consistent glass effects:
+
+```css
+/* Core glass card variables */
+--glass-card-bg: rgba(...)
+--glass-card-border: rgba(...)
+--glass-card-border-top: rgba(...)  /* Highlight effect */
+--glass-card-shadow: ...            /* Layered shadows */
+--glass-card-blur: 20px
+
+/* Glass utility classes */
+.glass-card      /* Primary card styling */
+.glass-input     /* Input field styling */
+.glass-sidebar   /* Navigation sidebar */
+.glass-button-secondary  /* Secondary buttons */
+```
+
 ```typescript
-// Card with glassmorphism effect
-className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl shadow-lg"
+// Card with glassmorphism (uses CSS variables)
+className="glass-card"
 
 // Dropdown menus (solid background for legibility)
 className="bg-popover border border-border rounded-md shadow-md"
 
-// Hover states
-className="transition-all duration-200 hover:bg-accent/50"
+// Hover states with glass effects
+className="glass-card hover:shadow-lg"
+```
+
+### AI-Forward Design
+Components and utilities for AI feature branding:
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| AIBadge | `components/ui/ai-badge.tsx` | "AI Powered" indicator badges |
+| AICard | `components/ui/ai-badge.tsx` | Card wrapper with AI glow effect |
+| AIThinking | `components/ui/ai-badge.tsx` | Loading state for AI operations |
+| AIShimmer | `components/ui/ai-badge.tsx` | Shimmer loading effect |
+
+```css
+/* AI gradient and glow effects */
+.ai-gradient     /* Purple-to-blue gradient */
+.ai-glow         /* Pulsing glow shadow */
+.ai-sparkle      /* Sparkle animation */
+.ai-shimmer      /* Loading shimmer effect */
+```
+
+### Loading & Empty States
+Consistent state handling across the app:
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| LoadingState | `components/ui/loading-state.tsx` | Loading with variants (default/minimal/fullscreen) |
+| CardSkeleton | `components/ui/loading-state.tsx` | Skeleton for card loading |
+| ListSkeleton | `components/ui/loading-state.tsx` | Skeleton for list loading |
+| EmptyState | `components/ui/empty-state.tsx` | 9 variants (thoughts/notes/sources/moments/discover/search/archive/trophy/default) |
+| InlineEmptyState | `components/ui/empty-state.tsx` | Compact inline empty state |
+
+### Animations & Microinteractions
+CSS animation classes for enhanced UX:
+
+```css
+/* Entry animations */
+.animate-bounce-in   /* Scale bounce on appear */
+.animate-slide-up    /* Slide up from below */
+.animate-pop         /* Quick pop effect */
+
+/* Interactive animations */
+.animate-wiggle      /* Attention wiggle */
+.animate-glow-pulse  /* Pulsing glow */
+
+/* Microinteraction classes */
+.hover-lift          /* Slight lift on hover */
+.hover-scale         /* Scale up on hover */
+.hover-glow          /* Add glow on hover */
+.press-effect        /* Press down animation */
 ```
 
 ### Color Tokens (shadcn/ui)
@@ -1366,8 +1435,13 @@ className="transition-all duration-200 hover:bg-accent/50"
 | Component | File | Purpose |
 |-----------|------|---------|
 | Theme Provider | `components/theme-provider.tsx` | Theme context |
-| Theme Toggle | `components/theme-toggle.tsx` | Dark/light switch |
+| Theme Picker | `components/theme-picker.tsx` | Header dropdown for theme selection |
 | Layout Shell | `components/layout-shell.tsx` | Page wrapper with sidebar |
+| Bottom Navigation | `components/layout/BottomNavigation.tsx` | Mobile tab bar |
+
+### Navigation Labels
+- Home, Library, **Check-in** (was "Active"), Moments, Discover, Trophy Case
+- Icons use Phosphor icons: House, Books, CheckCircle, CalendarCheck, Compass, Trophy
 
 ---
 
@@ -1398,3 +1472,12 @@ className="transition-all duration-200 hover:bg-accent/50"
 | - Enhanced Discovery | Complete | Phase 8: Tabs, saved discoveries, bookmark workflow |
 | - Focus Mode Settings | Complete | Phase 9: Active list limit slider, check-in toggle |
 | - Polish & Launch | Complete | Phase 10: Tests, caching, performance optimizations |
+| **UX Overhaul** | Complete | Major visual refresh |
+| - 16-Theme System | Complete | 14 dark + 2 light themes with picker |
+| - Enhanced Glassmorphism | Complete | CSS variables, layered shadows, saturation |
+| - AI-Forward Components | Complete | AIBadge, AICard, AIThinking, AIShimmer |
+| - Loading States | Complete | LoadingState with 3 variants, skeletons |
+| - Empty States | Complete | EmptyState with 9 content-specific variants |
+| - Animations | Complete | Entry animations, microinteractions |
+| - Navigation Updates | Complete | Check-in label, Phosphor icons consistency |
+| - Dashboard Improvements | Complete | Smart greeting, reordered cards |
