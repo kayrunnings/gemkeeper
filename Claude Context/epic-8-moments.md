@@ -14,7 +14,7 @@ This epic adds personalized scheduling and on-demand moment matching to ThoughtF
 1. Let users control when each gem surfaces (individual scheduling)
 2. Enable on-demand gem matching for upcoming situations (moments)
 3. Integrate Google Calendar for context-aware suggestions
-4. Create "prep cards" that help users apply wisdom to specific situations
+4. Create "prep cards" that help users apply knowledge to specific situations
 
 ---
 

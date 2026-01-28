@@ -77,7 +77,6 @@ gemkeeper/
 │   └── page.tsx                  # Home page
 ├── components/                   # React components
 │   ├── ui/                       # shadcn/ui components (includes slider.tsx)
-│   ├── gems/                     # Thought-related components
 │   ├── contexts/                 # Context management components
 │   ├── discover/                 # Discovery components
 │   │   ├── DiscoverCard.tsx      # Dashboard entry point
@@ -500,8 +499,8 @@ Standalone long-form notes, separate from thoughts. Notes can contain markdown c
 | user_id | UUID | FK → auth.users |
 | title | TEXT | Note title |
 | content | TEXT | Markdown content (no length limit) |
-| tags | TEXT[] | User-defined tags for organization |
-| is_favorite | BOOLEAN | Starred/favorite note |
+| folder_id | UUID | FK → folders (optional) |
+| search_vector | TSVECTOR | Full-text search index |
 | created_at | TIMESTAMPTZ | |
 | updated_at | TIMESTAMPTZ | |
 
@@ -577,8 +576,46 @@ Create a new custom context.
 #### PUT `/api/contexts/[id]`
 Update context properties.
 
+#### GET `/api/contexts/[id]`
+Get a single context by ID.
+
+**Response:**
+```typescript
+{
+  id: string;
+  name: string;
+  slug: string;
+  color: string;
+  is_default: boolean;
+  thought_limit: number;
+}
+```
+
 #### DELETE `/api/contexts/[id]`
 Delete custom context (thoughts move to "Other").
+
+### Schedule Parsing
+
+#### POST `/api/schedules/parse`
+Parse natural language schedule text using NLP.
+
+**Request:**
+```typescript
+{
+  text: string; // e.g., "every Monday at 9am"
+}
+```
+
+**Response:**
+```typescript
+{
+  cron_expression: string;
+  human_readable: string;
+  schedule_type: 'daily' | 'weekly' | 'monthly' | 'custom';
+  days_of_week?: number[];
+  time_of_day?: string;
+}
+```
 
 ### Thought Extraction
 
@@ -632,18 +669,16 @@ Extract thoughts from URL (article or YouTube).
 
 ### Thought Management
 
-#### GET `/api/gems`
-List user's thoughts.
-
-**Query Parameters:**
-- `status`: Filter by status (`active`, `passive`, `retired`, `graduated`)
-- `context_id`: Filter by context
-- `is_on_active_list`: Filter by Active List status
-
-**Note:** By default, only returns thoughts with `status IN ('active', 'passive')`. Retired and graduated thoughts require explicit status filter.
+**Note:** Most thought CRUD operations use the service layer pattern via functions in `lib/thoughts.ts` rather than REST endpoints. Components import and call these functions directly:
+- `updateThought()` - Update thought properties
+- `deleteThought()` - Hard delete a thought
+- `retireThought()` - Set status to retired
+- `restoreThought()` - Restore from retired status
+- `graduateThought()` - Graduate a thought
+- `toggleActiveList()` - Toggle Active List membership
 
 #### POST `/api/gems/bulk`
-Create multiple thoughts at once.
+Create multiple thoughts at once (legacy endpoint).
 
 **Request:**
 ```typescript
@@ -659,21 +694,22 @@ Create multiple thoughts at once.
 }
 ```
 
-#### PATCH `/api/gems/[id]`
-Update a thought.
+#### POST `/api/thoughts/bulk`
+Create multiple thoughts at once (new endpoint, mirrors `/api/gems/bulk`).
 
 **Request:**
 ```typescript
 {
-  content?: string;
-  context_id?: string;
-  is_on_active_list?: boolean;
-  status?: 'active' | 'passive' | 'retired' | 'graduated';
+  thoughts: Array<{
+    content: string;
+    context_id: string;
+    source?: string;
+    source_url?: string;
+    is_on_active_list?: boolean;
+    status?: string;
+  }>;
 }
 ```
-
-#### DELETE `/api/gems/[id]`
-Permanently delete a thought (hard delete).
 
 ### Moments
 
@@ -946,17 +982,18 @@ interface SearchResult {
 |-----------|------|---------|
 | Context Settings | `components/settings/ContextSettings.tsx` | Context management UI |
 | Context Form | `components/settings/ContextForm.tsx` | Add/edit context |
-| Context Badge | `components/contexts/ContextBadge.tsx` | Display context on cards |
 | Context Dropdown | `components/contexts/ContextDropdown.tsx` | Context selection |
 
 ### Thought Components
 | Component | File | Purpose |
 |-----------|------|---------|
-| Thought Detail | `components/gems/gem-detail.tsx` | Display with actions |
-| Thought Form | `components/gems/gem-form.tsx` | Manual creation |
-| Thought Card | `components/gems/gem-card.tsx` | List item display |
-| Extract Modal | `components/extract-gems-modal.tsx` | AI extraction wizard |
-| Active Badge | `components/gems/ActiveBadge.tsx` | Active List indicator |
+| Thought Detail | `components/thought-detail.tsx` | Display with actions |
+| Thought Form | `components/thought-form.tsx` | Manual creation |
+| Thought Edit Form | `components/thought-edit-form.tsx` | Edit existing thought |
+| Extracted Thought Card | `components/extracted-thought-card.tsx` | Card for extracted thoughts |
+| Extract Modal | `components/extract-thoughts-modal.tsx` | AI extraction wizard |
+| Retire Dialog | `components/retire-thought-dialog.tsx` | Retirement confirmation |
+| Graduate Dialog | `components/graduate-thought-dialog.tsx` | Graduation confirmation |
 
 ### Home/Dashboard Components
 | Component | File | Purpose |
