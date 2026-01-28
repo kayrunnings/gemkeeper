@@ -181,7 +181,8 @@ gemkeeper/
 | Runtime | React | 19.2.3 |
 | Styling | Tailwind CSS | 4.x |
 | UI Components | shadcn/ui + Radix UI | Latest |
-| Rich Text Editor | TipTap (@tiptap/react, extension-table) | 2.x |
+| Rich Text Editor | TipTap (@tiptap/react, extension-table, extension-text-align) | 2.x |
+| Emoji Picker | emoji-picker-react | Latest |
 | Database | Supabase (PostgreSQL) | Latest |
 | Authentication | Supabase Auth (@supabase/ssr) | 0.8.0 |
 | AI/ML | Google Gemini API | 2.0 Flash |
@@ -1077,12 +1078,16 @@ interface SearchResult {
 
 #### Rich Text Editor Features
 The `RichTextEditor` component uses TipTap and provides:
-- **Text formatting:** Bold, italic, underline, headings (H1, H2)
+- **Text formatting:** Bold, italic, underline, headings (H1, H2, H3)
 - **Lists:** Bullet lists, numbered lists, blockquotes
+- **Text alignment:** Left, center, right, justify alignment for paragraphs and headings
 - **Media:** Links, images (via URL)
 - **Tables:** Insert 3x3 tables with header rows, add/delete rows and columns
+- **Dividers:** Horizontal rule/divider insertion
+- **Emoji:** Emoji picker with search functionality
 - **History:** Undo/redo support
 - **AI Assist:** Writing assistance dropdown (improve, simplify, expand, summarize, fix grammar, continue) - requires AI consent
+- **Paste handling:** Preserves formatting when pasting from Notion and other rich text sources
 
 #### Enhanced Note Editor Layout
 The note editor modal (95vw x 90vh) features a modern layout:
@@ -1092,6 +1097,9 @@ The note editor modal (95vw x 90vh) features a modern layout:
 - **AI Thought extraction:** Extract thoughts directly from note content, select and save as passive thoughts
 - **Inline attachments:** Upload files directly from sidebar without switching tabs
 - **Link/Extract buttons:** Quick actions to link existing thoughts or extract new ones with AI
+- **Auto-save drafts:** Drafts are automatically saved to localStorage after 2 seconds of inactivity
+- **Draft restoration:** On opening a new note, users are prompted to restore any previous unsaved drafts
+- **Minimize functionality:** Minimize button saves current content as draft and closes the editor; draft can be restored later
 
 ### Discovery Components
 | Component | File | Purpose |

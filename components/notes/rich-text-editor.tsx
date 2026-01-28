@@ -6,8 +6,10 @@ import Placeholder from "@tiptap/extension-placeholder"
 import Link from "@tiptap/extension-link"
 import Image from "@tiptap/extension-image"
 import Underline from "@tiptap/extension-underline"
+import TextAlign from "@tiptap/extension-text-align"
 import { Table, TableRow, TableCell, TableHeader } from "@tiptap/extension-table"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, useRef } from "react"
+import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react"
 import { Button } from "@/components/ui/button"
 import {
   Bold,
@@ -31,6 +33,12 @@ import {
   Trash2,
   Columns,
   Rows,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  Minus as HorizontalRuleIcon,
+  Smile,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -105,12 +113,34 @@ export function RichTextEditor({
   const [aiLoading, setAiLoading] = useState(false)
   const [aiMenuOpen, setAiMenuOpen] = useState(false)
   const [tableMenuOpen, setTableMenuOpen] = useState(false)
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false)
+  const emojiPickerRef = useRef<HTMLDivElement>(null)
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setEmojiPickerOpen(false)
+      }
+    }
+    if (emojiPickerOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [emojiPickerOpen])
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         heading: {
           levels: [1, 2, 3],
+        },
+        horizontalRule: {
+          HTMLAttributes: {
+            class: "my-6 border-t border-border",
+          },
         },
       }),
       Placeholder.configure({
@@ -128,6 +158,11 @@ export function RichTextEditor({
         },
       }),
       Underline,
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
+        alignments: ["left", "center", "right", "justify"],
+        defaultAlignment: "left",
+      }),
       Table.configure({
         resizable: true,
         HTMLAttributes: {
@@ -154,9 +189,26 @@ export function RichTextEditor({
           editorClassName
         ),
       },
+      // Improved paste handling to preserve formatting from Notion and other sources
+      handlePaste: (view, event, slice) => {
+        // Let TipTap handle the paste with its built-in HTML parsing
+        // This preserves formatting from rich text sources like Notion
+        return false
+      },
+      // Parse pasted HTML content
+      transformPastedHTML(html) {
+        // Clean up Notion-specific styles while preserving structure
+        return html
+          .replace(/style="[^"]*"/g, '') // Remove inline styles that might break layout
+          .replace(/class="notion-[^"]*"/g, '') // Remove Notion-specific classes
+      },
     },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML())
+    },
+    // Enable parsing of pasted content
+    parseOptions: {
+      preserveWhitespace: "full",
     },
   })
 
@@ -166,6 +218,12 @@ export function RichTextEditor({
       editor.commands.setContent(content)
     }
   }, [content, editor])
+
+  const handleEmojiSelect = useCallback((emojiData: EmojiClickData) => {
+    if (!editor) return
+    editor.chain().focus().insertContent(emojiData.emoji).run()
+    setEmojiPickerOpen(false)
+  }, [editor])
 
   const handleSetLink = useCallback(() => {
     if (!editor) return
@@ -321,6 +379,71 @@ export function RichTextEditor({
         >
           <Quote className="h-4 w-4" />
         </ToolbarButton>
+
+        <ToolbarDivider />
+
+        {/* Text Alignment */}
+        <ToolbarButton
+          onClick={() => editor.chain().focus().setTextAlign("left").run()}
+          isActive={editor.isActive({ textAlign: "left" })}
+          title="Align left"
+        >
+          <AlignLeft className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().setTextAlign("center").run()}
+          isActive={editor.isActive({ textAlign: "center" })}
+          title="Align center"
+        >
+          <AlignCenter className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().setTextAlign("right").run()}
+          isActive={editor.isActive({ textAlign: "right" })}
+          title="Align right"
+        >
+          <AlignRight className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().setTextAlign("justify").run()}
+          isActive={editor.isActive({ textAlign: "justify" })}
+          title="Justify"
+        >
+          <AlignJustify className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarDivider />
+
+        {/* Horizontal Rule */}
+        <ToolbarButton
+          onClick={() => editor.chain().focus().setHorizontalRule().run()}
+          title="Insert divider"
+        >
+          <HorizontalRuleIcon className="h-4 w-4" />
+        </ToolbarButton>
+
+        {/* Emoji Picker */}
+        <div className="relative" ref={emojiPickerRef}>
+          <ToolbarButton
+            onClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
+            isActive={emojiPickerOpen}
+            title="Insert emoji"
+          >
+            <Smile className="h-4 w-4" />
+          </ToolbarButton>
+          {emojiPickerOpen && (
+            <div className="absolute top-full left-0 z-50 mt-1">
+              <EmojiPicker
+                onEmojiClick={handleEmojiSelect}
+                theme={Theme.AUTO}
+                width={320}
+                height={400}
+                searchPlaceholder="Search emoji..."
+                previewConfig={{ showPreview: false }}
+              />
+            </div>
+          )}
+        </div>
 
         <ToolbarDivider />
 
