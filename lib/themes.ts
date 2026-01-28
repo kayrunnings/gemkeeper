@@ -10,11 +10,15 @@ export const THEMES = [
   "rose",
   "nord",
   "sunrise",
+  "forest",
+  "cosmos",
+  "copper",
+  "arctic",
 ] as const
 
 export type Theme = (typeof THEMES)[number]
 
-export const THEME_INFO: Record<Theme, { name: string; description: string }> = {
+export const THEME_INFO: Record<Theme, { name: string; description: string; isLight?: boolean }> = {
   midnight: {
     name: "Midnight",
     description: "Deep navy blue with warm orange accents",
@@ -50,6 +54,24 @@ export const THEME_INFO: Record<Theme, { name: string; description: string }> = 
   sunrise: {
     name: "Sunrise",
     description: "Warm off-white with amber accents",
+    isLight: true,
+  },
+  forest: {
+    name: "Forest",
+    description: "Deep forest green with gold accents",
+  },
+  cosmos: {
+    name: "Cosmos",
+    description: "Deep space with nebula pink & purple",
+  },
+  copper: {
+    name: "Copper",
+    description: "Warm brown-gray with copper accents",
+  },
+  arctic: {
+    name: "Arctic",
+    description: "Cool blue-white with ice blue accents",
+    isLight: true,
   },
 }
 
@@ -71,4 +93,17 @@ export function getPreviousTheme(current: Theme): Theme {
   const currentIndex = THEMES.indexOf(current)
   const prevIndex = (currentIndex - 1 + THEMES.length) % THEMES.length
   return THEMES[prevIndex]
+}
+
+// Get themes by category
+export function getLightThemes(): Theme[] {
+  return Object.entries(THEME_INFO)
+    .filter(([, info]) => info.isLight)
+    .map(([key]) => key as Theme)
+}
+
+export function getDarkThemes(): Theme[] {
+  return Object.entries(THEME_INFO)
+    .filter(([, info]) => !info.isLight)
+    .map(([key]) => key as Theme)
 }

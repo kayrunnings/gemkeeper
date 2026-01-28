@@ -161,6 +161,10 @@ function getThemeColor(theme: Theme): string {
     rose: "#f472b6",
     nord: "#88c0d0",
     sunrise: "#f59e0b",
+    forest: "#d4af37",
+    cosmos: "#ec4899",
+    copper: "#c87533",
+    arctic: "#0ea5e9",
   }
   return colors[theme]
 }

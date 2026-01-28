@@ -4,11 +4,11 @@ import { useState } from "react"
 import Link from "next/link"
 import { Thought, CONTEXT_TAG_LABELS, ContextTag } from "@/lib/types/thought"
 import type { ContextWithCount } from "@/lib/types/context"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Sun, Lightbulb, X } from "lucide-react"
+import { Sun, Lightbulb, X, Check, ArrowRight, Target } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ContextBadge, getContextTintClass } from "@/components/ui/context-badge"
 
 interface DailyThoughtCardProps {
   thought: Thought | null
@@ -17,28 +17,15 @@ interface DailyThoughtCardProps {
   className?: string
 }
 
-const contextTagVariant: Record<ContextTag, string> = {
-  meetings: "meetings",
-  feedback: "feedback",
-  conflict: "conflict",
-  focus: "focus",
-  health: "health",
-  relationships: "relationships",
-  parenting: "parenting",
-  other: "other",
-}
-
 export function DailyThoughtCard({ thought, alreadyCheckedIn = false, contexts = [], className }: DailyThoughtCardProps) {
   const [isDismissed, setIsDismissed] = useState(false)
 
   // Look up context by ID or by slug matching context_tag
   const getContext = () => {
     if (!thought) return null
-    // First try to find by context_id
     if (thought.context_id) {
       return contexts.find((c) => c.id === thought.context_id) || null
     }
-    // Fall back to matching context_tag to slug
     if (thought.context_tag) {
       return contexts.find((c) => c.slug === thought.context_tag) || null
     }
@@ -46,86 +33,126 @@ export function DailyThoughtCard({ thought, alreadyCheckedIn = false, contexts =
   }
 
   const context = getContext()
+  const contextName = context?.name || thought?.context_tag || "other"
 
   if (isDismissed) {
     return null
   }
 
-  return (
-    <Card className={cn("overflow-hidden", className)}>
-      <div className="h-1 bg-gradient-to-r from-amber-400 to-orange-500" />
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-              <Sun className="h-5 w-5 text-white" />
+  // Completed state - celebratory design
+  if (alreadyCheckedIn && !thought) {
+    return (
+      <Card className={cn("overflow-hidden glass-card-interactive", className)}>
+        <div className="h-1 bg-gradient-to-r from-green-400 to-emerald-500" />
+        <CardContent className="py-8">
+          <div className="flex flex-col items-center justify-center text-center animate-scale-in">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mb-4 animate-bounce-subtle">
+              <Check className="h-8 w-8 text-white" />
             </div>
-            <CardTitle className="text-lg">Today&apos;s Thought</CardTitle>
+            <h3 className="text-xl font-semibold mb-2">Check-in Complete!</h3>
+            <p className="text-muted-foreground">Come back tomorrow for a new thought.</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Empty state - encourage adding thoughts
+  if (!thought) {
+    return (
+      <Card className={cn("overflow-hidden glass-card-interactive", className)}>
+        <div className="h-1 bg-gradient-to-r from-violet-500 to-purple-600" />
+        <CardContent className="py-8">
+          <div className="flex flex-col items-center justify-center text-center animate-slide-up">
+            <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mb-4">
+              <Lightbulb className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">No Active Thoughts Yet</h3>
+            <p className="text-muted-foreground mb-4">Add thoughts to your Active List to start your daily practice.</p>
+            <Link href="/thoughts">
+              <Button className="gap-2">
+                Get Started
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Main thought display - immersive hero design
+  const tintClass = getContextTintClass(contextName)
+
+  return (
+    <Card className={cn("overflow-hidden relative group card-hover-lift", className)}>
+      {/* Top accent bar with context color */}
+      <div
+        className="h-1.5 bg-gradient-to-r from-amber-400 to-orange-500"
+        style={context?.color ? {
+          background: `linear-gradient(to right, ${context.color}, ${context.color}dd)`
+        } : undefined}
+      />
+
+      {/* Subtle context gradient background */}
+      <div className={cn("absolute inset-0 opacity-50", tintClass)} />
+
+      <CardContent className="relative pt-6 pb-5">
+        {/* Header with sun icon and dismiss */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg"
+              style={context?.color ? {
+                background: `linear-gradient(135deg, ${context.color}, ${context.color}cc)`
+              } : undefined}
+            >
+              <Sun className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg">Today's Thought</h3>
+              {context && (
+                <ContextBadge context={context} size="sm" variant="ghost" className="mt-0.5" />
+              )}
+            </div>
           </div>
           <Button
             variant="ghost"
-            size="sm"
-            className="gap-1"
+            size="icon-sm"
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={() => setIsDismissed(true)}
           >
-            Dismiss
             <X className="h-4 w-4" />
           </Button>
         </div>
-      </CardHeader>
-      <CardContent>
-        {thought ? (
-          <div className="space-y-3">
-            {/* Context badge - use context color if available */}
-            {context ? (
-              <Badge
-                variant="outline"
-                className="border-2"
-                style={{
-                  borderColor: context.color || "#6B7280",
-                  color: context.color || "#6B7280",
-                }}
-              >
-                {context.name}
-              </Badge>
-            ) : (
-              <Badge variant={contextTagVariant[thought.context_tag] as "meetings" | "feedback" | "conflict" | "focus" | "health" | "relationships" | "parenting" | "other"}>
-                {thought.context_tag === "other" && thought.custom_context
-                  ? thought.custom_context
-                  : CONTEXT_TAG_LABELS[thought.context_tag]}
-              </Badge>
-            )}
-            <p className="text-lg leading-relaxed font-medium line-clamp-3">
-              {thought.content}
-            </p>
-            {thought.source && (
-              <p className="text-sm text-muted-foreground">— {thought.source}</p>
-            )}
-            <div className="pt-2">
-              <Link href="/checkin">
-                <Button size="sm" className="w-full">Check In</Button>
-              </Link>
-            </div>
-          </div>
-        ) : alreadyCheckedIn ? (
-          <div className="flex flex-col items-center justify-center py-6 text-center">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mb-3">
-              <Sun className="h-6 w-6 text-white" />
-            </div>
-            <p className="text-muted-foreground mb-2">You&apos;ve completed your check-in for today!</p>
-            <p className="text-sm text-muted-foreground">Come back tomorrow for a new thought.</p>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-6 text-center">
-            <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center mb-3">
-              <Lightbulb className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <p className="text-muted-foreground mb-4">No thoughts on your Active List yet</p>
-            <Link href="/thoughts">
-              <Button size="sm">Add Thoughts to Active List</Button>
-            </Link>
-          </div>
-        )}
+
+        {/* Quote-style thought content */}
+        <blockquote className="mb-4">
+          <p className="text-xl md:text-2xl leading-relaxed font-medium text-foreground">
+            "{thought.content}"
+          </p>
+          {thought.source && (
+            <footer className="mt-2 text-sm text-muted-foreground">
+              — {thought.source}
+            </footer>
+          )}
+        </blockquote>
+
+        {/* Action buttons */}
+        <div className="flex flex-wrap gap-3 pt-2">
+          <Link href="/checkin" className="flex-1 min-w-[140px]">
+            <Button className="w-full gap-2">
+              <Check className="h-4 w-4" />
+              Check In
+            </Button>
+          </Link>
+          <Link href="/moments">
+            <Button variant="outline" className="gap-2">
+              <Target className="h-4 w-4" />
+              Prep for Moment
+            </Button>
+          </Link>
+        </div>
       </CardContent>
     </Card>
   )

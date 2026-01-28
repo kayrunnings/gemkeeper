@@ -763,6 +763,223 @@
   --tag-other-foreground: #57534e;
 }
 
+/* ===== THEME 7: FOREST ===== */
+/* Deep forest green with gold accents - Calm, natural, wisdom */
+[data-theme="forest"] {
+  --background: #0d1a14;
+  --foreground: #f0fdf4;
+  --card: #132b1f;
+  --card-foreground: #f0fdf4;
+  --popover: #1a3829;
+  --popover-foreground: #f0fdf4;
+  --primary: #d4af37;
+  --primary-foreground: #0a0a0a;
+  --secondary: #1a3829;
+  --secondary-foreground: #bbf7d0;
+  --muted: #22543d;
+  --muted-foreground: #86efac;
+  --accent: #22c55e;
+  --accent-foreground: #0a0a0a;
+  --thought: #14532d;
+  --thought-foreground: #4ade80;
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
+  --success: #22c55e;
+  --success-foreground: #0a0a0a;
+  --warning: #d4af37;
+  --warning-foreground: #0a0a0a;
+  --info: #3b82f6;
+  --info-foreground: #f0fdf4;
+  --highlight: #fbbf24;
+  --highlight-foreground: #0a0a0a;
+  --border: #22543d;
+  --input: #1a3829;
+  --ring: #d4af37;
+  --ai-gradient-start: #d4af37;
+  --ai-gradient-end: #22c55e;
+  --ai-glow: rgba(212, 175, 55, 0.3);
+  --tag-meetings: #1e3a5f;
+  --tag-meetings-foreground: #93c5fd;
+  --tag-feedback: #4c1d3d;
+  --tag-feedback-foreground: #f9a8d4;
+  --tag-conflict: #450a0a;
+  --tag-conflict-foreground: #fca5a5;
+  --tag-focus: #312e81;
+  --tag-focus-foreground: #a5b4fc;
+  --tag-health: #14532d;
+  --tag-health-foreground: #4ade80;
+  --tag-relationships: #451a03;
+  --tag-relationships-foreground: #fcd34d;
+  --tag-parenting: #3b0764;
+  --tag-parenting-foreground: #d8b4fe;
+  --tag-other: #1a3829;
+  --tag-other-foreground: #bbf7d0;
+}
+
+/* ===== THEME 8: COSMOS ===== */
+/* Deep space with nebula colors - Expansive, creative, inspired */
+[data-theme="cosmos"] {
+  --background: #0a0a1a;
+  --foreground: #f5f3ff;
+  --card: #12122a;
+  --card-foreground: #f5f3ff;
+  --popover: #1a1a3a;
+  --popover-foreground: #f5f3ff;
+  --primary: #ec4899;
+  --primary-foreground: #f5f3ff;
+  --secondary: #1a1a3a;
+  --secondary-foreground: #e9d5ff;
+  --muted: #2d2d5a;
+  --muted-foreground: #c4b5fd;
+  --accent: #8b5cf6;
+  --accent-foreground: #f5f3ff;
+  --thought: #581c87;
+  --thought-foreground: #e879f9;
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
+  --success: #10b981;
+  --success-foreground: #0a0a0a;
+  --warning: #f59e0b;
+  --warning-foreground: #0a0a0a;
+  --info: #06b6d4;
+  --info-foreground: #f5f3ff;
+  --highlight: #f472b6;
+  --highlight-foreground: #f5f3ff;
+  --border: #2d2d5a;
+  --input: #1a1a3a;
+  --ring: #ec4899;
+  --ai-gradient-start: #ec4899;
+  --ai-gradient-end: #8b5cf6;
+  --ai-glow: rgba(236, 72, 153, 0.3);
+  --tag-meetings: #1e3a5f;
+  --tag-meetings-foreground: #93c5fd;
+  --tag-feedback: #701a75;
+  --tag-feedback-foreground: #f0abfc;
+  --tag-conflict: #450a0a;
+  --tag-conflict-foreground: #fca5a5;
+  --tag-focus: #581c87;
+  --tag-focus-foreground: #e879f9;
+  --tag-health: #064e3b;
+  --tag-health-foreground: #6ee7b7;
+  --tag-relationships: #451a03;
+  --tag-relationships-foreground: #fcd34d;
+  --tag-parenting: #4c1d95;
+  --tag-parenting-foreground: #c4b5fd;
+  --tag-other: #1a1a3a;
+  --tag-other-foreground: #e9d5ff;
+}
+
+/* ===== THEME 9: COPPER ===== */
+/* Warm brown-gray with copper accents - Cozy, professional, refined */
+[data-theme="copper"] {
+  --background: #1a1614;
+  --foreground: #fef7ed;
+  --card: #252018;
+  --card-foreground: #fef7ed;
+  --popover: #302820;
+  --popover-foreground: #fef7ed;
+  --primary: #c87533;
+  --primary-foreground: #fef7ed;
+  --secondary: #302820;
+  --secondary-foreground: #fed7aa;
+  --muted: #44403c;
+  --muted-foreground: #d6d3d1;
+  --accent: #f59e0b;
+  --accent-foreground: #0a0a0a;
+  --thought: #7c2d12;
+  --thought-foreground: #fdba74;
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
+  --success: #10b981;
+  --success-foreground: #0a0a0a;
+  --warning: #f59e0b;
+  --warning-foreground: #0a0a0a;
+  --info: #3b82f6;
+  --info-foreground: #fef7ed;
+  --highlight: #fb923c;
+  --highlight-foreground: #fef7ed;
+  --border: #44403c;
+  --input: #302820;
+  --ring: #c87533;
+  --ai-gradient-start: #c87533;
+  --ai-gradient-end: #f59e0b;
+  --ai-glow: rgba(200, 117, 51, 0.3);
+  --tag-meetings: #1e3a5f;
+  --tag-meetings-foreground: #93c5fd;
+  --tag-feedback: #4c1d3d;
+  --tag-feedback-foreground: #f9a8d4;
+  --tag-conflict: #450a0a;
+  --tag-conflict-foreground: #fca5a5;
+  --tag-focus: #312e81;
+  --tag-focus-foreground: #a5b4fc;
+  --tag-health: #064e3b;
+  --tag-health-foreground: #6ee7b7;
+  --tag-relationships: #7c2d12;
+  --tag-relationships-foreground: #fdba74;
+  --tag-parenting: #3b0764;
+  --tag-parenting-foreground: #d8b4fe;
+  --tag-other: #302820;
+  --tag-other-foreground: #d6d3d1;
+}
+
+/* ===== THEME 10: ARCTIC (LIGHT) ===== */
+/* Cool blue-white with ice accents - Clean, focused, crisp */
+[data-theme="arctic"] {
+  --background: #f0f9ff;
+  --foreground: #0c4a6e;
+  --card: #e0f2fe;
+  --card-foreground: #0c4a6e;
+  --popover: #ffffff;
+  --popover-foreground: #0c4a6e;
+  --primary: #0ea5e9;
+  --primary-foreground: #ffffff;
+  --secondary: #e0f2fe;
+  --secondary-foreground: #0369a1;
+  --muted: #bae6fd;
+  --muted-foreground: #0369a1;
+  --accent: #06b6d4;
+  --accent-foreground: #ffffff;
+  --thought: #e0f2fe;
+  --thought-foreground: #0369a1;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --success: #059669;
+  --success-foreground: #ffffff;
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
+  --info: #0284c7;
+  --info-foreground: #ffffff;
+  --highlight: #0891b2;
+  --highlight-foreground: #ffffff;
+  --border: #bae6fd;
+  --input: #e0f2fe;
+  --ring: #0ea5e9;
+  --ai-gradient-start: #0ea5e9;
+  --ai-gradient-end: #06b6d4;
+  --ai-glow: rgba(14, 165, 233, 0.2);
+  --tag-meetings: #dbeafe;
+  --tag-meetings-foreground: #1e40af;
+  --tag-feedback: #fce7f3;
+  --tag-feedback-foreground: #9d174d;
+  --tag-conflict: #fee2e2;
+  --tag-conflict-foreground: #991b1b;
+  --tag-focus: #e0e7ff;
+  --tag-focus-foreground: #3730a3;
+  --tag-health: #d1fae5;
+  --tag-health-foreground: #065f46;
+  --tag-relationships: #fef3c7;
+  --tag-relationships-foreground: #92400e;
+  --tag-parenting: #f3e8ff;
+  --tag-parenting-foreground: #6b21a8;
+  --tag-other: #e0f2fe;
+  --tag-other-foreground: #0369a1;
+}
+
+/* Light theme color scheme */
+html[data-theme="arctic"] {
+  color-scheme: light;
+}
+
 /* Tailwind v4 theme configuration */
 @theme inline {
   --color-background: var(--background);
@@ -969,6 +1186,54 @@
   --glass-body-gradient-end: #fff7ed;
 }
 
+/* Forest - Gold accents with deep green */
+[data-theme="forest"][data-ui-theme="glass"] {
+  --glass-button-primary-bg: rgba(212, 175, 55, 0.85);
+  --glass-button-primary-border: rgba(212, 175, 55, 0.4);
+  --glass-button-primary-shadow: 0 8px 16px rgba(212, 175, 55, 0.25);
+  --glass-body-gradient-start: #0d1a14;
+  --glass-body-gradient-end: #132b1f;
+}
+
+/* Cosmos - Pink/purple nebula */
+[data-theme="cosmos"][data-ui-theme="glass"] {
+  --glass-button-primary-bg: rgba(236, 72, 153, 0.85);
+  --glass-button-primary-border: rgba(236, 72, 153, 0.4);
+  --glass-button-primary-shadow: 0 8px 16px rgba(236, 72, 153, 0.25);
+  --glass-body-gradient-start: #0a0a1a;
+  --glass-body-gradient-end: #1a1030;
+}
+
+/* Copper - Warm brown tones */
+[data-theme="copper"][data-ui-theme="glass"] {
+  --glass-button-primary-bg: rgba(200, 117, 51, 0.85);
+  --glass-button-primary-border: rgba(200, 117, 51, 0.4);
+  --glass-button-primary-shadow: 0 8px 16px rgba(200, 117, 51, 0.25);
+  --glass-body-gradient-start: #1a1614;
+  --glass-body-gradient-end: #252018;
+}
+
+/* Arctic (Light theme) - Ice blue with adjusted glass */
+[data-theme="arctic"][data-ui-theme="glass"] {
+  --glass-card-bg: rgba(255, 255, 255, 0.6);
+  --glass-card-border: rgba(14, 165, 233, 0.15);
+  --glass-sidebar-bg: rgba(255, 255, 255, 0.5);
+  --glass-sidebar-border: rgba(14, 165, 233, 0.1);
+  --glass-modal-bg: rgba(255, 255, 255, 0.8);
+  --glass-modal-border: rgba(14, 165, 233, 0.15);
+  --glass-button-primary-bg: rgba(14, 165, 233, 0.9);
+  --glass-button-primary-border: rgba(14, 165, 233, 0.4);
+  --glass-button-primary-shadow: 0 8px 16px rgba(14, 165, 233, 0.2);
+  --glass-button-secondary-bg: rgba(14, 165, 233, 0.05);
+  --glass-button-secondary-border: rgba(14, 165, 233, 0.15);
+  --glass-input-bg: rgba(255, 255, 255, 0.5);
+  --glass-input-border: rgba(14, 165, 233, 0.15);
+  --glass-hover-bg: rgba(14, 165, 233, 0.05);
+  --glass-hover-border: rgba(14, 165, 233, 0.2);
+  --glass-body-gradient-start: #f0f9ff;
+  --glass-body-gradient-end: #e0f2fe;
+}
+
 /* Glass utility classes */
 .glass {
   background: var(--glass-card-bg);
@@ -1049,11 +1314,9 @@ body {
 
 /* Glass mode gradient background */
 :root[data-ui-theme="glass"] body {
-  background: linear-gradient(
-    to bottom,
-    var(--glass-body-gradient-start),
-    var(--glass-body-gradient-end)
-  );
+  background: linear-gradient(to bottom,
+      var(--glass-body-gradient-start),
+      var(--glass-body-gradient-end));
   min-height: 100vh;
 }
 
@@ -1062,70 +1325,150 @@ body {
 
 /* Animations for dialogs */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes zoomIn {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
-  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 @keyframes zoomOut {
-  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  to { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
 }
 
 @keyframes slideInFromRight {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes slideOutToRight {
-  from { opacity: 1; transform: translateX(0); }
-  to { opacity: 0; transform: translateX(20px); }
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(20px);
+  }
 }
 
 /* AI-forward animations */
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 15px var(--ai-glow), 0 0 30px rgba(99, 102, 241, 0.1);
   }
+
   50% {
     box-shadow: 0 0 25px var(--ai-glow), 0 0 50px rgba(99, 102, 241, 0.2);
   }
 }
 
 @keyframes sparkle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.1); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 @keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 @keyframes celebrate {
-  0% { transform: scale(0.8); opacity: 0; }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Animation classes */
@@ -1163,12 +1506,10 @@ body {
 
 /* AI effect classes */
 .ai-shimmer {
-  background: linear-gradient(
-    90deg,
-    var(--secondary) 0%,
-    var(--muted) 50%,
-    var(--secondary) 100%
-  );
+  background: linear-gradient(90deg,
+      var(--secondary) 0%,
+      var(--muted) 50%,
+      var(--secondary) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
@@ -1178,11 +1519,9 @@ body {
 }
 
 .ai-gradient {
-  background: linear-gradient(
-    135deg,
-    var(--ai-gradient-start) 0%,
-    var(--ai-gradient-end) 100%
-  );
+  background: linear-gradient(135deg,
+      var(--ai-gradient-start) 0%,
+      var(--ai-gradient-end) 100%);
 }
 
 .ai-gradient-border {
@@ -1195,11 +1534,9 @@ body {
   content: '';
   position: absolute;
   inset: -2px;
-  background: linear-gradient(
-    135deg,
-    var(--ai-gradient-start) 0%,
-    var(--ai-gradient-end) 100%
-  );
+  background: linear-gradient(135deg,
+      var(--ai-gradient-start) 0%,
+      var(--ai-gradient-end) 100%);
   border-radius: calc(var(--radius) + 2px);
   z-index: -1;
   opacity: 0.8;
@@ -1231,12 +1568,10 @@ body {
 
 /* Skeleton loading animation - glass compatible */
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--glass-card-bg) 0%,
-    var(--glass-hover-bg) 50%,
-    var(--glass-card-bg) 100%
-  );
+  background: linear-gradient(90deg,
+      var(--glass-card-bg) 0%,
+      var(--glass-hover-bg) 50%,
+      var(--glass-card-bg) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
   border-radius: var(--radius-sm);
@@ -1312,4 +1647,398 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ===== ENHANCED ANIMATION SYSTEM ===== */
+
+/* Additional Keyframes */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes bounce-subtle {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes wiggle {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(-3deg);
+  }
+
+  75% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes pulse-scale {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Enhanced pulse glow for AI features */
+@keyframes pulse-glow-strong {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px var(--ai-glow);
+  }
+
+  50% {
+    box-shadow: 0 0 40px var(--ai-glow), 0 0 60px var(--ai-glow);
+  }
+}
+
+/* Animation utility classes */
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+.animate-pulse-scale {
+  animation: pulse-scale 2s ease-in-out infinite;
+}
+
+.animate-pulse-glow-strong {
+  animation: pulse-glow-strong 2s ease-in-out infinite;
+}
+
+/* Staggered animations for list items */
+.stagger-1 {
+  animation-delay: 0.05s;
+}
+
+.stagger-2 {
+  animation-delay: 0.1s;
+}
+
+.stagger-3 {
+  animation-delay: 0.15s;
+}
+
+.stagger-4 {
+  animation-delay: 0.2s;
+}
+
+.stagger-5 {
+  animation-delay: 0.25s;
+}
+
+.stagger-6 {
+  animation-delay: 0.3s;
+}
+
+.stagger-7 {
+  animation-delay: 0.35s;
+}
+
+.stagger-8 {
+  animation-delay: 0.4s;
+}
+
+/* Fill mode for staggered animations */
+.animate-stagger {
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+/* Enhanced skeleton shimmer */
+.skeleton-shimmer {
+  background: linear-gradient(90deg,
+      var(--glass-card-bg) 0%,
+      rgba(255, 255, 255, 0.08) 20%,
+      rgba(255, 255, 255, 0.12) 50%,
+      rgba(255, 255, 255, 0.08) 80%,
+      var(--glass-card-bg) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius);
+}
+
+/* ===== INTERACTIVE STATES ===== */
+
+/* Button press effect - applies to all interactive buttons */
+.btn-press:not(:disabled):active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
+
+/* Universal button press for better feel */
+button:not(:disabled):not(.no-press):active,
+[role="button"]:not(:disabled):not(.no-press):active {
+  transform: scale(0.98);
+}
+
+/* Enhanced card hover with lift effect */
+.card-hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card-hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+  border-color: var(--glass-hover-border);
+}
+
+/* Subtle card hover - less dramatic lift */
+.card-hover-subtle {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card-hover-subtle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Glass card interactive - combines glass styling with hover */
+.glass-card-interactive {
+  background: var(--glass-card-bg);
+  backdrop-filter: blur(var(--glass-card-blur));
+  -webkit-backdrop-filter: blur(var(--glass-card-blur));
+  border: 1px solid var(--glass-card-border);
+  border-radius: var(--radius-lg);
+  transition: all 0.2s ease;
+}
+
+.glass-card-interactive:hover {
+  transform: translateY(-2px);
+  border-color: var(--glass-hover-border);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  background: var(--glass-hover-bg);
+}
+
+/* Icon button hover effect */
+.icon-btn-hover {
+  transition: all 0.2s ease;
+}
+
+.icon-btn-hover:hover {
+  transform: scale(1.1);
+  color: var(--primary);
+}
+
+/* Icon with glow on hover */
+.icon-glow-hover {
+  transition: all 0.2s ease;
+}
+
+.icon-glow-hover:hover {
+  filter: drop-shadow(0 0 8px var(--primary));
+  color: var(--primary);
+}
+
+/* Input focus glow effect */
+.input-glow:focus,
+.input-glow:focus-visible {
+  box-shadow: 0 0 0 3px var(--ai-glow);
+  border-color: var(--primary);
+}
+
+/* Link hover with underline animation */
+.link-underline {
+  position: relative;
+}
+
+.link-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary);
+  transition: width 0.2s ease;
+}
+
+.link-underline:hover::after {
+  width: 100%;
+}
+
+/* ===== CONTEXT-COLORED EFFECTS ===== */
+
+/* Context gradient tints for cards */
+.context-tint-meetings {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, transparent 60%);
+}
+
+.context-tint-feedback {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, transparent 60%);
+}
+
+.context-tint-conflict {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, transparent 60%);
+}
+
+.context-tint-focus {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, transparent 60%);
+}
+
+.context-tint-health {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, transparent 60%);
+}
+
+.context-tint-relationships {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, transparent 60%);
+}
+
+.context-tint-parenting {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, transparent 60%);
+}
+
+.context-tint-other {
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.1) 0%, transparent 60%);
+}
+
+/* ===== SPECIAL EFFECTS ===== */
+
+/* Confetti-ready animation hook */
+.confetti-trigger {
+  position: relative;
+}
+
+/* Trophy celebration pulse */
+.trophy-celebrate {
+  animation: pulse-scale 0.6s ease-out, pulse-glow-strong 1s ease-out;
+}
+
+/* Star toggle animation */
+.star-active {
+  animation: wiggle 0.3s ease-out, pulse-scale 0.3s ease-out;
+  color: var(--warning);
+}
+
+/* Graduation progress ring base */
+.progress-ring {
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+/* Notification dot pulse */
+.notification-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: pulse-scale 2s ease-in-out infinite;
+}
+
+/* AI thinking orb */
+.ai-thinking-orb {
+  background: linear-gradient(135deg, var(--ai-gradient-start), var(--ai-gradient-end));
+  border-radius: 50%;
+  animation: pulse-glow-strong 2s ease-in-out infinite, pulse-scale 2s ease-in-out infinite;
+  box-shadow: 0 0 30px var(--ai-glow);
+}
+
+/* Floating action button hover */
+.fab-hover {
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.fab-hover:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Slide transitions for panels */
+.slide-in-right {
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+.slide-in-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

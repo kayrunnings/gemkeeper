@@ -116,8 +116,8 @@ export function LibraryThoughtsTab({
           {searchQuery
             ? "No thoughts found"
             : selectedContextId
-            ? "No thoughts in this context"
-            : "No thoughts yet. Start capturing your insights!"}
+              ? "No thoughts in this context"
+              : "No thoughts yet. Start capturing your insights!"}
         </p>
         <Button asChild className="mt-4">
           <Link href="/thoughts/extract">Add Thought</Link>
@@ -127,22 +127,48 @@ export function LibraryThoughtsTab({
   }
 
   return (
-    <div className="space-y-6">
-      {thoughts.map((thought) => {
+    <div className="space-y-4">
+      {thoughts.map((thought, index) => {
         const context = getContext(thought.context_id)
+        const contextName = context?.name?.toLowerCase() || "other"
+        const tintClass = `context-tint-${contextName}`
 
         return (
           <Link key={thought.id} href={`/thoughts/${thought.id}`}>
-            <Card className="group hover:shadow-md transition-all duration-200 cursor-pointer">
-              <CardContent className="p-4">
+            <Card
+              className={cn(
+                "group card-hover-lift cursor-pointer overflow-hidden animate-slide-up",
+                `stagger-${Math.min(index + 1, 8)}`
+              )}
+              style={{ animationFillMode: "backwards" }}
+            >
+              {/* Context accent bar */}
+              {context?.color && (
+                <div
+                  className="h-1"
+                  style={{ background: context.color }}
+                />
+              )}
+
+              <CardContent className={cn("p-4 relative", tintClass)}>
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
-                    <Quote className="h-5 w-5 text-violet-500" />
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-110"
+                    style={{
+                      background: context?.color
+                        ? `linear-gradient(135deg, ${context.color}30, ${context.color}10)`
+                        : "rgba(139, 92, 246, 0.1)"
+                    }}
+                  >
+                    <Quote
+                      className="h-5 w-5 transition-colors"
+                      style={{ color: context?.color || "#8b5cf6" }}
+                    />
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-2 mb-2">
-                      <p className="text-foreground line-clamp-3 group-hover:text-primary transition-colors">
+                      <p className="text-foreground line-clamp-3 group-hover:text-primary transition-colors font-medium">
                         &ldquo;{thought.content}&rdquo;
                       </p>
                     </div>
@@ -159,13 +185,13 @@ export function LibraryThoughtsTab({
                       <span>{thought.application_count} applications</span>
                     </div>
 
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2 mt-3">
                       {thought.is_on_active_list && (
                         <Badge
                           variant="outline"
-                          className="text-amber-600 border-amber-600"
+                          className="text-amber-500 border-amber-500/50 bg-amber-500/10"
                         >
-                          <Zap className="h-3 w-3 mr-1" />
+                          <Zap className="h-3 w-3 mr-1" fill="currentColor" />
                           Active List
                         </Badge>
                       )}
@@ -173,8 +199,9 @@ export function LibraryThoughtsTab({
                         <Badge
                           variant="outline"
                           style={{
-                            borderColor: context.color || undefined,
+                            borderColor: `${context.color}50` || undefined,
                             color: context.color || undefined,
+                            backgroundColor: `${context.color}10` || undefined,
                           }}
                         >
                           {context.name}
@@ -182,14 +209,14 @@ export function LibraryThoughtsTab({
                       ) : (
                         <Badge
                           variant="outline"
-                          className="text-muted-foreground border-muted-foreground/50"
+                          className="text-muted-foreground border-muted-foreground/30"
                         >
                           Uncategorized
                         </Badge>
                       )}
                       {thought.status === "graduated" && (
-                        <Badge variant="secondary" className="text-green-600">
-                          Graduated
+                        <Badge variant="secondary" className="text-green-500 bg-green-500/10">
+                          🎓 Graduated
                         </Badge>
                       )}
                     </div>
