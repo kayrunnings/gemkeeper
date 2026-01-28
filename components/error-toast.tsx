@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, createContext, useContext, ReactNode } from "react"
+import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react"
 import { AlertCircle, CheckCircle, Info, X, Wifi, WifiOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -218,27 +218,27 @@ export function ToastProvider({ children }: ToastProviderProps) {
     }
   }, [])
 
-  const showToast = (toast: Omit<Toast, "id">) => {
+  const showToast = useCallback((toast: Omit<Toast, "id">) => {
     const id = Math.random().toString(36).substring(2, 9)
     setToasts((prev) => [...prev, { ...toast, id }])
-  }
+  }, [])
 
-  const showError = (error: unknown, fallbackMessage?: string) => {
+  const showError = useCallback((error: unknown, fallbackMessage?: string) => {
     const { title, message } = getErrorMessage(error, fallbackMessage)
-    showToast({ type: "error", title, message })
-  }
+    setToasts((prev) => [...prev, { type: "error", title, message, id: Math.random().toString(36).substring(2, 9) }])
+  }, [])
 
-  const showSuccess = (title: string, message?: string) => {
-    showToast({ type: "success", title, message })
-  }
+  const showSuccess = useCallback((title: string, message?: string) => {
+    setToasts((prev) => [...prev, { type: "success", title, message, id: Math.random().toString(36).substring(2, 9) }])
+  }, [])
 
-  const showInfo = (title: string, message?: string) => {
-    showToast({ type: "info", title, message })
-  }
+  const showInfo = useCallback((title: string, message?: string) => {
+    setToasts((prev) => [...prev, { type: "info", title, message, id: Math.random().toString(36).substring(2, 9) }])
+  }, [])
 
-  const dismissToast = (id: string) => {
+  const dismissToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id))
-  }
+  }, [])
 
   return (
     <ToastContext.Provider value={{ showToast, showError, showSuccess, showInfo }}>
