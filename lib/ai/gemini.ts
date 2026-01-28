@@ -199,7 +199,7 @@ export interface DiscoveryGenerationResult {
 // Prompt for web search grounding mode
 const DISCOVERY_WEB_SEARCH_PROMPT = `You are a knowledge curator helping users discover new insights from the web.
 
-Search the web and find 4 high-quality articles, blog posts, or resources that contain actionable wisdom.
+Search the web and find 8 high-quality articles, blog posts, or resources that contain actionable wisdom.
 
 For each piece of content you find:
 1. Extract ONE key insight (max 200 characters) - a concise, memorable phrase
@@ -228,7 +228,7 @@ Return valid JSON only:
 // Fallback prompt when web search is not available
 const DISCOVERY_FALLBACK_PROMPT = `You are a knowledge curator for ThoughtFolio, helping users discover valuable insights and wisdom.
 
-Your task is to recommend 4 pieces of wisdom, insights, or knowledge that would be valuable based on the user's interests.
+Your task is to recommend 8 pieces of wisdom, insights, or knowledge that would be valuable based on the user's interests.
 
 For each recommendation:
 1. Create ONE key insight (max 200 characters) - a concise, memorable, actionable phrase
@@ -303,7 +303,7 @@ export async function generateDiscoveries(
   if (mode === "directed" && query) {
     modeInstructions = `The user is searching for: "${query}"
 
-Find 4 articles/content pieces related to this specific topic. Focus on:
+Find 8 articles/content pieces related to this specific topic. Focus on:
 - Practical, actionable content
 - Reputable sources
 - Recent or timeless wisdom depending on the topic`
@@ -312,14 +312,14 @@ Find 4 articles/content pieces related to this specific topic. Focus on:
     if (specificContext) {
       modeInstructions = `The user wants discoveries for their "${specificContext.name}" context.
 
-Find 4 articles/content pieces that would be valuable for someone interested in ${specificContext.name.toLowerCase()}-related topics. Focus on:
+Find 8 articles/content pieces that would be valuable for someone interested in ${specificContext.name.toLowerCase()}-related topics. Focus on:
 - Insights applicable to ${specificContext.name.toLowerCase()} situations
 - Mix of trending and evergreen content
 - Practical wisdom they can apply`
     }
   } else {
     // Curated mode - mix across contexts
-    modeInstructions = `Find 4 diverse articles/content pieces across the user's interest areas.
+    modeInstructions = `Find 8 diverse articles/content pieces across the user's interest areas.
 
 Distribute discoveries across these contexts based on the user's interests:
 ${contextList}
@@ -334,7 +334,7 @@ ${contextList}
 
 ${thoughtSamples}
 
-Find 4 high-quality discoveries and return them as JSON.`
+Find 8 high-quality discoveries and return them as JSON.`
 
   // Helper function to call the model and parse response
   async function callModel(
@@ -368,7 +368,7 @@ Find 4 high-quality discoveries and return them as JSON.`
 
     // Validate and sanitize discoveries
     const validatedDiscoveries: GeneratedDiscovery[] = (parsed.discoveries || [])
-      .slice(0, 4)
+      .slice(0, 8)
       .map((d: unknown) => {
         const discovery = d as Record<string, unknown>
         return {

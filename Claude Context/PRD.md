@@ -455,7 +455,7 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 **Core Concept:**
 - Dashboard card offers three discovery paths: free-text search, context selection, or "Surprise Me"
 - Gemini searches the web for relevant articles/insights
-- Returns 4 discoveries per session as a browsable grid
+- Returns 8 discoveries per session as a browsable grid
 - User can save discoveries as thoughts (with source) or skip
 - Two daily sessions: 4 curated + 4 directed = 8 max discoveries per day
 
@@ -467,7 +467,7 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 | FR-11.2 | User can enter free-text topic for discovery | Text input accepts query, triggers search |
 | FR-11.3 | User can select context chip for focused discovery | Context chip triggers context-specific search |
 | FR-11.4 | User can click "Surprise Me" for curated mix | Button triggers multi-context discovery |
-| FR-11.5 | System returns 4 discoveries per session | Grid displays 4 cards |
+| FR-11.5 | System returns 8 discoveries per session | Grid displays 8 cards |
 | FR-11.6 | Each discovery includes: thought, source, summary, relevance | All fields populated in response |
 | FR-11.7 | Discoveries labeled as "Trending" or "Evergreen" | Badge displayed on each card |
 | FR-11.8 | User can view expanded discovery detail | Click opens detail view |
@@ -479,8 +479,9 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 | FR-11.14 | User can optionally save article as Note | Checkbox available |
 | FR-11.15 | User can skip discovery ("Not for me") | Card greys out, no penalty |
 | FR-11.16 | Skipped content tracked to avoid similar suggestions | Hash stored in database |
-| FR-11.17 | Curated session limit: 4 discoveries/day | Counter enforced server-side |
-| FR-11.18 | Directed session limit: 4 discoveries/day | Counter enforced server-side |
+| FR-11.16a | User can refresh to get new discoveries | Refresh button available in grid header |
+| FR-11.17 | Curated session limit: 8 discoveries/day | Counter enforced server-side |
+| FR-11.18 | Directed session limit: 8 discoveries/day | Counter enforced server-side |
 | FR-11.19 | Limits reset at midnight user's timezone | Reset logic uses profile timezone |
 | FR-11.20 | Context rotation prioritizes sparse contexts | Algorithm weights by thought count |
 | FR-11.21 | 0-thought contexts occasionally included | Exploration slot in rotation |
@@ -511,10 +512,11 @@ interface Discovery {
 
 **Acceptance Criteria:**
 - [x] Dashboard shows "Discover Something New!" card
-- [x] User can type any topic and get 4 relevant discoveries
-- [x] User can tap context chip and get 4 discoveries for that context
-- [x] User can tap "Surprise Me" and get 4 curated discoveries
-- [x] Grid displays 4 discovery cards with preview info
+- [x] User can type any topic and get 8 relevant discoveries
+- [x] User can tap context chip and get 8 discoveries for that context
+- [x] User can tap "Surprise Me" and get 8 curated discoveries
+- [x] Grid displays 8 discovery cards with preview info
+- [x] User can refresh to get new discoveries without closing grid
 - [x] Tapping card opens expanded view with full detail
 - [x] User can save discovery with editable thought text
 - [x] User can change context before saving

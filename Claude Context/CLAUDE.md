@@ -83,7 +83,7 @@ On-demand thought matching for upcoming situations. Moments search ALL thoughts 
 Standalone long-form content separate from atomic thoughts. Notes have titles, markdown content (no character limit), tags, and can be organized into folders. Users can **extract thoughts from notes**, creating a bridge between detailed note-taking and atomic insights. Notes are NOT the same as "thought reflections" (which are attached to individual thoughts).
 
 ### Discover
-AI-powered content discovery from the web. Dashboard card with three paths: free-text search, context chips, or "Surprise Me". Returns 4 discoveries per session. Daily limits: 4 curated + 4 directed = 8 max. User edits thought before saving (preserves "user's words" principle).
+AI-powered content discovery from the web. Dashboard card with three paths: free-text search, context chips, or "Surprise Me". Returns 8 discoveries per session with refresh capability. Daily limits: 8 curated + 8 directed = 16 max. User edits thought before saving (preserves "user's words" principle).
 
 ## Workflow Expectations
 
