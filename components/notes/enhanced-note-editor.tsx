@@ -259,9 +259,9 @@ export function EnhancedNoteEditor({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle>{note ? "Edit Note" : "New Note"}</DialogTitle>
+      <DialogContent className="sm:max-w-6xl w-[95vw] h-[90vh] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="shrink-0">
+          <DialogTitle className="text-xl">{note ? "Edit Note" : "New Note"}</DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
@@ -275,9 +275,9 @@ export function EnhancedNoteEditor({
             </TabsTrigger>
           </TabsList>
 
-          <div className="flex-1 overflow-y-auto py-4">
+          <div className="flex-1 overflow-y-auto py-4 min-h-0">
             {/* Edit Tab */}
-            <TabsContent value="edit" className="mt-0 space-y-4">
+            <TabsContent value="edit" className="mt-0 space-y-4 h-full flex flex-col">
               {/* Title */}
               <div className="space-y-2">
                 <Label htmlFor="title">Title</Label>
@@ -323,14 +323,15 @@ export function EnhancedNoteEditor({
               )}
 
               {/* Rich text editor */}
-              <div className="space-y-2">
+              <div className="space-y-2 flex-1 flex flex-col">
                 <Label>Content</Label>
                 <RichTextEditor
                   content={content}
                   onChange={setContent}
                   onAIAssist={hasAIConsent ? handleAIAssist : undefined}
                   placeholder="Start writing your note..."
-                  className="min-h-[300px]"
+                  className="flex-1 min-h-[400px]"
+                  editorClassName="min-h-[350px]"
                 />
               </div>
             </TabsContent>

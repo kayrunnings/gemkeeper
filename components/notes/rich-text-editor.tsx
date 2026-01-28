@@ -6,6 +6,7 @@ import Placeholder from "@tiptap/extension-placeholder"
 import Link from "@tiptap/extension-link"
 import Image from "@tiptap/extension-image"
 import Underline from "@tiptap/extension-underline"
+import { Table, TableRow, TableCell, TableHeader } from "@tiptap/extension-table"
 import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,6 +25,12 @@ import {
   Sparkles,
   Loader2,
   ChevronDown,
+  Table as TableIcon,
+  Plus,
+  Minus,
+  Trash2,
+  Columns,
+  Rows,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -31,6 +38,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import {
   Dialog,
@@ -96,6 +104,7 @@ export function RichTextEditor({
   const [imageUrl, setImageUrl] = useState("")
   const [aiLoading, setAiLoading] = useState(false)
   const [aiMenuOpen, setAiMenuOpen] = useState(false)
+  const [tableMenuOpen, setTableMenuOpen] = useState(false)
 
   const editor = useEditor({
     extensions: [
@@ -119,6 +128,23 @@ export function RichTextEditor({
         },
       }),
       Underline,
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: "border-collapse table-auto w-full my-4",
+        },
+      }),
+      TableRow,
+      TableHeader.configure({
+        HTMLAttributes: {
+          class: "border border-border bg-muted/50 px-3 py-2 text-left font-semibold",
+        },
+      }),
+      TableCell.configure({
+        HTMLAttributes: {
+          class: "border border-border px-3 py-2",
+        },
+      }),
     ],
     content,
     editorProps: {
@@ -316,6 +342,106 @@ export function RichTextEditor({
         >
           <ImageIcon className="h-4 w-4" />
         </ToolbarButton>
+
+        {/* Table */}
+        <DropdownMenu open={tableMenuOpen} onOpenChange={setTableMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-8 w-8 p-0",
+                editor.isActive("table") && "bg-muted"
+              )}
+              title="Table"
+            >
+              <TableIcon className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuItem
+              onClick={() => {
+                editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+                setTableMenuOpen(false)
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Insert table
+            </DropdownMenuItem>
+            {editor.isActive("table") && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    editor.chain().focus().addRowBefore().run()
+                    setTableMenuOpen(false)
+                  }}
+                >
+                  <Rows className="h-4 w-4 mr-2" />
+                  Add row above
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    editor.chain().focus().addRowAfter().run()
+                    setTableMenuOpen(false)
+                  }}
+                >
+                  <Rows className="h-4 w-4 mr-2" />
+                  Add row below
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    editor.chain().focus().deleteRow().run()
+                    setTableMenuOpen(false)
+                  }}
+                >
+                  <Minus className="h-4 w-4 mr-2" />
+                  Delete row
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    editor.chain().focus().addColumnBefore().run()
+                    setTableMenuOpen(false)
+                  }}
+                >
+                  <Columns className="h-4 w-4 mr-2" />
+                  Add column left
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    editor.chain().focus().addColumnAfter().run()
+                    setTableMenuOpen(false)
+                  }}
+                >
+                  <Columns className="h-4 w-4 mr-2" />
+                  Add column right
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    editor.chain().focus().deleteColumn().run()
+                    setTableMenuOpen(false)
+                  }}
+                >
+                  <Minus className="h-4 w-4 mr-2" />
+                  Delete column
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    editor.chain().focus().deleteTable().run()
+                    setTableMenuOpen(false)
+                  }}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete table
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <ToolbarDivider />
 
