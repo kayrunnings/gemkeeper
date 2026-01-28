@@ -81,7 +81,7 @@ gemkeeper/
 │   ├── discover/                 # Discovery components
 │   │   ├── DiscoverCard.tsx      # Dashboard entry point
 │   │   ├── ContextChip.tsx       # Context selector chip
-│   │   ├── DiscoveryGrid.tsx     # 2x2 grid of discoveries
+│   │   ├── DiscoveryGrid.tsx     # Grid of discoveries (8 items) with refresh
 │   │   ├── DiscoveryCard.tsx     # Individual discovery card
 │   │   ├── DiscoveryDetail.tsx   # Expanded discovery view
 │   │   └── SaveDiscoveryModal.tsx # Save flow modal
@@ -1056,7 +1056,7 @@ interface SearchResult {
 |-----------|------|---------|
 | Discover Card | `components/discover/DiscoverCard.tsx` | Dashboard entry point |
 | Context Chip | `components/discover/ContextChip.tsx` | Context selector |
-| Discovery Grid | `components/discover/DiscoveryGrid.tsx` | 2x2 grid view |
+| Discovery Grid | `components/discover/DiscoveryGrid.tsx` | Grid view with refresh button |
 | Discovery Card | `components/discover/DiscoveryCard.tsx` | Individual card with bookmark |
 | Discovery Detail | `components/discover/DiscoveryDetail.tsx` | Expanded view |
 | Save Modal | `components/discover/SaveDiscoveryModal.tsx` | Save flow |
@@ -1348,10 +1348,10 @@ Handles Cmd+K (search) and Cmd+N (capture) keyboard shortcuts globally.
 3. Check daily usage limits
 4. If curated: get context rotation (weighted by thought count)
 5. Call Gemini with grounding to search web
-6. Gemini returns 4 discoveries with metadata
+6. Gemini returns 8 discoveries with metadata
 7. Filter out previously skipped content (by URL hash)
 8. Store discoveries in database
-9. Return grid of 4 cards
+9. Return grid of 8 cards with refresh option
 10. User browses, expands cards
 11. On save: create thought + optional note, link discovery
 12. On skip: mark discovery skipped, add to skip list

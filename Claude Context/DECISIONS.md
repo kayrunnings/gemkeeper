@@ -239,7 +239,7 @@ This document tracks key product and technical decisions with their rationale. C
 
 **Key Learnings:**
 - Gemini 1.5 Flash required for Google Search grounding (not 2.0 Flash)
-- 4 discoveries per session is the right balance
+- 8 discoveries per session with refresh capability provides better variety
 - Separate curated and directed limits encourage both exploration modes
 - User editing before save preserves "user's words" principle
 - Skipped content tracking prevents annoying re-suggestions
@@ -723,6 +723,35 @@ This document tracks key product and technical decisions with their rationale. C
 - 16 themes require maintenance when updating color palette
 - AI components should be used consistently across all AI features
 - Loading/empty states should replace ad-hoc implementations
+
+---
+
+### 2026-01-28: Enhanced Explore/Discover UX
+
+**Decision:** Increase discovery count from 4 to 8 per session and add refresh capability.
+
+**Rationale:**
+- 4 discoveries often felt limiting when exploring a broad topic
+- Users wanted more variety without having to close and re-search
+- Refresh allows users to get fresh suggestions while staying in context
+- Better loading animations (AIThinking) improve perceived performance
+
+**Changes Made:**
+1. **8 discoveries per session** — AI prompts updated to generate 8 instead of 4
+2. **Refresh button** — Added to DiscoveryGrid header to get new suggestions
+3. **Loading animations** — AIThinking component used in ExploreTab for consistent UX
+4. **State tracking** — Components track last search context for proper refresh
+
+**Files Modified:**
+- `lib/ai/gemini.ts` - AI prompts updated (4→8 discoveries)
+- `components/discover/DiscoveryGrid.tsx` - Added refresh button, shows count
+- `components/discover/ExploreTab.tsx` - Added refresh support, AI loading
+- `components/discover/DiscoverCard.tsx` - Added refresh support
+
+**Consequences:**
+- Higher AI token usage per session (more discoveries generated)
+- Better user experience with more variety and control
+- Consistent loading animations across Discover features
 
 ---
 
