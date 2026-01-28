@@ -3,8 +3,9 @@
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Note, NoteInput, Folder } from "@/lib/types"
+import { Thought } from "@/lib/types/thought"
 import { NotesList } from "@/components/notes-list"
-import { NoteEditor } from "@/components/note-editor"
+import { EnhancedNoteEditor } from "@/components/notes/enhanced-note-editor"
 import { Sidebar, FilterType } from "@/components/sidebar"
 import { Button } from "@/components/ui/button"
 import { Plus, LogOut, Gem, Loader2, Menu, X } from "lucide-react"
@@ -17,9 +18,18 @@ import {
 } from "@/app/folders/actions"
 import { moveNoteToFolder as moveNoteToFolderAction } from "@/app/notes/actions"
 
+interface Context {
+  id: string
+  name: string
+  color: string
+  slug: string
+}
+
 export default function DashboardPage() {
   const [notes, setNotes] = useState<Note[]>([])
   const [folders, setFolders] = useState<Folder[]>([])
+  const [contexts, setContexts] = useState<Context[]>([])
+  const [availableThoughts, setAvailableThoughts] = useState<Thought[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [editingNote, setEditingNote] = useState<Note | null>(null)
@@ -44,8 +54,8 @@ export default function DashboardPage() {
       }
       setUserEmail(user.email ?? null)
 
-      // Fetch notes, folders, profile, and gem count in parallel
-      const [notesResult, foldersResult, profileResult, gemsResult] = await Promise.all([
+      // Fetch notes, folders, profile, gem count, contexts, and thoughts in parallel
+      const [notesResult, foldersResult, profileResult, gemsResult, contextsResult, thoughtsResult] = await Promise.all([
         supabase
           .from("notes")
           .select("*")
@@ -63,6 +73,16 @@ export default function DashboardPage() {
           .from("gems")
           .select("*", { count: "exact", head: true })
           .eq("status", "active"),
+        supabase
+          .from("contexts")
+          .select("id, name, color, slug")
+          .order("sort_order", { ascending: true }),
+        supabase
+          .from("gems")
+          .select("*")
+          .eq("status", "active")
+          .order("updated_at", { ascending: false })
+          .limit(100),
       ])
 
       if (notesResult.error) {
@@ -75,6 +95,14 @@ export default function DashboardPage() {
         console.error("Error fetching folders:", foldersResult.error)
       } else {
         setFolders(foldersResult.data || [])
+      }
+
+      if (!contextsResult.error && contextsResult.data) {
+        setContexts(contextsResult.data)
+      }
+
+      if (!thoughtsResult.error && thoughtsResult.data) {
+        setAvailableThoughts(thoughtsResult.data as Thought[])
       }
 
       setHasAIConsent(profileResult.data?.ai_consent_given ?? false)
@@ -434,7 +462,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Note editor modal */}
-      <NoteEditor
+      <EnhancedNoteEditor
         note={editingNote}
         isOpen={isEditorOpen}
         onClose={() => {
@@ -442,6 +470,9 @@ export default function DashboardPage() {
           setEditingNote(null)
         }}
         onSave={handleSaveNote}
+        contexts={contexts}
+        availableThoughts={availableThoughts}
+        hasAIConsent={hasAIConsent}
       />
 
       {/* Extract gems from note modal */}

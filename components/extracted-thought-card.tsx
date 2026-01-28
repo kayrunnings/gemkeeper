@@ -5,13 +5,15 @@ import { ContextTag, CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS } from "@/lib/types/
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Check, ChevronDown, ChevronUp, Pencil, X } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Check, ChevronDown, ChevronUp, Pencil, X, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export interface ExtractedThought {
   content: string
   context_tag: ContextTag
   source_quote?: string
+  is_on_active_list?: boolean
 }
 
 interface ExtractedThoughtCardProps {
@@ -19,6 +21,9 @@ interface ExtractedThoughtCardProps {
   selected: boolean
   onSelect: (selected: boolean) => void
   onUpdate: (thought: ExtractedThought) => void
+  showActiveListToggle?: boolean
+  activeListFull?: boolean
+  activeListCount?: number
 }
 
 export function ExtractedThoughtCard({
@@ -26,11 +31,17 @@ export function ExtractedThoughtCard({
   selected,
   onSelect,
   onUpdate,
+  showActiveListToggle = true,
+  activeListFull = false,
 }: ExtractedThoughtCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState(thought.content)
   const [showQuote, setShowQuote] = useState(false)
   const [showTagSelect, setShowTagSelect] = useState(false)
+
+  const handleActiveListToggle = (checked: boolean) => {
+    onUpdate({ ...thought, is_on_active_list: checked })
+  }
 
   const handleSaveEdit = () => {
     if (editedContent.trim()) {
@@ -203,6 +214,34 @@ export function ExtractedThoughtCard({
                   &ldquo;{thought.source_quote}&rdquo;
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Active List Toggle */}
+          {showActiveListToggle && selected && (
+            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={thought.is_on_active_list || false}
+                  onCheckedChange={handleActiveListToggle}
+                  disabled={activeListFull && !thought.is_on_active_list}
+                />
+                <span className="flex items-center gap-1.5 text-sm">
+                  <Star className={cn(
+                    "h-3.5 w-3.5",
+                    thought.is_on_active_list ? "text-amber-500 fill-amber-500" : "text-muted-foreground"
+                  )} />
+                  Add to Active List
+                </span>
+                {activeListFull && !thought.is_on_active_list && (
+                  <span className="text-xs text-muted-foreground">(List full)</span>
+                )}
+              </label>
+              <p className="text-xs text-muted-foreground mt-1 ml-6">
+                {thought.is_on_active_list
+                  ? "Will appear in your daily check-ins"
+                  : "Will be saved as passive (available for Moments)"}
+              </p>
             </div>
           )}
         </div>

@@ -3,8 +3,17 @@
 import { useState, useEffect, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Note, NoteInput, Folder } from "@/lib/types"
+import { Thought } from "@/lib/types/thought"
+
+// Simplified context interface for the note editor (matches EnhancedNoteEditor expectations)
+interface NoteContext {
+  id: string
+  name: string
+  color: string
+  slug: string
+}
 import { NoteCard } from "@/components/note-card"
-import { NoteEditor } from "@/components/note-editor"
+import { EnhancedNoteEditor } from "@/components/notes/enhanced-note-editor"
 import { ExtractFromNoteModal } from "@/components/extract-from-note-modal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,14 +48,25 @@ import { useToast } from "@/components/error-toast"
 type FilterType = "all" | "unfiled" | { folderId: string }
 type SortOrder = "desc" | "asc"
 
+// Input context can have nullable color (from full Context type)
+interface InputContext {
+  id: string
+  name: string
+  color: string | null
+  slug: string
+}
+
 interface LibraryNotesTabProps {
   searchQuery?: string
   sortOrder?: SortOrder
+  contexts?: InputContext[]
 }
 
-export function LibraryNotesTab({ searchQuery, sortOrder = "desc" }: LibraryNotesTabProps) {
+export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: propContexts }: LibraryNotesTabProps) {
   const [notes, setNotes] = useState<Note[]>([])
   const [folders, setFolders] = useState<Folder[]>([])
+  const [localContexts, setLocalContexts] = useState<NoteContext[]>([])
+  const [availableThoughts, setAvailableThoughts] = useState<Thought[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("all")
   const [isEditorOpen, setIsEditorOpen] = useState(false)
@@ -55,6 +75,19 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc" }: LibraryNote
   const [extractingNote, setExtractingNote] = useState<Note | null>(null)
   const [hasAIConsent, setHasAIConsent] = useState(false)
   const [activeGemCount, setActiveGemCount] = useState(0)
+
+  // Use passed contexts or local contexts, mapping to ensure correct format
+  const contexts: NoteContext[] = useMemo(() => {
+    if (propContexts) {
+      return propContexts.map(c => ({
+        id: c.id,
+        name: c.name,
+        color: c.color || '#6366f1',
+        slug: c.slug,
+      }))
+    }
+    return localContexts
+  }, [propContexts, localContexts])
 
   // Folder creation/editing state
   const [isCreatingFolder, setIsCreatingFolder] = useState(false)
@@ -79,7 +112,7 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc" }: LibraryNote
       return
     }
 
-    const [notesResult, foldersResult, profileResult, gemsResult] = await Promise.all([
+    const [notesResult, foldersResult, profileResult, gemsResult, contextsResult, thoughtsResult] = await Promise.all([
       supabase
         .from("notes")
         .select("*")
@@ -100,10 +133,33 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc" }: LibraryNote
         .select("*", { count: "exact", head: true })
         .eq("user_id", user.id)
         .eq("status", "active"),
+      // Fetch contexts if not passed as prop
+      !propContexts ? supabase
+        .from("contexts")
+        .select("id, name, color, slug")
+        .eq("user_id", user.id)
+        .order("sort_order", { ascending: true }) : Promise.resolve({ data: null, error: null }),
+      // Fetch available thoughts for linking
+      supabase
+        .from("gems")
+        .select("*")
+        .eq("user_id", user.id)
+        .in("status", ["active", "passive"])
+        .order("updated_at", { ascending: false })
+        .limit(100),
     ])
 
     if (!notesResult.error) setNotes(notesResult.data || [])
     if (!foldersResult.error) setFolders(foldersResult.data || [])
+    if (!contextsResult.error && contextsResult.data) {
+      setLocalContexts(contextsResult.data.map((c: { id: string; name: string; color: string | null; slug: string }) => ({
+        id: c.id,
+        name: c.name,
+        color: c.color || '#6366f1', // Default to indigo if no color
+        slug: c.slug,
+      })))
+    }
+    if (!thoughtsResult.error && thoughtsResult.data) setAvailableThoughts(thoughtsResult.data as Thought[])
     setHasAIConsent(profileResult.data?.ai_consent_given ?? false)
     setActiveGemCount(gemsResult.count ?? 0)
     setIsLoading(false)
@@ -159,7 +215,7 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc" }: LibraryNote
   }
 
   // Note operations
-  const handleSaveNote = async (noteInput: NoteInput, existingId?: string) => {
+  const handleSaveNote = async (noteInput: NoteInput & { context_id?: string }, existingId?: string) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
@@ -640,7 +696,7 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc" }: LibraryNote
       </div>
 
       {/* Note editor modal */}
-      <NoteEditor
+      <EnhancedNoteEditor
         note={editingNote}
         isOpen={isEditorOpen}
         onClose={() => {
@@ -648,6 +704,9 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc" }: LibraryNote
           setEditingNote(null)
         }}
         onSave={handleSaveNote}
+        contexts={contexts}
+        availableThoughts={availableThoughts}
+        hasAIConsent={hasAIConsent}
       />
 
       {/* Extract gems from note modal */}
