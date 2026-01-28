@@ -72,9 +72,15 @@ export function ExtractFromNoteModal({
   const [showConsentModal, setShowConsentModal] = useState(false)
   const [consentGranted, setConsentGranted] = useState(hasAIConsent)
 
-  const availableSlots = MAX_ACTIVE_GEMS - activeGemCount
   const selectedCount = selectedGems.size
-  const canSave = selectedCount > 0 && selectedCount <= availableSlots
+  // Count how many selected thoughts are marked for active list
+  const activeListSelections = extractedGems.filter(
+    (g, i) => selectedGems.has(i) && g.is_on_active_list
+  ).length
+  const availableActiveSlots = MAX_ACTIVE_GEMS - activeGemCount
+  const activeListFull = activeGemCount >= MAX_ACTIVE_GEMS
+  // Can save if any are selected (thoughts are passive by default, so no limit applies)
+  const canSave = selectedCount > 0
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -194,7 +200,10 @@ export function ExtractFromNoteModal({
         throw new Error(data.error || "Failed to extract gems")
       }
 
-      const thoughts = data.thoughts || []
+      const thoughts = (data.thoughts || []).map((t: ExtractedThought) => ({
+        ...t,
+        is_on_active_list: false, // Default to passive (not on active list)
+      }))
       setExtractedThoughts(thoughts)
       setUsage(data.usage)
       setSelectedGems(new Set(thoughts.map((_: ExtractedThought, i: number) => i)))
@@ -208,6 +217,15 @@ export function ExtractFromNoteModal({
   const handleSaveSelected = async () => {
     if (!canSave) return
 
+    // Check if too many are being added to active list
+    if (activeListSelections > availableActiveSlots) {
+      setError(
+        `You can only add ${availableActiveSlots} more thought${availableActiveSlots !== 1 ? "s" : ""} to your Active List. ` +
+        `Please deselect some or uncheck "Add to Active List" for some thoughts.`
+      )
+      return
+    }
+
     setIsSaving(true)
     setError(null)
 
@@ -218,6 +236,7 @@ export function ExtractFromNoteModal({
           content: gem.content,
           context_tag: gem.context_tag,
           source: `Note: ${note.title || "Untitled Note"}`,
+          is_on_active_list: gem.is_on_active_list || false,
         }))
 
       const response = await fetch("/api/gems/bulk", {
@@ -430,12 +449,24 @@ export function ExtractFromNoteModal({
                   </p>
                 </div>
 
-                {selectedCount > availableSlots && (
+                {/* Info about passive by default */}
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-muted/50 border border-border">
+                  <Sparkles className="h-5 w-5 shrink-0 mt-0.5 text-violet-500" />
+                  <div className="text-sm">
+                    <p className="font-medium">Thoughts are saved as passive by default</p>
+                    <p className="text-muted-foreground">
+                      They&apos;ll be available for Moments but won&apos;t appear in daily check-ins.
+                      Check &quot;Add to Active List&quot; on any thought to include it in your daily rotation.
+                      {!activeListFull && ` (${availableActiveSlots} Active List slot${availableActiveSlots !== 1 ? "s" : ""} available)`}
+                    </p>
+                  </div>
+                </div>
+
+                {activeListSelections > availableActiveSlots && (
                   <div className="flex items-start gap-2 p-3 rounded-xl bg-warning/10 border border-warning/20 text-warning">
                     <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
                     <p className="text-sm">
-                      You have {activeGemCount}/{MAX_ACTIVE_GEMS} active thoughts. You
-                      can save up to {availableSlots} more.
+                      You&apos;ve selected {activeListSelections} thoughts for Active List, but only {availableActiveSlots} slot{availableActiveSlots !== 1 ? "s" : ""} available.
                     </p>
                   </div>
                 )}
@@ -448,6 +479,9 @@ export function ExtractFromNoteModal({
                       selected={selectedGems.has(i)}
                       onSelect={(selected) => handleGemSelect(i, selected)}
                       onUpdate={(updated) => handleGemUpdate(i, updated)}
+                      showActiveListToggle={true}
+                      activeListFull={activeListFull}
+                      activeListCount={activeGemCount}
                     />
                   ))}
                 </div>
@@ -485,11 +519,11 @@ export function ExtractFromNoteModal({
                   <CheckCircle2 className="h-8 w-8 text-green-600" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">
-                  Added {savedCount} gem{savedCount !== 1 ? "s" : ""} to your
+                  Added {savedCount} thought{savedCount !== 1 ? "s" : ""} to your
                   collection!
                 </h3>
                 <p className="text-muted-foreground mb-6">
-                  Your new gems are ready for daily practice.
+                  Your thoughts are ready. They&apos;ll appear in Moments searches and any on the Active List will be included in your daily check-ins.
                 </p>
                 <Button onClick={onClose}>Done</Button>
               </div>

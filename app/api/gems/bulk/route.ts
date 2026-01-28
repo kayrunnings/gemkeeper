@@ -10,6 +10,7 @@ interface BulkGemInput {
   context_tag: ContextTag
   source?: string
   source_url?: string
+  is_on_active_list?: boolean
 }
 
 export async function POST(request: NextRequest) {
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
     source: gem.source || null,
     source_url: gem.source_url || null,
     status: "active" as const,
+    is_on_active_list: gem.is_on_active_list || false, // Default to passive
     application_count: 0,
     skip_count: 0,
   }))

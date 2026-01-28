@@ -1,0 +1,453 @@
+"use client"
+
+import { useEditor, EditorContent, Editor } from "@tiptap/react"
+import StarterKit from "@tiptap/starter-kit"
+import Placeholder from "@tiptap/extension-placeholder"
+import Link from "@tiptap/extension-link"
+import Image from "@tiptap/extension-image"
+import Underline from "@tiptap/extension-underline"
+import { useCallback, useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import {
+  Bold,
+  Italic,
+  Underline as UnderlineIcon,
+  List,
+  ListOrdered,
+  Quote,
+  Heading1,
+  Heading2,
+  Link as LinkIcon,
+  Image as ImageIcon,
+  Undo,
+  Redo,
+  Sparkles,
+  Loader2,
+  ChevronDown,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+
+interface RichTextEditorProps {
+  content: string
+  onChange: (content: string) => void
+  onAIAssist?: (prompt: string, selectedText: string) => Promise<string>
+  placeholder?: string
+  className?: string
+  editorClassName?: string
+}
+
+interface ToolbarButtonProps {
+  onClick: () => void
+  isActive?: boolean
+  disabled?: boolean
+  children: React.ReactNode
+  title?: string
+}
+
+function ToolbarButton({ onClick, isActive, disabled, children, title }: ToolbarButtonProps) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      className={cn(
+        "h-8 w-8 p-0",
+        isActive && "bg-muted"
+      )}
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+    >
+      {children}
+    </Button>
+  )
+}
+
+function ToolbarDivider() {
+  return <div className="w-px h-6 bg-border mx-1" />
+}
+
+export function RichTextEditor({
+  content,
+  onChange,
+  onAIAssist,
+  placeholder = "Start writing...",
+  className,
+  editorClassName,
+}: RichTextEditorProps) {
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false)
+  const [linkUrl, setLinkUrl] = useState("")
+  const [imageDialogOpen, setImageDialogOpen] = useState(false)
+  const [imageUrl, setImageUrl] = useState("")
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiMenuOpen, setAiMenuOpen] = useState(false)
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: {
+          levels: [1, 2, 3],
+        },
+      }),
+      Placeholder.configure({
+        placeholder,
+      }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: "text-primary underline cursor-pointer hover:text-primary/80",
+        },
+      }),
+      Image.configure({
+        HTMLAttributes: {
+          class: "max-w-full h-auto rounded-lg my-4",
+        },
+      }),
+      Underline,
+    ],
+    content,
+    editorProps: {
+      attributes: {
+        class: cn(
+          "prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[200px] px-4 py-3",
+          editorClassName
+        ),
+      },
+    },
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML())
+    },
+  })
+
+  // Update content when prop changes (for initial load)
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content)
+    }
+  }, [content, editor])
+
+  const handleSetLink = useCallback(() => {
+    if (!editor) return
+
+    if (linkUrl) {
+      editor
+        .chain()
+        .focus()
+        .extendMarkRange("link")
+        .setLink({ href: linkUrl })
+        .run()
+    }
+    setLinkDialogOpen(false)
+    setLinkUrl("")
+  }, [editor, linkUrl])
+
+  const handleRemoveLink = useCallback(() => {
+    if (!editor) return
+    editor.chain().focus().unsetLink().run()
+    setLinkDialogOpen(false)
+  }, [editor])
+
+  const handleAddImage = useCallback(() => {
+    if (!editor || !imageUrl) return
+    editor.chain().focus().setImage({ src: imageUrl }).run()
+    setImageDialogOpen(false)
+    setImageUrl("")
+  }, [editor, imageUrl])
+
+  const handleAIAssist = useCallback(async (action: string) => {
+    if (!editor || !onAIAssist) return
+
+    setAiLoading(true)
+    setAiMenuOpen(false)
+
+    try {
+      const { from, to } = editor.state.selection
+      const selectedText = editor.state.doc.textBetween(from, to, " ")
+
+      let prompt = ""
+      switch (action) {
+        case "improve":
+          prompt = "Improve the writing quality, clarity, and flow of this text while keeping the same meaning:"
+          break
+        case "simplify":
+          prompt = "Simplify this text to make it clearer and more concise:"
+          break
+        case "expand":
+          prompt = "Expand on this idea with more detail and examples:"
+          break
+        case "summarize":
+          prompt = "Summarize the key points of this text:"
+          break
+        case "fix-grammar":
+          prompt = "Fix any grammar, spelling, and punctuation errors in this text:"
+          break
+        case "continue":
+          prompt = "Continue writing from where this text left off, maintaining the same style and context:"
+          break
+        default:
+          prompt = action
+      }
+
+      const textToProcess = selectedText || editor.getText()
+      const result = await onAIAssist(prompt, textToProcess)
+
+      if (result) {
+        if (selectedText) {
+          // Replace selection with AI result
+          editor.chain().focus().deleteSelection().insertContent(result).run()
+        } else {
+          // Append AI result at the end
+          editor.chain().focus().insertContent(`\n\n${result}`).run()
+        }
+      }
+    } catch (error) {
+      console.error("AI assist error:", error)
+    } finally {
+      setAiLoading(false)
+    }
+  }, [editor, onAIAssist])
+
+  if (!editor) {
+    return null
+  }
+
+  return (
+    <div className={cn("border rounded-lg overflow-hidden", className)}>
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-0.5 p-1 border-b bg-muted/50">
+        {/* Text formatting */}
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          isActive={editor.isActive("bold")}
+          title="Bold (Ctrl+B)"
+        >
+          <Bold className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          isActive={editor.isActive("italic")}
+          title="Italic (Ctrl+I)"
+        >
+          <Italic className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          isActive={editor.isActive("underline")}
+          title="Underline (Ctrl+U)"
+        >
+          <UnderlineIcon className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarDivider />
+
+        {/* Headings */}
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          isActive={editor.isActive("heading", { level: 1 })}
+          title="Heading 1"
+        >
+          <Heading1 className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          isActive={editor.isActive("heading", { level: 2 })}
+          title="Heading 2"
+        >
+          <Heading2 className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarDivider />
+
+        {/* Lists */}
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          isActive={editor.isActive("bulletList")}
+          title="Bullet list"
+        >
+          <List className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          isActive={editor.isActive("orderedList")}
+          title="Numbered list"
+        >
+          <ListOrdered className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          isActive={editor.isActive("blockquote")}
+          title="Quote"
+        >
+          <Quote className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarDivider />
+
+        {/* Link and Image */}
+        <ToolbarButton
+          onClick={() => {
+            const previousUrl = editor.getAttributes("link").href
+            setLinkUrl(previousUrl || "")
+            setLinkDialogOpen(true)
+          }}
+          isActive={editor.isActive("link")}
+          title="Add link"
+        >
+          <LinkIcon className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => setImageDialogOpen(true)}
+          title="Add image"
+        >
+          <ImageIcon className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarDivider />
+
+        {/* Undo/Redo */}
+        <ToolbarButton
+          onClick={() => editor.chain().focus().undo().run()}
+          disabled={!editor.can().undo()}
+          title="Undo"
+        >
+          <Undo className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().redo().run()}
+          disabled={!editor.can().redo()}
+          title="Redo"
+        >
+          <Redo className="h-4 w-4" />
+        </ToolbarButton>
+
+        {/* AI Assistant */}
+        {onAIAssist && (
+          <>
+            <ToolbarDivider />
+            <DropdownMenu open={aiMenuOpen} onOpenChange={setAiMenuOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-8 gap-1 px-2 text-violet-600 hover:text-violet-700 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-900/20",
+                    aiLoading && "opacity-50"
+                  )}
+                  disabled={aiLoading}
+                >
+                  {aiLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">AI Assist</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuItem onClick={() => handleAIAssist("improve")}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Improve writing
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleAIAssist("simplify")}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Simplify
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleAIAssist("expand")}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Expand on this
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleAIAssist("summarize")}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Summarize
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleAIAssist("fix-grammar")}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Fix grammar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleAIAssist("continue")}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Continue writing
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        )}
+      </div>
+
+      {/* Editor content */}
+      <EditorContent editor={editor} />
+
+      {/* Link Dialog */}
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Link</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="link-url">URL</Label>
+              <Input
+                id="link-url"
+                placeholder="https://example.com"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            {editor.isActive("link") && (
+              <Button variant="outline" onClick={handleRemoveLink}>
+                Remove Link
+              </Button>
+            )}
+            <Button onClick={handleSetLink}>
+              {editor.isActive("link") ? "Update" : "Add"} Link
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Dialog */}
+      <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Image</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="image-url">Image URL</Label>
+              <Input
+                id="image-url"
+                placeholder="https://example.com/image.jpg"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleAddImage}>Add Image</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+export { type Editor }
