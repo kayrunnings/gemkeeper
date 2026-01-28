@@ -1135,14 +1135,17 @@ syncMicrosoftCalendar(connectionId: string, userId: string): Promise<{ error: st
 ```
 
 ### Calendar Sync Service (`lib/calendar-sync.ts`)
-Converts cached calendar events into moments. **Must be called after calendar sync.**
+**⚠️ Server-only:** This module imports `lib/calendar.ts` which uses `googleapis` (Node.js only). Do NOT import in client components.
+
+For client-side code, use the API route instead: `POST /api/calendar/check-moments`
+
 ```typescript
 checkForUpcomingEvents(): Promise<{ momentsCreated: number; events: Array<{ event: CalendarEvent; momentId: string }>; error: string | null }>
 syncAllCalendars(): Promise<{ synced: number; error: string | null }>
 runCalendarCheck(): Promise<void>  // Syncs calendars then creates moments
 ```
 
-**Critical:** `checkForUpcomingEvents()` queries `calendar_events_cache` for events where `moment_created = false` and `start_time` is within the user's configured `lead_time_minutes`. It creates moments via `/api/moments` and marks cache entries as processed.
+**Critical:** `checkForUpcomingEvents()` queries `calendar_events_cache` for events where `moment_created = false` and `start_time` is within the user's configured `lead_time_minutes`. It creates moments and marks cache entries as processed.
 
 ### Moments Service (`lib/moments.ts`)
 ```typescript
@@ -1297,16 +1300,16 @@ Handles Cmd+K (search) and Cmd+N (capture) keyboard shortcuts globally.
 ```
 1. User connects Google Calendar via OAuth
 2. On sync (manual or after connection):
-   a. Call /api/calendar/sync → syncCalendarEvents() in lib/calendar.ts
+   a. Call POST /api/calendar/sync → syncCalendarEvents() in lib/calendar.ts
    b. Fetch events from Google Calendar API for next 24 hours
    c. Filter events based on user settings (all/meetings/custom keywords)
    d. Upsert events to calendar_events_cache table (moment_created = false)
-3. After sync completes, call checkForUpcomingEvents() in lib/calendar-sync.ts:
+3. After sync completes, call POST /api/calendar/check-moments:
    a. Query calendar_events_cache for events where:
       - moment_created = false
       - start_time is within lead_time_minutes from now
    b. For each qualifying event:
-      - Create moment via /api/moments with source = 'calendar'
+      - Create moment in database with source = 'calendar'
       - Mark cache event as moment_created = true
 4. Moments appear in dashboard Upcoming Moments card and Moments page
 ```
@@ -1314,10 +1317,10 @@ Handles Cmd+K (search) and Cmd+N (capture) keyboard shortcuts globally.
 **Key Files:**
 - `lib/calendar.ts` — Server-side Google Calendar API integration
 - `lib/calendar-client.ts` — Client-safe calendar functions
-- `lib/calendar-sync.ts` — Moment creation from cached events
+- `app/api/calendar/check-moments/route.ts` — API route for moment creation from cached events
 - `components/settings/CalendarSettings.tsx` — Calendar settings UI
 
-**Important:** The `checkForUpcomingEvents()` function MUST be called after `syncCalendarEvents()` to convert cached calendar events into moments. Without this call, events are cached but no moments are created.
+**Important:** The `/api/calendar/check-moments` endpoint MUST be called after `/api/calendar/sync` to convert cached calendar events into moments. Without this call, events are cached but no moments are created. Client components should use the API route (not import `lib/calendar-sync.ts` directly) to avoid bundling server-only dependencies.
 
 ### Retire Flow
 ```
