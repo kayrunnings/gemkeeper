@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { House, Books, Lightning, Compass } from "@phosphor-icons/react"
+import { House, Books, CheckCircle, Compass } from "@phosphor-icons/react"
 
 type PhosphorIcon = React.ComponentType<{ className?: string; weight?: "thin" | "light" | "regular" | "bold" | "fill" | "duotone" }>
 
@@ -29,8 +29,8 @@ const navItems: NavItem[] = [
   },
   {
     href: "/checkin",
-    label: "Active",
-    icon: Lightning,
+    label: "Check-in",
+    icon: CheckCircle,
     matchPaths: ["/checkin", "/daily"]
   },
   {

@@ -3,11 +3,12 @@
 import { useState, useEffect, ReactNode } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
-// Phosphor icons for navigation
+// Phosphor icons for navigation - curated for clarity and consistency
 import {
   House,
   Books,
-  Lightning,
+  CheckCircle,
+  CalendarCheck,
   Compass,
   Trophy,
   GearSix,
@@ -15,16 +16,14 @@ import {
   NotePencil,
   BookOpenText,
   Archive,
-  List,
-  X as PhosphorX,
   CaretLeft,
   CaretDown,
   CaretUp,
   SignOut,
   Sparkle,
   MagnifyingGlass,
-  SidebarSimple,
   Plus,
+  Palette,
 } from "@phosphor-icons/react"
 // Keep some Lucide icons for specific UI elements
 import {
@@ -41,6 +40,7 @@ import { useGlobalShortcuts } from "@/lib/hooks/useGlobalShortcuts"
 import { BottomNavigation } from "@/components/layout/BottomNavigation"
 import { FloatingMomentButton } from "@/components/moments/FloatingMomentButton"
 import { AICaptureModal } from "@/components/capture/AICaptureModal"
+import { ThemePicker } from "@/components/theme-picker"
 import type { ContextWithCount } from "@/lib/types/context"
 
 // Wrapper to make Phosphor icons compatible with our icon interface
@@ -70,8 +70,8 @@ const navItems: NavItem[] = [
     icon: Books,
     children: librarySubItems,
   },
-  { href: "/checkin", label: "Active", icon: Lightning },
-  { href: "/moments", label: "Moments", icon: Lightning },
+  { href: "/checkin", label: "Check-in", icon: CheckCircle },
+  { href: "/moments", label: "Moments", icon: CalendarCheck },
   { href: "/discover", label: "Discover", icon: Compass },
   { href: "/thought-bank", label: "Trophy Case", icon: Trophy },
 ]
@@ -186,6 +186,9 @@ export function LayoutShell({
             >
               <MagnifyingGlass className="h-5 w-5" />
             </Button>
+
+            {/* Theme picker */}
+            <ThemePicker />
 
             {/* Right panel toggle */}
             {rightPanel && (

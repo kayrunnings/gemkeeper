@@ -185,17 +185,23 @@ className="flex flex-row md:flex-col"
 
 ### Glassmorphism UI Patterns
 
-The app uses a glassmorphism design system. Follow these patterns for consistency:
+The app uses an enhanced glassmorphism design system with CSS custom properties. Follow these patterns for consistency:
 
 ```typescript
-// ✅ Good: Cards with glassmorphism
-className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl shadow-lg"
+// ✅ Good: Cards with glass utility class (preferred)
+className="glass-card"
+
+// ✅ Good: Inputs with glass styling
+className="glass-input"
+
+// ✅ Good: Secondary buttons with glass
+className="glass-button-secondary"
 
 // ✅ Good: Dropdowns (solid background for legibility)
 className="bg-popover border border-border rounded-md shadow-md"
 
-// ✅ Good: Hover states with transitions
-className="transition-all duration-200 hover:bg-accent/50"
+// ✅ Good: Hover states on glass cards
+className="glass-card hover:shadow-lg"
 
 // ✅ Good: Dialog/modal overlays
 className="bg-background/95 backdrop-blur-sm"
@@ -205,9 +211,80 @@ className="bg-transparent" // Hard to read, poor UX
 
 // ❌ Bad: Glassmorphism on dropdowns
 className="bg-popover/50 backdrop-blur" // Causes legibility issues
+
+// ❌ Bad: Inline glass styles (use utility classes instead)
+className="bg-card/80 backdrop-blur-sm border..." // Use glass-card
 ```
 
+**CSS Variables:** The glass system uses theme-specific CSS custom properties:
+- `--glass-card-bg`, `--glass-card-border`, `--glass-card-shadow`
+- `--glass-input-bg`, `--glass-input-border`
+- `--glass-sidebar-bg`, `--glass-sidebar-border`
+
 **Key Lesson:** Dropdowns, menus, and popovers need solid backgrounds (`bg-popover`) for readability. Only use transparency on cards and containers.
+
+### AI-Forward Design Patterns
+
+For AI-powered features, use the dedicated components and classes:
+
+```typescript
+// ✅ Good: AI badge indicator
+import { AIBadge } from "@/components/ui/ai-badge"
+<AIBadge variant="subtle" label="AI Powered" />
+
+// ✅ Good: AI thinking state
+import { AIThinking } from "@/components/ui/ai-badge"
+<AIThinking message="Discovering personalized insights..." />
+
+// ✅ Good: AI gradient on icons/headers
+className="ai-gradient"
+
+// ✅ Good: AI glow effect on cards
+className="ai-glow"
+
+// ❌ Bad: Hardcoded AI gradients
+className="bg-gradient-to-r from-purple-500 to-blue-500" // Use ai-gradient
+```
+
+### Loading & Empty State Patterns
+
+Use the standardized state components for consistency:
+
+```typescript
+// ✅ Good: Loading states
+import { LoadingState } from "@/components/ui/loading-state"
+<LoadingState variant="fullscreen" />  // Full page
+<LoadingState variant="minimal" />     // Inline
+
+// ✅ Good: Empty states with correct variant
+import { EmptyState } from "@/components/ui/empty-state"
+<EmptyState variant="thoughts" />
+<EmptyState variant="discover" />
+
+// ❌ Bad: Ad-hoc empty state UI
+<div className="text-center py-8">No items found</div>
+```
+
+### Animation Patterns
+
+Use CSS animation classes for microinteractions:
+
+```typescript
+// ✅ Good: Entry animations
+className="animate-bounce-in"   // Cards appearing
+className="animate-slide-up"    // Modals, sheets
+
+// ✅ Good: Hover microinteractions
+className="hover-lift"          // Subtle lift
+className="hover-scale"         // Scale up
+className="hover-glow"          // Add glow
+
+// ✅ Good: Press feedback
+className="press-effect"        // Clickable items
+
+// ❌ Bad: Custom animation styles (use utility classes)
+style={{ animation: "bounce 0.5s" }}
+```
 
 ### Theme Support
 

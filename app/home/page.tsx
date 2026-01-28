@@ -16,7 +16,7 @@ import { UpcomingMomentsCard } from "@/components/home/UpcomingMomentsCard"
 import { RecentActivityCard } from "@/components/home/RecentActivityCard"
 import { DiscoverCard } from "@/components/discover"
 import { useToast } from "@/components/error-toast"
-import { Home as HomeIcon } from "lucide-react"
+import { LoadingState } from "@/components/ui/loading-state"
 import type { Moment } from "@/types/moments"
 
 interface Stats {
@@ -25,11 +25,46 @@ interface Stats {
   totalApplications: number
 }
 
-function getGreeting(): string {
+interface GreetingContext {
+  activeCount: number
+  graduatedCount: number
+  upcomingMomentsCount: number
+  hasCheckedIn: boolean
+  checkinEnabled: boolean
+}
+
+function getSmartGreeting(displayName: string, context: GreetingContext): { greeting: string; subtitle: string } {
   const hour = new Date().getHours()
-  if (hour < 12) return "Good morning"
-  if (hour < 17) return "Good afternoon"
-  return "Good evening"
+  let timeGreeting = "Good evening"
+  if (hour < 12) timeGreeting = "Good morning"
+  else if (hour < 17) timeGreeting = "Good afternoon"
+
+  const greeting = `${timeGreeting}, ${displayName}`
+
+  // Smart subtitle based on context
+  if (context.checkinEnabled && !context.hasCheckedIn && context.activeCount > 0) {
+    return { greeting, subtitle: "Ready to reflect on today's thought?" }
+  }
+
+  if (context.upcomingMomentsCount > 0) {
+    const momentText = context.upcomingMomentsCount === 1 ? "moment" : "moments"
+    return { greeting, subtitle: `You have ${context.upcomingMomentsCount} upcoming ${momentText} to prepare for` }
+  }
+
+  if (context.activeCount === 0) {
+    return { greeting, subtitle: "Start building your knowledge by capturing your first thought" }
+  }
+
+  if (context.graduatedCount > 0 && context.graduatedCount >= context.activeCount) {
+    return { greeting, subtitle: `Amazing progress! ${context.graduatedCount} thoughts graduated to mastery` }
+  }
+
+  if (context.activeCount > 0) {
+    const thoughtText = context.activeCount === 1 ? "thought" : "thoughts"
+    return { greeting, subtitle: `${context.activeCount} active ${thoughtText} ready for application` }
+  }
+
+  return { greeting, subtitle: "Here's your knowledge dashboard" }
 }
 
 export default function HomePage() {
@@ -137,54 +172,56 @@ export default function HomePage() {
   }, [router, supabase, showError])
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-            <HomeIcon className="h-8 w-8 text-white" />
-          </div>
-          <p className="text-muted-foreground">Loading your dashboard...</p>
-        </div>
-      </div>
-    )
+    return <LoadingState variant="fullscreen" message="Gathering your thoughts..." />
   }
 
   const displayName = userName || userEmail?.split("@")[0] || "there"
 
+  // Get smart greeting based on context
+  const { greeting, subtitle } = getSmartGreeting(displayName, {
+    activeCount: stats.activeGems,
+    graduatedCount: stats.graduatedGems,
+    upcomingMomentsCount: moments.length,
+    hasCheckedIn: alreadyCheckedIn,
+    checkinEnabled,
+  })
+
   return (
     <LayoutShell userEmail={userEmail} contexts={contexts} calendarConnected={calendarConnected}>
       <div className="p-4 md:p-8 max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
+        {/* Header with smart greeting */}
+        <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-            {getGreeting()}, {displayName}!
+            {greeting}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Here&apos;s your knowledge dashboard
+            {subtitle}
           </p>
         </div>
 
-        {/* Quick Actions - At the very top */}
-        <QuickActionsRow className="mb-6" />
-
-        {/* Today's Thought - only show if checkin is enabled */}
+        {/* Primary action: Today's Thought - The core loop, shown first */}
         {checkinEnabled && (
           <DailyThoughtCard thought={dailyThought} alreadyCheckedIn={alreadyCheckedIn} contexts={contexts} className="mb-6" />
         )}
 
-        {/* Discover Something New */}
+        {/* Quick Actions - Easy access to main features */}
+        <QuickActionsRow className="mb-6" />
+
+        {/* Upcoming Moments - Time-sensitive, shown early */}
+        {moments.length > 0 && (
+          <UpcomingMomentsCard moments={moments} className="mb-6" />
+        )}
+
+        {/* Discover Something New - AI-powered discovery */}
         <div className="mb-6">
           <DiscoverCard contexts={contexts} />
         </div>
 
-        {/* Upcoming Moments */}
-        <UpcomingMomentsCard moments={moments} className="mb-6" />
+        {/* Recent Activity - What's happening in your library */}
+        <RecentActivityCard contexts={contexts} className="mb-6" />
 
-        {/* Activity Stats */}
-        <ActivityStatsCard stats={stats} className="mb-6" />
-
-        {/* Recent Activity - At the bottom */}
-        <RecentActivityCard contexts={contexts} />
+        {/* Activity Stats - Summary at the bottom */}
+        <ActivityStatsCard stats={stats} />
       </div>
     </LayoutShell>
   )

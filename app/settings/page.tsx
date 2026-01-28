@@ -160,7 +160,14 @@ function getThemeColor(theme: Theme): string {
     forest: "#eab308",
     rose: "#f472b6",
     nord: "#88c0d0",
+    cyber: "#00ffff",
+    copper: "#b87333",
+    slate: "#64748b",
+    aurora: "#22d3ee",
+    ember: "#ea580c",
+    onyx: "#a1a1aa",
     sunrise: "#f59e0b",
+    daylight: "#0ea5e9",
   }
   return colors[theme]
 }

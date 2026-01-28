@@ -4,10 +4,12 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Sparkles, Search, Shuffle, Loader2, Info } from "lucide-react"
+import { Sparkle, MagnifyingGlass, Shuffle, Info } from "@phosphor-icons/react"
+import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ContextChip } from "./ContextChip"
 import { DiscoveryGrid } from "./DiscoveryGrid"
+import { AIBadge, AIThinking } from "@/components/ui/ai-badge"
 import type { ContextWithCount } from "@/lib/types/context"
 import type { Discovery, DiscoveryUsage } from "@/lib/types/discovery"
 
@@ -140,14 +142,19 @@ export function DiscoverCard({ contexts, className }: DiscoverCardProps) {
   const directedDisabled = usage?.directed_used || isLoading
 
   return (
-    <Card className={cn("overflow-hidden", className)}>
-      <div className="h-1 bg-gradient-to-r from-violet-500 to-purple-600" />
+    <Card className={cn("overflow-hidden glass-card relative", className)}>
+      {/* AI gradient border top */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] ai-gradient" />
+
       <CardHeader className="pb-2">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
-            <Sparkles className="h-5 w-5 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl ai-gradient flex items-center justify-center shadow-lg">
+              <Sparkle className="h-5 w-5 text-white" weight="fill" />
+            </div>
+            <CardTitle className="text-lg">Discover Something New</CardTitle>
           </div>
-          <CardTitle className="text-lg">Discover Something New!</CardTitle>
+          <AIBadge variant="subtle" label="AI Powered" size="md" />
         </div>
       </CardHeader>
       <CardContent>
@@ -185,19 +192,24 @@ export function DiscoverCard({ contexts, className }: DiscoverCardProps) {
           </div>
         )}
 
-        {!bothSessionsUsed && (
+        {/* AI Thinking State */}
+        {isLoading && (
+          <AIThinking message="Discovering personalized insights..." />
+        )}
+
+        {!bothSessionsUsed && !isLoading && (
           <>
             {/* Search input */}
             <div className="flex gap-2 mb-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search for a topic..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   disabled={directedDisabled}
-                  className="pl-9"
+                  className="pl-9 glass-input"
                 />
               </div>
               <Button
@@ -205,11 +217,7 @@ export function DiscoverCard({ contexts, className }: DiscoverCardProps) {
                 disabled={directedDisabled || !query.trim()}
                 className="shrink-0"
               >
-                {isLoading && sessionType === null ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Search"
-                )}
+                Search
               </Button>
             </div>
 
@@ -247,16 +255,10 @@ export function DiscoverCard({ contexts, className }: DiscoverCardProps) {
               variant="outline"
               onClick={handleSurpriseMe}
               disabled={curatedDisabled}
-              className="w-full gap-2"
+              className="w-full gap-2 glass-button-secondary"
             >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <Shuffle className="h-4 w-4" />
-                  Surprise Me
-                </>
-              )}
+              <Shuffle className="h-4 w-4" />
+              Surprise Me
             </Button>
           </>
         )}
