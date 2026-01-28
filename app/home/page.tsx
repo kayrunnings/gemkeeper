@@ -78,6 +78,7 @@ export default function HomePage() {
   const [userName, setUserName] = useState<string | null>(null)
   const [calendarConnected, setCalendarConnected] = useState(false)
   const [checkinEnabled, setCheckinEnabled] = useState(true)
+  const [hasAIConsent, setHasAIConsent] = useState(false)
   const router = useRouter()
   const supabase = createClient()
   const { showError } = useToast()
@@ -92,10 +93,10 @@ export default function HomePage() {
         }
         setUserEmail(user.email ?? null)
 
-        // Fetch profile for name and checkin settings
+        // Fetch profile for name, checkin settings, and AI consent
         const { data: profile } = await supabase
           .from("profiles")
-          .select("name, checkin_enabled")
+          .select("name, checkin_enabled, ai_consent_given")
           .eq("id", user.id)
           .single()
 
@@ -104,6 +105,7 @@ export default function HomePage() {
         }
         // Set checkin_enabled, default to true if not set
         setCheckinEnabled(profile?.checkin_enabled ?? true)
+        setHasAIConsent(profile?.ai_consent_given ?? false)
 
         // Fetch all data in parallel
         const [thoughtResult, momentsResult, contextsResult, activeGemsResult, graduatedGemsResult, calendarResult] = await Promise.all([
@@ -205,7 +207,7 @@ export default function HomePage() {
         )}
 
         {/* Quick Actions - Easy access to main features */}
-        <QuickActionsRow className="mb-6" />
+        <QuickActionsRow className="mb-6" hasAIConsent={hasAIConsent} />
 
         {/* Upcoming Moments - Time-sensitive, shown early */}
         {moments.length > 0 && (

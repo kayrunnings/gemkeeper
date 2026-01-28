@@ -40,6 +40,7 @@ import { useGlobalShortcuts } from "@/lib/hooks/useGlobalShortcuts"
 import { BottomNavigation } from "@/components/layout/BottomNavigation"
 import { FloatingMomentButton } from "@/components/moments/FloatingMomentButton"
 import { AICaptureModal } from "@/components/capture/AICaptureModal"
+import { ThoughtForm } from "@/components/thought-form"
 import { ThemePicker } from "@/components/theme-picker"
 import type { ContextWithCount } from "@/lib/types/context"
 
@@ -102,6 +103,7 @@ export function LayoutShell({
   const { isCollapsedByDefault } = useSidebar()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(isCollapsedByDefault)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isThoughtFormOpen, setIsThoughtFormOpen] = useState(false)
   const { isSearchOpen, setIsSearchOpen, isCaptureOpen, setIsCaptureOpen } = useGlobalShortcuts()
   const pathname = usePathname()
   const router = useRouter()
@@ -516,6 +518,17 @@ export function LayoutShell({
       <FloatingMomentButton
         calendarConnected={calendarConnected}
         onAICapture={() => setIsCaptureOpen(true)}
+        onAddThought={() => setIsThoughtFormOpen(true)}
+      />
+
+      {/* Quick Add Thought Modal */}
+      <ThoughtForm
+        isOpen={isThoughtFormOpen}
+        onClose={() => setIsThoughtFormOpen(false)}
+        onThoughtCreated={() => {
+          setIsThoughtFormOpen(false)
+          router.refresh()
+        }}
       />
 
       {/* Mobile Bottom Navigation */}
