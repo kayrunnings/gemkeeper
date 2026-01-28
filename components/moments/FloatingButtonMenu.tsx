@@ -1,10 +1,10 @@
 "use client"
 
-import { Calendar, PencilSimple, Sparkle, X } from "@phosphor-icons/react"
+import { Calendar, PencilSimple, Sparkle, X, Lightbulb } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 
 interface FloatingButtonMenuProps {
-  onSelect: (option: 'capture' | 'calendar' | 'describe') => void
+  onSelect: (option: 'capture' | 'calendar' | 'describe' | 'thought') => void
   onClose: () => void
   showCalendarOption?: boolean
 }
@@ -52,6 +52,24 @@ export function FloatingButtonMenu({
           <div>
             <div className="font-medium">AI Capture</div>
             <div className="text-xs text-muted-foreground">Extract insights from content</div>
+          </div>
+        </button>
+
+        {/* Add Thought */}
+        <button
+          onClick={() => onSelect('thought')}
+          className={cn(
+            "w-full flex items-center gap-3 px-4 py-3",
+            "text-left text-sm",
+            "hover:bg-muted transition-colors"
+          )}
+        >
+          <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
+            <Lightbulb className="h-5 w-5 text-amber-500" weight="fill" />
+          </div>
+          <div>
+            <div className="font-medium">Add Thought</div>
+            <div className="text-xs text-muted-foreground">Capture a quick insight</div>
           </div>
         </button>
 

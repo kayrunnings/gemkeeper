@@ -12,6 +12,7 @@ import { CalendarEventPicker } from "./CalendarEventPicker"
 interface FloatingMomentButtonProps {
   calendarConnected?: boolean
   onAICapture?: () => void
+  onAddThought?: () => void
   className?: string
 }
 
@@ -20,6 +21,7 @@ type ActivePanel = null | 'menu' | 'quick-entry' | 'calendar'
 export function FloatingMomentButton({
   calendarConnected = false,
   onAICapture,
+  onAddThought,
   className,
 }: FloatingMomentButtonProps) {
   const pathname = usePathname()
@@ -73,10 +75,13 @@ export function FloatingMomentButton({
     setActivePanel(activePanel === null ? 'menu' : null)
   }
 
-  const handleMenuSelect = (option: 'capture' | 'calendar' | 'describe') => {
+  const handleMenuSelect = (option: 'capture' | 'calendar' | 'describe' | 'thought') => {
     if (option === 'capture') {
       setActivePanel(null)
       onAICapture?.()
+    } else if (option === 'thought') {
+      setActivePanel(null)
+      onAddThought?.()
     } else if (option === 'calendar') {
       setActivePanel('calendar')
     } else {
