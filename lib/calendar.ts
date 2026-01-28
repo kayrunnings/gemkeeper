@@ -1,10 +1,14 @@
 import { google } from "googleapis"
 import { createClient } from "@/lib/supabase/client"
+import type { SupabaseClient } from "@supabase/supabase-js"
 import type {
   CalendarConnection,
   CalendarEvent,
   CalendarSyncResult,
 } from "@/types/calendar"
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnySupabaseClient = SupabaseClient<any, any, any>
 
 // Google OAuth2 client setup
 function getGoogleOAuth2Client() {
@@ -191,11 +195,14 @@ export async function updateCalendarSettings(
 
 /**
  * Refresh Google OAuth token
+ * @param connectionId - The calendar connection ID
+ * @param externalSupabase - Optional Supabase client (use server client when calling from API routes)
  */
 export async function refreshGoogleToken(
-  connectionId: string
+  connectionId: string,
+  externalSupabase?: AnySupabaseClient
 ): Promise<{ error: string | null }> {
-  const supabase = createClient()
+  const supabase = externalSupabase || createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -250,11 +257,14 @@ export async function refreshGoogleToken(
 
 /**
  * Sync calendar events from Google Calendar
+ * @param connectionId - The calendar connection ID
+ * @param externalSupabase - Optional Supabase client (use server client when calling from API routes)
  */
 export async function syncCalendarEvents(
-  connectionId: string
+  connectionId: string,
+  externalSupabase?: AnySupabaseClient
 ): Promise<{ result: CalendarSyncResult | null; error: string | null }> {
-  const supabase = createClient()
+  const supabase = externalSupabase || createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -284,7 +294,7 @@ export async function syncCalendarEvents(
     // Check if token needs refresh
     const tokenExpiry = new Date(connection.token_expires_at)
     if (tokenExpiry < new Date()) {
-      const refreshResult = await refreshGoogleToken(connectionId)
+      const refreshResult = await refreshGoogleToken(connectionId, supabase)
       if (refreshResult.error) {
         return { result: null, error: refreshResult.error }
       }

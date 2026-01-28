@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { result, error } = await syncCalendarEvents(connectionId)
+    const { result, error } = await syncCalendarEvents(connectionId, supabase)
 
     if (error) {
       return NextResponse.json({ error }, { status: 500 })
