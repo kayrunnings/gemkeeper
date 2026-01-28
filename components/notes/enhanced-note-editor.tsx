@@ -37,7 +37,6 @@ import {
   Wand2,
   Link2,
   Minimize2,
-  Maximize2,
   Save,
 } from "lucide-react"
 import { RichTextEditor } from "./rich-text-editor"
@@ -57,16 +56,6 @@ interface ExtractedThought {
   source_quote?: string
 }
 
-interface NoteDraft {
-  title: string
-  content: string
-  selectedContextId: string | null
-  noteId?: string
-  timestamp: number
-}
-
-const DRAFT_STORAGE_KEY = "gemkeeper_note_draft"
-
 interface EnhancedNoteEditorProps {
   note: Note | null
   isOpen: boolean
@@ -75,8 +64,9 @@ interface EnhancedNoteEditorProps {
   contexts?: Context[]
   availableThoughts?: Thought[]
   hasAIConsent?: boolean
-  onMinimize?: (draft: NoteDraft) => void
-  minimizedDraft?: NoteDraft | null
+  // Database-backed draft support
+  onSaveDraft?: (title: string, content: string, existingDraftId?: string) => Promise<Note | null>
+  isDraft?: boolean
 }
 
 interface AttachmentFile {
@@ -90,8 +80,6 @@ interface AttachmentFile {
   error?: string
 }
 
-export type { NoteDraft }
-
 export function EnhancedNoteEditor({
   note,
   isOpen,
@@ -100,8 +88,8 @@ export function EnhancedNoteEditor({
   contexts = [],
   availableThoughts = [],
   hasAIConsent = false,
-  onMinimize,
-  minimizedDraft,
+  onSaveDraft,
+  isDraft = false,
 }: EnhancedNoteEditorProps) {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
@@ -112,9 +100,10 @@ export function EnhancedNoteEditor({
   const [showThoughtPicker, setShowThoughtPicker] = useState(false)
   const [thoughtSearchQuery, setThoughtSearchQuery] = useState("")
   const [isSaving, setIsSaving] = useState(false)
-  const [hasDraft, setHasDraft] = useState(false)
   const [draftSaved, setDraftSaved] = useState(false)
+  const [currentDraftId, setCurrentDraftId] = useState<string | undefined>(undefined)
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const isSavingDraftRef = useRef(false)
 
   // Collapsible sections state
   const [attachmentsOpen, setAttachmentsOpen] = useState(true)
@@ -125,17 +114,18 @@ export function EnhancedNoteEditor({
   const [extractedThoughts, setExtractedThoughts] = useState<ExtractedThought[]>([])
   const [selectedExtracted, setSelectedExtracted] = useState<Set<number>>(new Set())
 
-  // Check for existing draft on mount
+  // Initialize draft ID when editing a draft
   useEffect(() => {
-    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY)
-    if (savedDraft) {
-      setHasDraft(true)
+    if (note?.is_draft) {
+      setCurrentDraftId(note.id)
+    } else if (!note) {
+      setCurrentDraftId(undefined)
     }
-  }, [])
+  }, [note])
 
-  // Auto-save draft when content changes
+  // Auto-save draft to database when content changes (debounced)
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen || !onSaveDraft) return
     if (!title.trim() && !content.trim()) return
 
     // Clear existing timer
@@ -143,81 +133,63 @@ export function EnhancedNoteEditor({
       clearTimeout(autoSaveTimerRef.current)
     }
 
-    // Set new auto-save timer (save after 2 seconds of inactivity)
-    autoSaveTimerRef.current = setTimeout(() => {
-      saveDraft()
-    }, 2000)
+    // Set new auto-save timer (save after 3 seconds of inactivity)
+    autoSaveTimerRef.current = setTimeout(async () => {
+      if (isSavingDraftRef.current) return
+      isSavingDraftRef.current = true
+
+      try {
+        const savedDraft = await onSaveDraft(title, content, currentDraftId)
+        if (savedDraft) {
+          setCurrentDraftId(savedDraft.id)
+          setDraftSaved(true)
+          // Reset the saved indicator after 2 seconds
+          setTimeout(() => setDraftSaved(false), 2000)
+        }
+      } finally {
+        isSavingDraftRef.current = false
+      }
+    }, 3000)
 
     return () => {
       if (autoSaveTimerRef.current) {
         clearTimeout(autoSaveTimerRef.current)
       }
     }
-  }, [title, content, selectedContextId, isOpen])
+  }, [title, content, isOpen, onSaveDraft, currentDraftId])
 
-  const saveDraft = useCallback(() => {
-    if (!title.trim() && !content.trim()) return
-
-    const draft: NoteDraft = {
-      title,
-      content,
-      selectedContextId,
-      noteId: note?.id,
-      timestamp: Date.now(),
+  // Handle minimize - save draft to database and close
+  const handleMinimize = useCallback(async () => {
+    if (!onSaveDraft) {
+      onClose()
+      return
     }
-    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft))
-    setDraftSaved(true)
-    setHasDraft(true)
-    // Reset the saved indicator after 2 seconds
-    setTimeout(() => setDraftSaved(false), 2000)
-  }, [title, content, selectedContextId, note?.id])
 
-  const loadDraft = useCallback(() => {
-    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY)
-    if (savedDraft) {
-      const draft: NoteDraft = JSON.parse(savedDraft)
-      setTitle(draft.title)
-      setContent(draft.content)
-      setSelectedContextId(draft.selectedContextId)
-    }
-  }, [])
-
-  const clearDraft = useCallback(() => {
-    localStorage.removeItem(DRAFT_STORAGE_KEY)
-    setHasDraft(false)
-  }, [])
-
-  const handleMinimize = useCallback(() => {
-    const draft: NoteDraft = {
-      title,
-      content,
-      selectedContextId,
-      noteId: note?.id,
-      timestamp: Date.now(),
-    }
-    // Save to localStorage before minimizing
-    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft))
-    setHasDraft(true)
-    if (onMinimize) {
-      onMinimize(draft)
+    // Save draft before closing
+    if (title.trim() || content.trim()) {
+      isSavingDraftRef.current = true
+      try {
+        const savedDraft = await onSaveDraft(title, content, currentDraftId)
+        if (savedDraft) {
+          setCurrentDraftId(savedDraft.id)
+        }
+      } finally {
+        isSavingDraftRef.current = false
+      }
     }
     onClose()
-  }, [title, content, selectedContextId, note?.id, onMinimize, onClose])
+  }, [title, content, currentDraftId, onSaveDraft, onClose])
 
   // Initialize form when dialog opens
   useEffect(() => {
     if (isOpen) {
-      // Check if we have a minimized draft to restore
-      if (minimizedDraft) {
-        setTitle(minimizedDraft.title)
-        setContent(minimizedDraft.content)
-        setSelectedContextId(minimizedDraft.selectedContextId)
-        if (minimizedDraft.noteId) {
-          loadLinkedThoughts(minimizedDraft.noteId)
-        }
-      } else if (note) {
+      if (note) {
         setTitle(note.title || "")
         setContent(note.content || "")
+        // Set draft ID if this is a draft
+        if (note.is_draft) {
+          setCurrentDraftId(note.id)
+        }
         // Load existing attachments
         if (note.attachments) {
           setAttachments(
@@ -234,22 +206,18 @@ export function EnhancedNoteEditor({
         // Load linked thoughts
         loadLinkedThoughts(note.id)
       } else {
-        // Check for saved draft in localStorage
-        const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY)
-        if (savedDraft && !note) {
-          // Offer to restore draft
-          setHasDraft(true)
-        }
+        // New note - reset everything
         setTitle("")
         setContent("")
         setSelectedContextId(null)
         setAttachments([])
         setLinkedThoughts([])
+        setCurrentDraftId(undefined)
       }
       setExtractedThoughts([])
       setSelectedExtracted(new Set())
     }
-  }, [isOpen, note, minimizedDraft])
+  }, [isOpen, note])
 
   const loadLinkedThoughts = async (noteId: string) => {
     const { data, error } = await getLinkedThoughts(noteId)
@@ -268,9 +236,9 @@ export function EnhancedNoteEditor({
       if (selectedContextId) {
         noteData.context_id = selectedContextId
       }
-      onSave(noteData, note?.id)
-      // Clear draft after successful save
-      clearDraft()
+      // Pass note ID (or draft ID if editing a draft)
+      const existingId = note?.id || currentDraftId
+      onSave(noteData, existingId)
       onClose()
     } finally {
       setIsSaving(false)
@@ -501,32 +469,13 @@ export function EnhancedNoteEditor({
           </div>
         </DialogHeader>
 
-        {/* Draft restore banner */}
-        {hasDraft && !note && !minimizedDraft && !title && !content && (
-          <div className="mx-6 mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-200 dark:border-amber-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Save className="h-4 w-4 text-amber-500" />
-              <span className="text-sm">You have an unsaved draft from a previous session.</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={loadDraft}
-                className="text-xs"
-              >
-                <Maximize2 className="h-3 w-3 mr-1" />
-                Restore Draft
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearDraft}
-                className="text-xs text-muted-foreground"
-              >
-                Discard
-              </Button>
-            </div>
+        {/* Draft indicator banner */}
+        {isDraft && (
+          <div className="mx-6 mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-200 dark:border-amber-800 flex items-center gap-2">
+            <Save className="h-4 w-4 text-amber-500" />
+            <span className="text-sm text-amber-700 dark:text-amber-300">
+              Editing draft - changes auto-save. Click &quot;Publish Note&quot; when ready.
+            </span>
           </div>
         )}
 
@@ -879,8 +828,10 @@ export function EnhancedNoteEditor({
             {isSaving ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
+                {isDraft ? "Publishing..." : "Saving..."}
               </>
+            ) : isDraft ? (
+              "Publish Note"
             ) : note ? (
               "Save Changes"
             ) : (

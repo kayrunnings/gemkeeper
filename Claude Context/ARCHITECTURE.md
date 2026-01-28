@@ -504,11 +504,14 @@ Standalone long-form notes, separate from thoughts. Notes can contain markdown c
 | title | TEXT | Note title |
 | content | TEXT | Markdown content (no length limit) |
 | folder_id | UUID | FK → folders (optional) |
+| is_draft | BOOLEAN | Whether note is a draft (default: false) |
 | search_vector | TSVECTOR | Full-text search index |
 | created_at | TIMESTAMPTZ | |
 | updated_at | TIMESTAMPTZ | |
 
 **Note:** Notes are a separate feature from "thought reflections" (which are attached to individual thoughts). Notes are standalone documents that can be organized into folders and have thoughts extracted from them.
+
+**Drafts:** When `is_draft` is true, the note is a work-in-progress that auto-saves to the database. Drafts appear in a dedicated "Drafts" section in the library sidebar and can be "published" (converted to regular notes) when ready. Drafts sync across devices since they're stored in the database.
 
 #### `sources` (ThoughtFolio 2.0)
 First-class source entities representing books, articles, podcasts, etc.

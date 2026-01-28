@@ -31,6 +31,7 @@ export interface Note {
   // Optional fields that may or may not exist in the database
   tags?: string[]
   is_favorite?: boolean
+  is_draft?: boolean
 }
 
 // For creating/updating notes (without server-generated fields)
@@ -38,6 +39,7 @@ export interface NoteInput {
   title?: string | null
   content?: string | null
   folder_id?: string | null
+  is_draft?: boolean
 }
 
 // For uploading attachments
