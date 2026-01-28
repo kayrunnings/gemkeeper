@@ -181,6 +181,7 @@ gemkeeper/
 | Runtime | React | 19.2.3 |
 | Styling | Tailwind CSS | 4.x |
 | UI Components | shadcn/ui + Radix UI | Latest |
+| Rich Text Editor | TipTap (@tiptap/react, extension-table) | 2.x |
 | Database | Supabase (PostgreSQL) | Latest |
 | Authentication | Supabase Auth (@supabase/ssr) | 0.8.0 |
 | AI/ML | Google Gemini API | 2.0 Flash |
@@ -1066,12 +1067,21 @@ interface SearchResult {
 ### Notes Components
 | Component | File | Purpose |
 |-----------|------|---------|
-| Rich Text Editor | `components/notes/rich-text-editor.tsx` | TipTap WYSIWYG editor with AI writing assist |
-| Enhanced Note Editor | `components/notes/enhanced-note-editor.tsx` | Full modal with tabs for edit, attachments, thought links |
+| Rich Text Editor | `components/notes/rich-text-editor.tsx` | TipTap WYSIWYG editor with formatting, tables, and AI writing assist |
+| Enhanced Note Editor | `components/notes/enhanced-note-editor.tsx` | Full-screen modal (95vw x 90vh) with tabs for edit, attachments, thought links |
 | Note Editor (Legacy) | `components/note-editor.tsx` | Basic markdown note editing |
 | Note Card | `components/note-card.tsx` | Note display in lists |
 | Notes List | `components/notes-list.tsx` | List of user's notes |
 | Extract from Note | `components/extract-from-note-modal.tsx` | Extract thoughts from note content |
+
+#### Rich Text Editor Features
+The `RichTextEditor` component uses TipTap and provides:
+- **Text formatting:** Bold, italic, underline, headings (H1, H2)
+- **Lists:** Bullet lists, numbered lists, blockquotes
+- **Media:** Links, images (via URL)
+- **Tables:** Insert 3x3 tables with header rows, add/delete rows and columns
+- **History:** Undo/redo support
+- **AI Assist:** Writing assistance dropdown (improve, simplify, expand, summarize, fix grammar, continue) - requires AI consent
 
 ### Discovery Components
 | Component | File | Purpose |
