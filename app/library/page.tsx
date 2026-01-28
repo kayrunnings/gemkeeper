@@ -154,7 +154,7 @@ function LibraryContent() {
           />
         )
       case "notes":
-        return <LibraryNotesTab searchQuery={debouncedSearchQuery} sortOrder={sortOrder} />
+        return <LibraryNotesTab searchQuery={debouncedSearchQuery} sortOrder={sortOrder} contexts={contexts} />
       case "sources":
         return <LibrarySourcesTab searchQuery={debouncedSearchQuery} sortOrder={sortOrder} />
       case "archive":

@@ -103,9 +103,11 @@ gemkeeper/
 │   │   ├── CaptureSuggestions.tsx # Results display
 │   │   └── CaptureItemCard.tsx   # Item card with selection
 │   ├── notes/                    # Notes components
-│   │   ├── note-editor.tsx       # Note editing with markdown
-│   │   ├── note-card.tsx         # Note display card
-│   │   └── notes-list.tsx        # Notes list view
+│   │   ├── rich-text-editor.tsx  # TipTap rich text editor with AI assist
+│   │   └── enhanced-note-editor.tsx # Full note editor modal with attachments/links
+│   ├── note-editor.tsx           # Basic note editor (markdown, legacy)
+│   ├── note-card.tsx             # Note display card
+│   ├── notes-list.tsx            # Notes list view
 │   ├── search/                   # Search components (ThoughtFolio 2.0)
 │   │   ├── GlobalSearch.tsx      # Cmd+K search modal
 │   │   ├── SearchResults.tsx     # Grouped search results
@@ -645,6 +647,24 @@ Extract thoughts from text content.
 }
 ```
 
+#### POST `/api/ai/write-assist`
+AI-powered writing assistance for the rich text editor.
+
+**Request:**
+```typescript
+{
+  prompt: string;  // Action: "improve", "simplify", "expand", "summarize", "fix-grammar", "continue"
+  text: string;    // Selected text or full content to process
+}
+```
+
+**Response:**
+```typescript
+{
+  result: string;  // AI-generated improved text
+}
+```
+
 #### POST `/api/extract/url`
 Extract thoughts from URL (article or YouTube).
 
@@ -1046,7 +1066,9 @@ interface SearchResult {
 ### Notes Components
 | Component | File | Purpose |
 |-----------|------|---------|
-| Note Editor | `components/note-editor.tsx` | Markdown note editing |
+| Rich Text Editor | `components/notes/rich-text-editor.tsx` | TipTap WYSIWYG editor with AI writing assist |
+| Enhanced Note Editor | `components/notes/enhanced-note-editor.tsx` | Full modal with tabs for edit, attachments, thought links |
+| Note Editor (Legacy) | `components/note-editor.tsx` | Basic markdown note editing |
 | Note Card | `components/note-card.tsx` | Note display in lists |
 | Notes List | `components/notes-list.tsx` | List of user's notes |
 | Extract from Note | `components/extract-from-note-modal.tsx` | Extract thoughts from note content |
