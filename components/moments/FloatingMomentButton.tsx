@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
-import { Plus, X } from "lucide-react"
+import { Plus, X } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 import { useScrollVisibility } from "@/lib/hooks/useScrollVisibility"
 import { FloatingButtonMenu } from "./FloatingButtonMenu"

@@ -157,6 +157,9 @@ function getThemeColor(theme: Theme): string {
     amethyst: "#a78bfa",
     ocean: "#3b82f6",
     ruby: "#f43f5e",
+    forest: "#eab308",
+    rose: "#f472b6",
+    nord: "#88c0d0",
     sunrise: "#f59e0b",
   }
   return colors[theme]

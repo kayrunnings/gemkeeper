@@ -3,12 +3,14 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Home, Library, Zap, Sparkles } from "lucide-react"
+import { House, Books, Lightning, Compass } from "@phosphor-icons/react"
+
+type PhosphorIcon = React.ComponentType<{ className?: string; weight?: "thin" | "light" | "regular" | "bold" | "fill" | "duotone" }>
 
 interface NavItem {
   href: string
   label: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: PhosphorIcon
   matchPaths?: string[]
 }
 
@@ -16,25 +18,25 @@ const navItems: NavItem[] = [
   {
     href: "/home",
     label: "Home",
-    icon: Home,
+    icon: House,
     matchPaths: ["/home"]
   },
   {
     href: "/library",
     label: "Library",
-    icon: Library,
+    icon: Books,
     matchPaths: ["/library", "/thoughts", "/notes", "/dashboard"]
   },
   {
     href: "/checkin",
     label: "Active",
-    icon: Zap,
+    icon: Lightning,
     matchPaths: ["/checkin", "/daily"]
   },
   {
     href: "/discover",
     label: "Discover",
-    icon: Sparkles,
+    icon: Compass,
     matchPaths: ["/discover"]
   },
 ]

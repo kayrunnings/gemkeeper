@@ -1,6 +1,6 @@
 "use client"
 
-import { Calendar, Pencil, Sparkles, X } from "lucide-react"
+import { Calendar, PencilSimple, Sparkle, X } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 
 interface FloatingButtonMenuProps {
@@ -47,7 +47,7 @@ export function FloatingButtonMenu({
           )}
         >
           <div className="w-9 h-9 rounded-lg ai-gradient flex items-center justify-center">
-            <Sparkles className="h-5 w-5 text-white" />
+            <Sparkle className="h-5 w-5 text-white" weight="fill" />
           </div>
           <div>
             <div className="font-medium">AI Capture</div>
@@ -87,7 +87,7 @@ export function FloatingButtonMenu({
           )}
         >
           <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
-            <Pencil className="h-5 w-5 text-blue-500" />
+            <PencilSimple className="h-5 w-5 text-blue-500" />
           </div>
           <div>
             <div className="font-medium">New Moment</div>
