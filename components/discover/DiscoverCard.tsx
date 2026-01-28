@@ -66,7 +66,11 @@ export function DiscoverCard({ contexts, className }: DiscoverCardProps) {
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || "Failed to generate discoveries")
+        if (typeof data.error === 'string') {
+          setError(data.error)
+        } else {
+          setError("Failed to generate discoveries")
+        }
         return
       }
 

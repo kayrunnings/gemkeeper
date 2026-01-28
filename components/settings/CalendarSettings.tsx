@@ -245,7 +245,9 @@ export function CalendarSettings({ className }: CalendarSettingsProps) {
                 <>
                   <AlertCircle className="h-4 w-4 text-destructive" />
                   <span className="text-destructive">
-                    {googleConnection.sync_error}
+                    {typeof googleConnection.sync_error === 'string' 
+                      ? googleConnection.sync_error 
+                      : 'Sync error occurred. Please try again.'}
                   </span>
                 </>
               ) : (
