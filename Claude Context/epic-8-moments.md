@@ -244,3 +244,21 @@ Epic 8 was completed in January 2026. Key implementations:
 - Auto-moment creation from calendar events
 - Prep card display with relevance explanations
 - Moment history and completion tracking
+
+---
+
+## Bug Fixes
+
+### January 2026: Calendar Sync Not Creating Moments
+
+**Issue:** Calendar events were synced to `calendar_events_cache` but no moments were being created, causing "No calendar moments found" in the UI.
+
+**Root Cause:** The `checkForUpcomingEvents()` function in `lib/calendar-sync.ts` was never called after `syncCalendarEvents()`. This function is responsible for converting cached calendar events into actual moments.
+
+**Fix:** Updated `components/settings/CalendarSettings.tsx` to call `checkForUpcomingEvents()` after every calendar sync (both initial OAuth connection and manual sync).
+
+**Key Lesson:** Calendar sync is a two-step process:
+1. `syncCalendarEvents()` — Caches events from Google Calendar
+2. `checkForUpcomingEvents()` — Creates moments from cached events
+
+Both steps must execute for calendar moments to appear.
