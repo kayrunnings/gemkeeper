@@ -1068,7 +1068,8 @@ interface SearchResult {
 | Component | File | Purpose |
 |-----------|------|---------|
 | Rich Text Editor | `components/notes/rich-text-editor.tsx` | TipTap WYSIWYG editor with formatting, tables, and AI writing assist |
-| Enhanced Note Editor | `components/notes/enhanced-note-editor.tsx` | Full-screen modal (95vw x 90vh) with tabs for edit, attachments, thought links |
+| Enhanced Note Editor | `components/notes/enhanced-note-editor.tsx` | Full-screen modal with inline sidebar for attachments/thoughts, AI extraction |
+| Collapsible | `components/ui/collapsible.tsx` | Radix UI collapsible sections |
 | Note Editor (Legacy) | `components/note-editor.tsx` | Basic markdown note editing |
 | Note Card | `components/note-card.tsx` | Note display in lists |
 | Notes List | `components/notes-list.tsx` | List of user's notes |
@@ -1082,6 +1083,15 @@ The `RichTextEditor` component uses TipTap and provides:
 - **Tables:** Insert 3x3 tables with header rows, add/delete rows and columns
 - **History:** Undo/redo support
 - **AI Assist:** Writing assistance dropdown (improve, simplify, expand, summarize, fix grammar, continue) - requires AI consent
+
+#### Enhanced Note Editor Layout
+The note editor modal (95vw x 90vh) features a modern layout:
+- **Main content area:** Title input, context badges, rich text editor
+- **AI Features panel:** Prominent violet-themed section with "Extract Thoughts from Note" button
+- **Right sidebar (desktop):** Collapsible sections for Attachments and Linked Thoughts
+- **AI Thought extraction:** Extract thoughts directly from note content, select and save as passive thoughts
+- **Inline attachments:** Upload files directly from sidebar without switching tabs
+- **Link/Extract buttons:** Quick actions to link existing thoughts or extract new ones with AI
 
 ### Discovery Components
 | Component | File | Purpose |
