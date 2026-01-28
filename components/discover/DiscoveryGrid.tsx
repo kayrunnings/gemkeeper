@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Sparkles, X, Lightbulb } from "lucide-react"
+import { Sparkles, X, Lightbulb, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DiscoveryCard } from "./DiscoveryCard"
 import { DiscoveryDetail } from "./DiscoveryDetail"
@@ -17,6 +17,8 @@ interface DiscoveryGridProps {
   contexts: ContextWithCount[]
   onDone: () => void
   onDiscoveryUpdate: (discovery: Discovery) => void
+  onRefresh?: () => void
+  isRefreshing?: boolean
   className?: string
 }
 
@@ -27,6 +29,8 @@ export function DiscoveryGrid({
   contexts,
   onDone,
   onDiscoveryUpdate,
+  onRefresh,
+  isRefreshing,
   className,
 }: DiscoveryGridProps) {
   const [selectedDiscovery, setSelectedDiscovery] = useState<Discovery | null>(null)
@@ -72,12 +76,29 @@ export function DiscoveryGrid({
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
-              <CardTitle className="text-lg">{getHeaderText()}</CardTitle>
+              <div>
+                <CardTitle className="text-lg">{getHeaderText()}</CardTitle>
+                <p className="text-xs text-muted-foreground">{discoveries.length} discoveries</p>
+              </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={onDone}>
-              <X className="h-4 w-4 mr-1" />
-              Done
-            </Button>
+            <div className="flex items-center gap-2">
+              {onRefresh && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onRefresh}
+                  disabled={isRefreshing}
+                  className="gap-1"
+                >
+                  <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+                  {isRefreshing ? "Loading..." : "Refresh"}
+                </Button>
+              )}
+              <Button variant="ghost" size="sm" onClick={onDone}>
+                <X className="h-4 w-4 mr-1" />
+                Done
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

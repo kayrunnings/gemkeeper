@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sparkle, MagnifyingGlass, Shuffle, Info } from "@phosphor-icons/react"
-import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ContextChip } from "./ContextChip"
 import { DiscoveryGrid } from "./DiscoveryGrid"
@@ -21,9 +20,12 @@ interface DiscoverCardProps {
 export function DiscoverCard({ contexts, className }: DiscoverCardProps) {
   const [query, setQuery] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [discoveries, setDiscoveries] = useState<Discovery[]>([])
   const [showGrid, setShowGrid] = useState(false)
   const [sessionType, setSessionType] = useState<"curated" | "directed" | null>(null)
+  const [lastContextId, setLastContextId] = useState<string | null>(null)
+  const [lastQuery, setLastQuery] = useState<string | null>(null)
   const [usage, setUsage] = useState<DiscoveryUsage | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [needsBootstrap, setNeedsBootstrap] = useState(false)
@@ -50,9 +52,22 @@ export function DiscoverCard({ contexts, className }: DiscoverCardProps) {
     fetchUsage()
   }, [])
 
-  const handleDiscover = async (mode: "curated" | "directed", contextId?: string) => {
-    setIsLoading(true)
+  const handleDiscover = async (mode: "curated" | "directed", contextId?: string, isRefresh = false) => {
+    if (isRefresh) {
+      setIsRefreshing(true)
+    } else {
+      setIsLoading(true)
+    }
     setError(null)
+
+    // Track last search for refresh
+    if (mode === "directed") {
+      setLastQuery(query.trim())
+      setLastContextId(null)
+    } else {
+      setLastContextId(contextId || null)
+      setLastQuery(null)
+    }
 
     try {
       const response = await fetch("/api/discover", {
@@ -60,7 +75,7 @@ export function DiscoverCard({ contexts, className }: DiscoverCardProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode,
-          query: mode === "directed" ? query.trim() : undefined,
+          query: mode === "directed" ? (isRefresh && lastQuery ? lastQuery : query.trim()) : undefined,
           context_id: contextId,
         }),
       })
@@ -92,6 +107,15 @@ export function DiscoverCard({ contexts, className }: DiscoverCardProps) {
       setError("Something went wrong. Please try again.")
     } finally {
       setIsLoading(false)
+      setIsRefreshing(false)
+    }
+  }
+
+  const handleRefresh = () => {
+    if (sessionType === "directed" && lastQuery) {
+      handleDiscover("directed", undefined, true)
+    } else if (sessionType === "curated") {
+      handleDiscover("curated", lastContextId || undefined, true)
     }
   }
 
@@ -128,10 +152,12 @@ export function DiscoverCard({ contexts, className }: DiscoverCardProps) {
       <DiscoveryGrid
         discoveries={discoveries}
         sessionType={sessionType}
-        query={query}
+        query={lastQuery || query}
         contexts={contexts}
         onDone={handleDone}
         onDiscoveryUpdate={handleDiscoveryUpdate}
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
         className={className}
       />
     )

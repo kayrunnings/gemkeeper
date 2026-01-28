@@ -7,6 +7,7 @@ import { Search, Loader2, TrendingUp, Compass, BookOpen, Brain, Heart, Briefcase
 import { cn } from "@/lib/utils"
 import { ContextChip } from "./ContextChip"
 import { DiscoveryGrid } from "./DiscoveryGrid"
+import { AIThinking } from "@/components/ui/ai-badge"
 import type { ContextWithCount } from "@/lib/types/context"
 import type { Discovery } from "@/lib/types/discovery"
 
@@ -28,17 +29,24 @@ const EXPLORE_TOPICS = [
 export function ExploreTab({ contexts, className }: ExploreTabProps) {
   const [query, setQuery] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [discoveries, setDiscoveries] = useState<Discovery[]>([])
   const [showGrid, setShowGrid] = useState(false)
   const [searchedQuery, setSearchedQuery] = useState("")
+  const [lastSearchContext, setLastSearchContext] = useState<ContextWithCount | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const handleSearch = async (searchQuery: string) => {
+  const handleSearch = async (searchQuery: string, isRefresh = false) => {
     if (!searchQuery.trim()) return
 
-    setIsLoading(true)
+    if (isRefresh) {
+      setIsRefreshing(true)
+    } else {
+      setIsLoading(true)
+    }
     setError(null)
     setSearchedQuery(searchQuery)
+    setLastSearchContext(null)
 
     try {
       const response = await fetch("/api/discover", {
@@ -64,13 +72,19 @@ export function ExploreTab({ contexts, className }: ExploreTabProps) {
       setError("Something went wrong. Please try again.")
     } finally {
       setIsLoading(false)
+      setIsRefreshing(false)
     }
   }
 
-  const handleContextExplore = async (context: ContextWithCount) => {
-    setIsLoading(true)
+  const handleContextExplore = async (context: ContextWithCount, isRefresh = false) => {
+    if (isRefresh) {
+      setIsRefreshing(true)
+    } else {
+      setIsLoading(true)
+    }
     setError(null)
     setSearchedQuery(context.name)
+    setLastSearchContext(context)
 
     try {
       const response = await fetch("/api/discover", {
@@ -96,6 +110,15 @@ export function ExploreTab({ contexts, className }: ExploreTabProps) {
       setError("Something went wrong. Please try again.")
     } finally {
       setIsLoading(false)
+      setIsRefreshing(false)
+    }
+  }
+
+  const handleRefresh = () => {
+    if (lastSearchContext) {
+      handleContextExplore(lastSearchContext, true)
+    } else if (searchedQuery) {
+      handleSearch(searchedQuery, true)
     }
   }
 
@@ -117,11 +140,13 @@ export function ExploreTab({ contexts, className }: ExploreTabProps) {
     return (
       <DiscoveryGrid
         discoveries={discoveries}
-        sessionType="directed"
+        sessionType={lastSearchContext ? "curated" : "directed"}
         query={searchedQuery}
         contexts={contexts}
         onDone={handleDone}
         onDiscoveryUpdate={handleDiscoveryUpdate}
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
         className={className}
       />
     )
@@ -161,6 +186,11 @@ export function ExploreTab({ contexts, className }: ExploreTabProps) {
           <div className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm">
             {error}
           </div>
+        )}
+
+        {/* AI Thinking Loading State */}
+        {isLoading && (
+          <AIThinking message="Exploring and discovering insights for you..." />
         )}
       </div>
 
