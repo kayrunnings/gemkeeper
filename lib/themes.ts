@@ -10,7 +10,6 @@ export const THEMES = [
   "rose",
   "nord",
   "sunrise",
-  "forest",
   "cosmos",
   "copper",
   "arctic",
@@ -55,10 +54,6 @@ export const THEME_INFO: Record<Theme, { name: string; description: string; isLi
     name: "Sunrise",
     description: "Warm off-white with amber accents",
     isLight: true,
-  },
-  forest: {
-    name: "Forest",
-    description: "Deep forest green with gold accents",
   },
   cosmos: {
     name: "Cosmos",
