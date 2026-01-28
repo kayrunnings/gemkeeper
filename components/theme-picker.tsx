@@ -7,7 +7,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
@@ -36,10 +35,10 @@ export function ThemePicker() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="flex items-center gap-2">
-          <Moon className="h-4 w-4" />
+        <div className="flex items-center gap-2 px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+          <Moon className="h-3.5 w-3.5" />
           Dark Themes
-        </DropdownMenuLabel>
+        </div>
         <div className="grid grid-cols-2 gap-1 p-1">
           {DARK_THEMES.map((t) => (
             <ThemeOption
@@ -56,10 +55,10 @@ export function ThemePicker() {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuLabel className="flex items-center gap-2">
-          <Sun className="h-4 w-4" />
+        <div className="flex items-center gap-2 px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+          <Sun className="h-3.5 w-3.5" />
           Light Themes
-        </DropdownMenuLabel>
+        </div>
         <div className="grid grid-cols-2 gap-1 p-1">
           {LIGHT_THEMES.map((t) => (
             <ThemeOption
