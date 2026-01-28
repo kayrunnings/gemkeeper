@@ -477,9 +477,9 @@ export function EnhancedNoteEditor({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-7xl w-[95vw] h-[90vh] max-h-[90vh] overflow-hidden flex flex-col p-0">
         <DialogHeader className="shrink-0 px-6 pt-6 pb-4 border-b">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pr-8">
             <DialogTitle className="text-xl">{note ? "Edit Note" : "New Note"}</DialogTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {/* Draft saved indicator */}
               {draftSaved && (
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -487,7 +487,7 @@ export function EnhancedNoteEditor({
                   Draft saved
                 </span>
               )}
-              {/* Minimize button */}
+              {/* Minimize button - positioned to avoid close button */}
               <Button
                 variant="ghost"
                 size="icon"

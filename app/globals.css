@@ -2175,6 +2175,76 @@ body {
   margin: 0.25rem 0;
 }
 
+/* TipTap Editor List Styles - Fix bullet and numbered list display */
+.ProseMirror ul,
+.prose ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin: 0.5rem 0 !important;
+}
+
+.ProseMirror ol,
+.prose ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin: 0.5rem 0 !important;
+}
+
+.ProseMirror ul li,
+.ProseMirror ol li,
+.prose ul li,
+.prose ol li {
+  margin: 0.25rem 0 !important;
+  display: list-item !important;
+}
+
+.ProseMirror ul li::marker,
+.prose ul li::marker {
+  color: var(--foreground);
+}
+
+.ProseMirror ol li::marker,
+.prose ol li::marker {
+  color: var(--foreground);
+}
+
+/* Nested list styles */
+.ProseMirror ul ul,
+.prose ul ul {
+  list-style-type: circle !important;
+  margin: 0.25rem 0 !important;
+}
+
+.ProseMirror ul ul ul,
+.prose ul ul ul {
+  list-style-type: square !important;
+}
+
+.ProseMirror ol ol,
+.prose ol ol {
+  list-style-type: lower-alpha !important;
+  margin: 0.25rem 0 !important;
+}
+
+/* Blockquote styles for TipTap */
+.ProseMirror blockquote,
+.prose blockquote {
+  border-left: 3px solid var(--primary);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+
+/* TipTap placeholder styling */
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: var(--muted-foreground);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
 /* Focus ring styles */
 .focus-ring {
   outline: none;

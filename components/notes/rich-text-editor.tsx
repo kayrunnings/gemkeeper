@@ -189,18 +189,63 @@ export function RichTextEditor({
           editorClassName
         ),
       },
-      // Improved paste handling to preserve formatting from Notion and other sources
-      handlePaste: (view, event, slice) => {
-        // Let TipTap handle the paste with its built-in HTML parsing
-        // This preserves formatting from rich text sources like Notion
-        return false
-      },
-      // Parse pasted HTML content
+      // Parse pasted HTML content - preserve structure while cleaning up problematic styles
       transformPastedHTML(html) {
-        // Clean up Notion-specific styles while preserving structure
-        return html
-          .replace(/style="[^"]*"/g, '') // Remove inline styles that might break layout
-          .replace(/class="notion-[^"]*"/g, '') // Remove Notion-specific classes
+        // Create a temporary container to parse and clean the HTML
+        const tempDiv = document.createElement('div')
+        tempDiv.innerHTML = html
+
+        // Remove Notion-specific data attributes and classes that break rendering
+        const elementsToClean = tempDiv.querySelectorAll('*')
+        elementsToClean.forEach((el) => {
+          // Remove data-* attributes that can cause issues
+          Array.from(el.attributes).forEach((attr) => {
+            if (attr.name.startsWith('data-') || attr.name === 'contenteditable') {
+              el.removeAttribute(attr.name)
+            }
+          })
+
+          // Remove Notion-specific classes but keep semantic ones
+          const classList = Array.from(el.classList)
+          classList.forEach((className) => {
+            if (className.startsWith('notion-') ||
+                className.includes('block-') ||
+                className.includes('page-')) {
+              el.classList.remove(className)
+            }
+          })
+
+          // Clean up problematic inline styles but preserve text formatting
+          const style = el.getAttribute('style')
+          if (style) {
+            // Keep only essential text styles
+            const allowedStyles = ['font-weight', 'font-style', 'text-decoration']
+            const styleMap: Record<string, string> = {}
+            style.split(';').forEach((rule) => {
+              const [prop, value] = rule.split(':').map(s => s?.trim())
+              if (prop && value && allowedStyles.some(allowed => prop.includes(allowed))) {
+                styleMap[prop] = value
+              }
+            })
+            const newStyle = Object.entries(styleMap).map(([k, v]) => `${k}: ${v}`).join('; ')
+            if (newStyle) {
+              el.setAttribute('style', newStyle)
+            } else {
+              el.removeAttribute('style')
+            }
+          }
+        })
+
+        // Convert Notion-style checkboxes to bullet points
+        const checkboxes = tempDiv.querySelectorAll('input[type="checkbox"]')
+        checkboxes.forEach((checkbox) => {
+          const parent = checkbox.parentElement
+          if (parent) {
+            checkbox.remove()
+          }
+        })
+
+        return tempDiv.innerHTML
       },
     },
     onUpdate: ({ editor }) => {
@@ -311,9 +356,9 @@ export function RichTextEditor({
   }
 
   return (
-    <div className={cn("border rounded-lg overflow-hidden", className)}>
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 p-1 border-b bg-muted/50">
+    <div className={cn("border rounded-lg overflow-hidden flex flex-col", className)}>
+      {/* Sticky Toolbar */}
+      <div className="flex flex-wrap items-center gap-0.5 p-1 border-b bg-muted/50 sticky top-0 z-10">
         {/* Text formatting */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -640,8 +685,10 @@ export function RichTextEditor({
         )}
       </div>
 
-      {/* Editor content */}
-      <EditorContent editor={editor} />
+      {/* Editor content - scrollable area */}
+      <div className="flex-1 overflow-y-auto">
+        <EditorContent editor={editor} />
+      </div>
 
       {/* Link Dialog */}
       <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
