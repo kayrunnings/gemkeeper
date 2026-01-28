@@ -114,8 +114,8 @@ gemkeeper/
 │   ├── library/                  # Library components (ThoughtFolio 2.0)
 │   │   ├── LibraryTabs.tsx       # Tab navigation
 │   │   ├── LibraryAllTab.tsx     # Mixed content feed
-│   │   ├── LibraryThoughtsTab.tsx # Thoughts list
-│   │   ├── LibraryNotesTab.tsx   # Notes list
+│   │   ├── LibraryThoughtsTab.tsx # Full-featured thoughts tab with filters, Add/Extract
+│   │   ├── LibraryNotesTab.tsx   # Notes list with folders
 │   │   ├── LibrarySourcesTab.tsx # Sources grid
 │   │   ├── LibraryArchiveTab.tsx # Archived thoughts
 │   │   └── SourceCard.tsx        # Source display card
@@ -1013,8 +1013,14 @@ interface SearchResult {
 |-----------|------|---------|
 | Daily Thought Card | `components/home/DailyThoughtCard.tsx` | Today's thought display with 3 states |
 | Activity Stats | `components/home/ActivityStatsCard.tsx` | Usage statistics |
-| Quick Actions | `components/home/QuickActionsCard.tsx` | Navigation shortcuts |
+| Quick Actions Row | `components/home/QuickActionsRow.tsx` | 4-card grid: Add Thought, Extract with AI, New Moment, Your Thoughts |
 | Upcoming Moments | `components/home/UpcomingMomentsCard.tsx` | Recent moments widget |
+
+**QuickActionsRow Features:**
+- **Add Thought** — Opens ThoughtForm modal directly (amber/orange gradient)
+- **Extract with AI** — Opens ExtractThoughtsModal directly (violet/purple gradient)
+- **New Moment** — Links to /moments (blue/cyan gradient)
+- **Your Thoughts** — Links to /library?tab=thoughts (slate gradient)
 
 **DailyThoughtCard States:**
 - **Thought available** — Shows the thought with context badge, content, and source
@@ -1030,9 +1036,16 @@ interface SearchResult {
 | Recent Moments | `components/moments/RecentMoments.tsx` | Dashboard widget |
 | Moment Banner | `components/moments/MomentBanner.tsx` | Moment header display |
 | Floating Moment Button | `components/moments/FloatingMomentButton.tsx` | Fixed bottom-right FAB with scroll visibility |
-| Floating Button Menu | `components/moments/FloatingButtonMenu.tsx` | Menu with "From Calendar" and "Describe It" options |
+| Floating Button Menu | `components/moments/FloatingButtonMenu.tsx` | Menu with AI Capture, Add Thought, From Calendar, New Moment options |
+
 | Quick Moment Entry | `components/moments/QuickMomentEntry.tsx` | Inline moment description input |
 | Calendar Event Picker | `components/moments/CalendarEventPicker.tsx` | Upcoming events selector |
+
+**FloatingButtonMenu Options:**
+- **AI Capture** — Opens AICaptureModal (ai-gradient)
+- **Add Thought** — Opens ThoughtForm modal (amber lightbulb icon)
+- **From Calendar** — Opens CalendarEventPicker (conditional, only if calendar connected)
+- **New Moment** — Opens QuickMomentEntry (blue)
 
 ### Capture Components (ThoughtFolio 2.0)
 | Component | File | Purpose |
@@ -1070,6 +1083,24 @@ interface SearchResult {
 | Search Results | `components/search/SearchResults.tsx` | Grouped results display |
 | Search Result Card | `components/search/SearchResultCard.tsx` | Individual result |
 | Search Filters | `components/search/SearchFilters.tsx` | Type filter buttons |
+
+### Library Components (ThoughtFolio 2.0)
+| Component | File | Purpose |
+|-----------|------|---------|
+| Library Tabs | `components/library/LibraryTabs.tsx` | Tab navigation (All, Thoughts, Notes, Sources, Archive) |
+| Library All Tab | `components/library/LibraryAllTab.tsx` | Mixed content feed |
+| Library Thoughts Tab | `components/library/LibraryThoughtsTab.tsx` | Full-featured thoughts management |
+| Library Notes Tab | `components/library/LibraryNotesTab.tsx` | Notes with folder organization |
+| Library Sources Tab | `components/library/LibrarySourcesTab.tsx` | Sources grid |
+| Library Archive Tab | `components/library/LibraryArchiveTab.tsx` | Archived/retired thoughts |
+
+**LibraryThoughtsTab Features:**
+- **Filter Sidebar** (desktop): All Thoughts, Active List, Passive with counts
+- **Mobile Filter**: Dropdown selector for filter options
+- **Header Actions**: "Add Thought" and "Extract with AI" buttons
+- **Integrated Modals**: ThoughtForm for manual entry, ExtractThoughtsModal for AI extraction
+- **Context Filter**: Optional filtering by context (passed from parent)
+- **Pagination**: "Load more" for large collections
 
 ---
 

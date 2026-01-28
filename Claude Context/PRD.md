@@ -110,10 +110,16 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 **Description:** Users can capture knowledge from various sources.
 
 **Methods:**
-- Manual text entry
-- AI-assisted extraction from pasted content
+- Manual text entry (via ThoughtForm modal)
+- AI-assisted extraction from pasted content (via ExtractThoughtsModal)
 - AI-assisted extraction from URLs (articles, YouTube)
 - Source attribution (book, podcast, article, video, conversation, experience)
+
+**Access Points:**
+- **Dashboard Quick Actions**: "Add Thought" and "Extract with AI" cards open modals directly
+- **Library Thoughts Tab**: Header buttons for "Add Thought" and "Extract with AI"
+- **Floating Action Button**: "Add Thought" option in quick actions menu
+- **Global Shortcut**: Cmd+N opens AI Capture modal
 
 **Functional Requirements:**
 
@@ -185,6 +191,13 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 - Edit thought content and source
 - Move thoughts between contexts
 
+**Library Thoughts Tab (`/library?tab=thoughts`):**
+- **Filter Sidebar** (desktop): All Thoughts, Active List, Passive with counts
+- **Mobile Filter**: Dropdown selector for filter options
+- **Header Actions**: "Add Thought" and "Extract with AI" buttons
+- **Thought Cards**: Clickable cards linking to thought detail page
+- **Context Filter**: Filter by specific context (from Library page)
+
 **Functional Requirements:**
 
 | ID | Requirement | Testable Criteria |
@@ -199,14 +212,17 @@ User-described upcoming situations that trigger AI matching against ALL thoughts
 | FR-4.8 | User can change thought context | Context updated in database |
 
 **Acceptance Criteria:**
-- [ ] User can view thoughts filtered by context
-- [ ] User can view thoughts filtered by Active/Passive
-- [ ] User can retire thought (moves to Retired page)
-- [ ] User can delete thought permanently (with confirmation)
-- [ ] Retired page accessible from navigation
-- [ ] User can restore retired thoughts
-- [ ] User can edit thought content
-- [ ] User can change thought's context
+- [x] User can view thoughts filtered by context
+- [x] User can view thoughts filtered by Active/Passive
+- [x] User can retire thought (moves to Retired page)
+- [x] User can delete thought permanently (with confirmation)
+- [x] Retired page accessible from navigation
+- [x] User can restore retired thoughts
+- [x] User can edit thought content
+- [x] User can change thought's context
+- [x] Library Thoughts tab has Add Thought and Extract with AI buttons
+- [x] Library Thoughts tab has filter sidebar (All/Active/Passive)
+- [x] Mobile users can filter via dropdown selector
 
 ---
 
