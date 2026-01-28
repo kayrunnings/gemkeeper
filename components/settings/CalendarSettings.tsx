@@ -28,6 +28,20 @@ import {
 } from "@/lib/calendar-client"
 import { useToast } from "@/components/error-toast"
 
+async function checkForUpcomingEvents(): Promise<{ momentsCreated: number }> {
+  try {
+    const response = await fetch("/api/calendar/check-moments", {
+      method: "POST",
+    })
+    if (!response.ok) {
+      return { momentsCreated: 0 }
+    }
+    return await response.json()
+  } catch {
+    return { momentsCreated: 0 }
+  }
+}
+
 interface CalendarSettingsProps {
   className?: string
 }
@@ -67,10 +81,16 @@ export function CalendarSettings({ className }: CalendarSettingsProps) {
         const googleConn = conns.find((c) => c.provider === "google")
         if (googleConn) {
           setIsSyncing(googleConn.id)
-          syncCalendarEvents(googleConn.id).then(() => {
+          syncCalendarEvents(googleConn.id).then(async () => {
+            // Create moments from synced calendar events
+            const { momentsCreated } = await checkForUpcomingEvents()
             loadConnections()
             setIsSyncing(null)
-            showSuccess("Calendar synced!", "Your upcoming events are now available.")
+            if (momentsCreated > 0) {
+              showSuccess("Calendar synced!", `Created ${momentsCreated} moment${momentsCreated !== 1 ? 's' : ''} from upcoming events.`)
+            } else {
+              showSuccess("Calendar synced!", "Your upcoming events are now available.")
+            }
           })
         }
       })
@@ -111,8 +131,13 @@ export function CalendarSettings({ className }: CalendarSettingsProps) {
   const handleSync = async (connectionId: string) => {
     setIsSyncing(connectionId)
     await syncCalendarEvents(connectionId)
+    // Create moments from synced calendar events
+    const { momentsCreated } = await checkForUpcomingEvents()
     await loadConnections()
     setIsSyncing(null)
+    if (momentsCreated > 0) {
+      showSuccess("Calendar synced!", `Created ${momentsCreated} moment${momentsCreated !== 1 ? 's' : ''} from upcoming events.`)
+    }
   }
 
   const handleSettingChange = async (
