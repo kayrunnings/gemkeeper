@@ -290,3 +290,19 @@ Compare this to `/api/moments/route.ts` (for manual moments) which did all these
 - Prepare page now fetches linked notes via `note_thought_links` table
 
 **Key Lesson:** When implementing a feature through multiple code paths (manual moments via `/api/moments` vs calendar moments via `/api/calendar/check-moments`), ensure all paths include the same critical functionality. AI matching is essential for moments to provide value.
+
+---
+
+### January 2026: Calendar Events Not Clickable on Dashboard
+
+**Issue:** Dashboard showed "Upcoming" calendar events but users couldn't click on them to prepare. Events were visible but moments weren't created until the lead time window (15-60 minutes before event).
+
+**Root Cause:** The design assumed moments would only be created when events are imminent (within lead time). But the dashboard showed ALL upcoming events (within 24 hours) from `calendar_events_cache`, creating confusing UX where events were visible but not actionable.
+
+**Fix:**
+1. Created `POST /api/moments/from-event` endpoint for on-demand moment creation
+2. Made calendar events in `UpcomingMomentsCard` clickable with loading state
+3. When clicked, creates moment with full AI matching and navigates to prepare page
+4. Changed badge from "Upcoming" to "Click to prepare" to indicate actionability
+
+**Key Lesson:** If content is visible on the UI, it should be actionable. Don't show events users can't interact with.

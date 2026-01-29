@@ -842,6 +842,37 @@ This caused calendar moments to appear in the dashboard but show "No thoughts ma
 
 ---
 
+### 2026-01-29: On-Demand Moment Creation from Calendar Events
+
+**Decision:** Allow users to create moments from calendar events on-demand by clicking on them in the dashboard, rather than waiting for the lead time window.
+
+**Issue:** Dashboard showed "Upcoming" calendar events from `calendar_events_cache`, but users couldn't click on them to prepare. Moments were only created when events were within the lead time window (e.g., 15-60 minutes before). This created confusing UX where events were visible but not actionable.
+
+**Solution:**
+1. Created new API endpoint `POST /api/moments/from-event` that creates a moment from a specific cached calendar event
+2. Made calendar events in `UpcomingMomentsCard` clickable with visual feedback
+3. When clicked, the endpoint creates the moment with AI matching and navigates to the prepare page
+4. Changed badge from "Upcoming" to "Click to prepare" to indicate actionability
+
+**Files Created/Changed:**
+- `app/api/moments/from-event/route.ts` — New endpoint for on-demand moment creation
+- `components/home/UpcomingMomentsCard.tsx` — Made events clickable, added loading state
+
+**UX Improvement:**
+- Before: Events show "Upcoming" badge, not clickable, confusing
+- After: Events show "Click to prepare" badge, clickable, creates moment with AI matching
+
+**Rationale:**
+- Users expect to prepare for visible events immediately
+- Waiting for lead time window (15-60 min) is frustrating
+- On-demand creation provides immediate value
+
+**Alternatives Considered:**
+- Always create moments when syncing calendar → Rejected: would create many unused moments
+- Hide events until within lead time → Rejected: less useful, users want to see upcoming events
+
+---
+
 ## Deferred Decisions
 
 Items we've discussed but intentionally not decided yet:

@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, ArrowRight, Clock, Target, Loader2 } from "lucide-react"
+import { Calendar, ArrowRight, Clock, Target, Loader2, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import type { Moment } from "@/types/moments"
@@ -17,6 +18,7 @@ interface CalendarEventCache {
   end_time: string
   moment_created: boolean
   moment_id: string | null
+  external_event_id?: string
 }
 
 interface UpcomingMomentsCardProps {
@@ -43,8 +45,10 @@ function isToday(dateString: string | null): boolean {
 }
 
 export function UpcomingMomentsCard({ moments, calendarConnected = false, className }: UpcomingMomentsCardProps) {
+  const router = useRouter()
   const [upcomingEvents, setUpcomingEvents] = useState<CalendarEventCache[]>([])
   const [isLoadingEvents, setIsLoadingEvents] = useState(false)
+  const [creatingMomentFor, setCreatingMomentFor] = useState<string | null>(null)
 
   // Fetch upcoming calendar events from cache
   useEffect(() => {
@@ -81,6 +85,36 @@ export function UpcomingMomentsCard({ moments, calendarConnected = false, classN
 
     fetchUpcomingEvents()
   }, [calendarConnected])
+
+  // Handle clicking on an upcoming event to create a moment on-demand
+  const handleEventClick = async (event: CalendarEventCache) => {
+    // If moment already exists, navigate to it
+    if (event.moment_created && event.moment_id) {
+      router.push(`/moments/${event.moment_id}/prepare`)
+      return
+    }
+
+    // Create moment on-demand
+    setCreatingMomentFor(event.id)
+    try {
+      const response = await fetch("/api/moments/from-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_cache_id: event.id }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        router.push(`/moments/${data.moment_id}/prepare`)
+      } else {
+        console.error("Failed to create moment from event")
+      }
+    } catch (err) {
+      console.error("Error creating moment:", err)
+    } finally {
+      setCreatingMomentFor(null)
+    }
+  }
 
   // Get moments that are from calendar and are upcoming
   const calendarMoments = moments.filter(m => m.source === 'calendar' && m.calendar_event_start)
@@ -146,20 +180,26 @@ export function UpcomingMomentsCard({ moments, calendarConnected = false, classN
                 </div>
               </Link>
             ))}
-            {/* Show upcoming events that don't have moments yet */}
+            {/* Show upcoming events - clickable to create moments on-demand */}
             {upcomingEvents
               .filter(event => !event.moment_created)
               .slice(0, 3 - upcomingMoments.length)
               .map((event) => (
-                <div
+                <button
                   key={event.id}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-dashed border-border"
+                  onClick={() => handleEventClick(event)}
+                  disabled={creatingMomentFor === event.id}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-dashed border-border hover:bg-secondary/50 hover:border-primary/30 transition-colors text-left"
                 >
                   <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    {creatingMomentFor === event.id ? (
+                      <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+                    ) : (
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate text-muted-foreground">
+                    <p className="font-medium truncate">
                       {event.title}
                     </p>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -169,10 +209,17 @@ export function UpcomingMomentsCard({ moments, calendarConnected = false, classN
                       )}
                     </div>
                   </div>
-                  <Badge variant="outline" className="shrink-0 text-xs">
-                    Upcoming
-                  </Badge>
-                </div>
+                  {creatingMomentFor === event.id ? (
+                    <Badge variant="secondary" className="shrink-0 text-xs gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      Preparing...
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="shrink-0 text-xs">
+                      Click to prepare
+                    </Badge>
+                  )}
+                </button>
               ))}
           </div>
         ) : (
