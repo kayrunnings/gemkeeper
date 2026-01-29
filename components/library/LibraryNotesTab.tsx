@@ -15,6 +15,7 @@ interface NoteContext {
 import { NoteCard } from "@/components/note-card"
 import { EnhancedNoteEditor } from "@/components/notes/enhanced-note-editor"
 import { ExtractFromNoteModal } from "@/components/extract-from-note-modal"
+import { saveDraft as saveDraftAction, publishDraft as publishDraftAction, deleteNote as deleteNoteAction } from "@/app/notes/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -30,6 +31,7 @@ import {
   Folder as FolderIcon,
   FolderPlus,
   FileX,
+  FilePenLine,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -45,7 +47,7 @@ import {
 import { moveNoteToFolder as moveNoteToFolderAction } from "@/app/notes/actions"
 import { useToast } from "@/components/error-toast"
 
-type FilterType = "all" | "unfiled" | { folderId: string }
+type FilterType = "all" | "unfiled" | "drafts" | { folderId: string }
 type SortOrder = "desc" | "asc"
 
 // Input context can have nullable color (from full Context type)
@@ -76,6 +78,10 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
   const [hasAIConsent, setHasAIConsent] = useState(false)
   const [activeGemCount, setActiveGemCount] = useState(0)
 
+  // Draft management - database-backed drafts
+  const [drafts, setDrafts] = useState<Note[]>([])
+  const [editingDraft, setEditingDraft] = useState<Note | null>(null)
+
   // Use passed contexts or local contexts, mapping to ensure correct format
   const contexts: NoteContext[] = useMemo(() => {
     if (propContexts) {
@@ -103,6 +109,29 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
     loadData()
   }, [sortOrder])
 
+  // Reload drafts when editor closes (to catch newly saved drafts)
+  useEffect(() => {
+    if (!isEditorOpen) {
+      loadDrafts()
+    }
+  }, [isEditorOpen])
+
+  async function loadDrafts() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data, error } = await supabase
+      .from("notes")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("is_draft", true)
+      .order("updated_at", { ascending: false })
+
+    if (!error && data) {
+      setDrafts(data)
+    }
+  }
+
   async function loadData() {
     setIsLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
@@ -112,12 +141,21 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
       return
     }
 
-    const [notesResult, foldersResult, profileResult, gemsResult, contextsResult, thoughtsResult] = await Promise.all([
+    const [notesResult, draftsResult, foldersResult, profileResult, gemsResult, contextsResult, thoughtsResult] = await Promise.all([
+      // Fetch published notes (exclude drafts)
       supabase
         .from("notes")
         .select("*")
         .eq("user_id", user.id)
+        .or("is_draft.is.null,is_draft.eq.false")
         .order("updated_at", { ascending: sortOrder === "asc" }),
+      // Fetch drafts separately
+      supabase
+        .from("notes")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_draft", true)
+        .order("updated_at", { ascending: false }),
       supabase
         .from("folders")
         .select("*")
@@ -150,6 +188,7 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
     ])
 
     if (!notesResult.error) setNotes(notesResult.data || [])
+    if (!draftsResult.error) setDrafts(draftsResult.data || [])
     if (!foldersResult.error) setFolders(foldersResult.data || [])
     if (!contextsResult.error && contextsResult.data) {
       setLocalContexts(contextsResult.data.map((c: { id: string; name: string; color: string | null; slug: string }) => ({
@@ -297,7 +336,48 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
 
   const handleNewNote = () => {
     setEditingNote(null)
+    setEditingDraft(null)
     setIsEditorOpen(true)
+  }
+
+  const handleOpenDraft = (draft: Note) => {
+    // Open a draft for editing - treat it like editing a note but it's a draft
+    setEditingNote(draft)
+    setEditingDraft(draft)
+    setIsEditorOpen(true)
+  }
+
+  // Save content as a draft to the database
+  const handleSaveDraft = async (title: string, content: string, existingDraftId?: string) => {
+    const { draft: savedDraft, error } = await saveDraftAction(
+      { title, content },
+      existingDraftId
+    )
+    if (!error && savedDraft) {
+      // Update local drafts list
+      setDrafts(prev => {
+        const existing = prev.find(d => d.id === savedDraft.id)
+        if (existing) {
+          return prev.map(d => d.id === savedDraft.id ? savedDraft : d)
+        }
+        return [savedDraft, ...prev]
+      })
+      setEditingDraft(savedDraft)
+      return savedDraft
+    }
+    return null
+  }
+
+  // Delete a draft from the database
+  const handleDeleteDraft = async (draftId: string) => {
+    const { error } = await deleteNoteAction(draftId)
+    if (!error) {
+      setDrafts(prev => prev.filter(d => d.id !== draftId))
+      setEditingDraft(null)
+      showSuccess("Draft deleted")
+    } else {
+      showError(new Error(error), "Failed to delete draft")
+    }
   }
 
   const handleExtractGems = (note: Note) => {
@@ -393,6 +473,7 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
   const getFilterTitle = () => {
     if (selectedFilter === "all") return "All Notes"
     if (selectedFilter === "unfiled") return "Unfiled"
+    if (selectedFilter === "drafts") return "Drafts"
     if (typeof selectedFilter === "object" && selectedFilter.folderId) {
       const folder = folders.find((f) => f.id === selectedFilter.folderId)
       return folder?.name || "Folder"
@@ -598,6 +679,52 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
             {/* Divider */}
             <div className="my-2 border-t border-[var(--glass-sidebar-border)]" />
 
+            {/* Drafts section - show if there are any drafts */}
+            {drafts.length > 0 && (
+              <>
+                <div className="flex items-center justify-between px-3 py-1">
+                  <span className="text-xs font-semibold uppercase text-amber-500 tracking-wider">
+                    Drafts
+                  </span>
+                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-500">
+                    {drafts.length}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  {drafts.map((draft) => (
+                    <button
+                      key={draft.id}
+                      onClick={() => handleOpenDraft(draft)}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200 w-full text-left group",
+                        editingDraft?.id === draft.id
+                          ? "glass-button-primary text-primary-foreground shadow-sm"
+                          : "hover:bg-[var(--glass-hover-bg)] text-foreground bg-amber-500/5 border border-amber-500/10"
+                      )}
+                    >
+                      <FilePenLine className="h-4 w-4 text-amber-500 shrink-0" />
+                      <span className="flex-1 truncate text-sm">
+                        {draft.title?.trim() || "Untitled Draft"}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteDraft(draft.id)
+                        }}
+                        title="Delete draft"
+                      >
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </button>
+                  ))}
+                </div>
+                <div className="my-2 border-t border-[var(--glass-sidebar-border)]" />
+              </>
+            )}
+
             {/* Unfiled */}
             <button
               onClick={() => setSelectedFilter("unfiled")}
@@ -636,15 +763,30 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
               }
               onChange={(e) => {
                 const value = e.target.value
-                if (value === "all" || value === "unfiled") {
-                  setSelectedFilter(value)
+                if (value === "all" || value === "unfiled" || value === "drafts") {
+                  setSelectedFilter(value as FilterType)
                 } else if (value.startsWith("folder:")) {
                   setSelectedFilter({ folderId: value.replace("folder:", "") })
+                } else if (value.startsWith("draft:")) {
+                  const draftId = value.replace("draft:", "")
+                  const selectedDraft = drafts.find(d => d.id === draftId)
+                  if (selectedDraft) {
+                    handleOpenDraft(selectedDraft)
+                  }
                 }
               }}
               className="w-full h-10 rounded-xl glass-input px-3 text-sm"
             >
               <option value="all">All Notes ({notes.length})</option>
+              {drafts.length > 0 && (
+                <optgroup label={`Drafts (${drafts.length})`}>
+                  {drafts.map((draft) => (
+                    <option key={draft.id} value={`draft:${draft.id}`}>
+                      {draft.title?.trim() || "Untitled Draft"}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
               {folders.map((folder) => (
                 <option key={folder.id} value={`folder:${folder.id}`}>
                   {folder.name} ({noteCounts[folder.id] || 0})
@@ -702,11 +844,29 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
         onClose={() => {
           setIsEditorOpen(false)
           setEditingNote(null)
+          setEditingDraft(null)
         }}
-        onSave={handleSaveNote}
+        onSave={async (noteInput, existingId) => {
+          // If this was a draft, publish it (convert to regular note)
+          if (editingDraft && existingId) {
+            const { note, error } = await publishDraftAction(existingId, noteInput)
+            if (!error && note) {
+              setNotes(prev => [note, ...prev])
+              setDrafts(prev => prev.filter(d => d.id !== existingId))
+              showSuccess("Note published")
+            } else {
+              showError(new Error(error || "Failed to publish"), "Error")
+            }
+          } else {
+            handleSaveNote(noteInput, existingId)
+          }
+          setEditingDraft(null)
+        }}
+        onSaveDraft={handleSaveDraft}
         contexts={contexts}
         availableThoughts={availableThoughts}
         hasAIConsent={hasAIConsent}
+        isDraft={!!editingDraft}
       />
 
       {/* Extract gems from note modal */}
