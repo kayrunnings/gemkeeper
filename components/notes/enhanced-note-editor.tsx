@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { Note, NoteInput } from "@/lib/types"
-import { Thought } from "@/lib/types/thought"
+import { Note, NoteInput, Folder } from "@/lib/types"
+import { Thought, ContextTag, CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS } from "@/lib/types/thought"
 import {
   Dialog,
   DialogContent,
@@ -14,11 +14,19 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import {
   Paperclip,
   X,
@@ -38,6 +46,12 @@ import {
   Link2,
   Minimize2,
   Save,
+  Folder as FolderIcon,
+  FolderPlus,
+  Check,
+  RefreshCw,
+  Pencil,
+  FileX,
 } from "lucide-react"
 import { RichTextEditor } from "./rich-text-editor"
 import { cn } from "@/lib/utils"
@@ -54,19 +68,25 @@ interface ExtractedThought {
   content: string
   context_tag: string
   source_quote?: string
+  isEditing?: boolean
+  editedContent?: string
+  editedContextTag?: string
 }
 
 interface EnhancedNoteEditorProps {
   note: Note | null
   isOpen: boolean
   onClose: () => void
-  onSave: (note: NoteInput & { context_id?: string }, existingId?: string) => void
+  onSave: (note: NoteInput & { context_id?: string; folder_id?: string | null }, existingId?: string) => void
   contexts?: Context[]
   availableThoughts?: Thought[]
   hasAIConsent?: boolean
   // Database-backed draft support
   onSaveDraft?: (title: string, content: string, existingDraftId?: string) => Promise<Note | null>
   isDraft?: boolean
+  // Folder support
+  folders?: Folder[]
+  onCreateFolder?: (name: string) => Promise<Folder | null>
 }
 
 interface AttachmentFile {
@@ -90,10 +110,12 @@ export function EnhancedNoteEditor({
   hasAIConsent = false,
   onSaveDraft,
   isDraft = false,
+  folders = [],
+  onCreateFolder,
 }: EnhancedNoteEditorProps) {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
-  const [selectedContextId, setSelectedContextId] = useState<string | null>(null)
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [attachments, setAttachments] = useState<AttachmentFile[]>([])
   const [linkedThoughts, setLinkedThoughts] = useState<Thought[]>([])
   const [linkingThought, setLinkingThought] = useState(false)
@@ -105,14 +127,28 @@ export function EnhancedNoteEditor({
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
   const isSavingDraftRef = useRef(false)
 
+  // Folder creation state
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false)
+  const [newFolderName, setNewFolderName] = useState("")
+  const [isFolderLoading, setIsFolderLoading] = useState(false)
+
   // Collapsible sections state
   const [attachmentsOpen, setAttachmentsOpen] = useState(true)
   const [thoughtsOpen, setThoughtsOpen] = useState(true)
+  const [extractedOpen, setExtractedOpen] = useState(true)
 
   // AI extraction state
   const [isExtracting, setIsExtracting] = useState(false)
   const [extractedThoughts, setExtractedThoughts] = useState<ExtractedThought[]>([])
   const [selectedExtracted, setSelectedExtracted] = useState<Set<number>>(new Set())
+  const [isSavingExtracted, setIsSavingExtracted] = useState(false)
+
+  // Create thought from selection state
+  const [selectedText, setSelectedText] = useState("")
+  const [showCreateThought, setShowCreateThought] = useState(false)
+  const [newThoughtContent, setNewThoughtContent] = useState("")
+  const [newThoughtContextTag, setNewThoughtContextTag] = useState<ContextTag>("other")
+  const [isCreatingThought, setIsCreatingThought] = useState(false)
 
   // Initialize draft ID when editing a draft
   useEffect(() => {
@@ -186,6 +222,7 @@ export function EnhancedNoteEditor({
       if (note) {
         setTitle(note.title || "")
         setContent(note.content || "")
+        setSelectedFolderId(note.folder_id || null)
         // Set draft ID if this is a draft
         if (note.is_draft) {
           setCurrentDraftId(note.id)
@@ -209,13 +246,16 @@ export function EnhancedNoteEditor({
         // New note - reset everything
         setTitle("")
         setContent("")
-        setSelectedContextId(null)
+        setSelectedFolderId(null)
         setAttachments([])
         setLinkedThoughts([])
         setCurrentDraftId(undefined)
       }
       setExtractedThoughts([])
       setSelectedExtracted(new Set())
+      setShowCreateThought(false)
+      setNewThoughtContent("")
+      setSelectedText("")
     }
   }, [isOpen, note])
 
@@ -229,12 +269,10 @@ export function EnhancedNoteEditor({
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      const noteData: NoteInput & { context_id?: string } = {
+      const noteData: NoteInput & { folder_id?: string | null } = {
         title: title.trim() || "Untitled",
         content,
-      }
-      if (selectedContextId) {
-        noteData.context_id = selectedContextId
+        folder_id: selectedFolderId,
       }
       // Pass note ID (or draft ID if editing a draft)
       const existingId = note?.id || currentDraftId
@@ -243,6 +281,112 @@ export function EnhancedNoteEditor({
     } finally {
       setIsSaving(false)
     }
+  }
+
+  // Handle creating a new folder
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim() || !onCreateFolder || isFolderLoading) return
+    setIsFolderLoading(true)
+    try {
+      const folder = await onCreateFolder(newFolderName.trim())
+      if (folder) {
+        setSelectedFolderId(folder.id)
+        setNewFolderName("")
+        setIsCreatingFolder(false)
+      }
+    } finally {
+      setIsFolderLoading(false)
+    }
+  }
+
+  // Handle text selection in editor
+  const handleTextSelect = useCallback((text: string) => {
+    if (text.trim()) {
+      setSelectedText(text)
+    }
+  }, [])
+
+  // Create thought from selected or entered text
+  const handleCreateThought = async () => {
+    const thoughtContent = newThoughtContent.trim() || selectedText.trim()
+    if (!thoughtContent || isCreatingThought) return
+
+    setIsCreatingThought(true)
+    try {
+      const response = await fetch("/api/gems/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gems: [{
+            content: thoughtContent.substring(0, 200),
+            context_tag: newThoughtContextTag,
+            source: title || "Note",
+            is_on_active_list: false,
+          }]
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Link the created thought to the note if note exists
+        if (note?.id && data.gems?.[0]?.id) {
+          await linkThoughtToNote(note.id, data.gems[0].id)
+          await loadLinkedThoughts(note.id)
+        }
+        setShowCreateThought(false)
+        setNewThoughtContent("")
+        setSelectedText("")
+        setNewThoughtContextTag("other")
+      }
+    } catch (error) {
+      console.error("Error creating thought:", error)
+    } finally {
+      setIsCreatingThought(false)
+    }
+  }
+
+  // Toggle editing mode for an extracted thought
+  const handleEditExtracted = (index: number) => {
+    setExtractedThoughts(prev => prev.map((t, i) =>
+      i === index
+        ? { ...t, isEditing: true, editedContent: t.content, editedContextTag: t.context_tag }
+        : t
+    ))
+  }
+
+  // Save edited extracted thought
+  const handleSaveEditedExtracted = (index: number) => {
+    setExtractedThoughts(prev => prev.map((t, i) =>
+      i === index
+        ? {
+            ...t,
+            content: t.editedContent || t.content,
+            context_tag: t.editedContextTag || t.context_tag,
+            isEditing: false
+          }
+        : t
+    ))
+  }
+
+  // Cancel editing extracted thought
+  const handleCancelEditExtracted = (index: number) => {
+    setExtractedThoughts(prev => prev.map((t, i) =>
+      i === index ? { ...t, isEditing: false } : t
+    ))
+  }
+
+  // Update edited content for extracted thought
+  const handleUpdateExtractedContent = (index: number, content: string) => {
+    setExtractedThoughts(prev => prev.map((t, i) =>
+      i === index ? { ...t, editedContent: content } : t
+    ))
+  }
+
+  // Update edited context tag for extracted thought
+  const handleUpdateExtractedContextTag = (index: number, contextTag: string) => {
+    setExtractedThoughts(prev => prev.map((t, i) =>
+      i === index ? { ...t, editedContextTag: contextTag } : t
+    ))
   }
 
   const handleAIAssist = useCallback(async (prompt: string, text: string): Promise<string> => {
@@ -266,12 +410,14 @@ export function EnhancedNoteEditor({
     }
   }, [])
 
-  const handleExtractThoughts = async () => {
+  const handleExtractThoughts = async (append: boolean = false) => {
     if (!content.trim() || !hasAIConsent) return
 
     setIsExtracting(true)
-    setExtractedThoughts([])
-    setSelectedExtracted(new Set())
+    if (!append) {
+      setExtractedThoughts([])
+      setSelectedExtracted(new Set())
+    }
 
     try {
       // Strip HTML tags for extraction
@@ -292,9 +438,20 @@ export function EnhancedNoteEditor({
 
       const data = await response.json()
       if (data.thoughts && data.thoughts.length > 0) {
-        setExtractedThoughts(data.thoughts)
-        // Select all by default
-        setSelectedExtracted(new Set(data.thoughts.map((_: ExtractedThought, i: number) => i)))
+        if (append) {
+          const existingCount = extractedThoughts.length
+          setExtractedThoughts(prev => [...prev, ...data.thoughts])
+          // Select all new thoughts by default
+          setSelectedExtracted(prev => {
+            const newSet = new Set(prev)
+            data.thoughts.forEach((_: ExtractedThought, i: number) => newSet.add(existingCount + i))
+            return newSet
+          })
+        } else {
+          setExtractedThoughts(data.thoughts)
+          // Select all by default
+          setSelectedExtracted(new Set(data.thoughts.map((_: ExtractedThought, i: number) => i)))
+        }
       }
     } catch (error) {
       console.error("Extract error:", error)
@@ -306,6 +463,7 @@ export function EnhancedNoteEditor({
   const handleSaveExtractedThoughts = async () => {
     if (selectedExtracted.size === 0) return
 
+    setIsSavingExtracted(true)
     const thoughtsToSave = extractedThoughts
       .filter((_, i) => selectedExtracted.has(i))
       .map(t => ({
@@ -325,16 +483,35 @@ export function EnhancedNoteEditor({
       })
 
       if (response.ok) {
-        setExtractedThoughts([])
-        setSelectedExtracted(new Set())
-        // Reload linked thoughts if note exists
-        if (note?.id) {
-          loadLinkedThoughts(note.id)
+        const data = await response.json()
+        // Link the created thoughts to the note if note exists
+        if (note?.id && data.gems?.length > 0) {
+          for (const gem of data.gems) {
+            await linkThoughtToNote(note.id, gem.id)
+          }
+          await loadLinkedThoughts(note.id)
         }
+        // Remove saved thoughts from extracted list
+        setExtractedThoughts(prev => prev.filter((_, i) => !selectedExtracted.has(i)))
+        setSelectedExtracted(new Set())
       }
     } catch (error) {
       console.error("Save extracted thoughts error:", error)
+    } finally {
+      setIsSavingExtracted(false)
     }
+  }
+
+  // Extract more thoughts (keep existing ones)
+  const handleExtractMore = async () => {
+    await handleExtractThoughts(true)
+  }
+
+  // Try again (replace existing extracted thoughts)
+  const handleTryAgain = async () => {
+    setExtractedThoughts([])
+    setSelectedExtracted(new Set())
+    await handleExtractThoughts(false)
   }
 
   const toggleExtractedSelection = (index: number) => {
@@ -493,32 +670,92 @@ export function EnhancedNoteEditor({
               />
             </div>
 
-            {/* Context selector */}
-            {contexts.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {contexts.map((context) => (
-                  <Badge
-                    key={context.id}
-                    variant={selectedContextId === context.id ? "default" : "outline"}
-                    className={cn(
-                      "cursor-pointer transition-colors",
-                      selectedContextId === context.id
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted"
+            {/* Folder selector */}
+            {folders.length > 0 && (
+              <div className="flex items-center gap-2">
+                <FolderIcon className="h-4 w-4 text-muted-foreground" />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      {selectedFolderId
+                        ? folders.find(f => f.id === selectedFolderId)?.name || "Select folder"
+                        : "No folder"
+                      }
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56">
+                    <DropdownMenuItem onClick={() => setSelectedFolderId(null)}>
+                      <FileX className="h-4 w-4 mr-2" />
+                      Unfiled
+                      {!selectedFolderId && <Check className="h-4 w-4 ml-auto" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {folders.map((folder) => (
+                      <DropdownMenuItem
+                        key={folder.id}
+                        onClick={() => setSelectedFolderId(folder.id)}
+                      >
+                        <FolderIcon className="h-4 w-4 mr-2" />
+                        {folder.name}
+                        {selectedFolderId === folder.id && <Check className="h-4 w-4 ml-auto" />}
+                      </DropdownMenuItem>
+                    ))}
+                    {onCreateFolder && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setIsCreatingFolder(true)}>
+                          <FolderPlus className="h-4 w-4 mr-2" />
+                          New folder...
+                        </DropdownMenuItem>
+                      </>
                     )}
-                    style={{
-                      borderColor: context.color,
-                      backgroundColor: selectedContextId === context.id ? context.color : undefined,
-                    }}
-                    onClick={() =>
-                      setSelectedContextId(
-                        selectedContextId === context.id ? null : context.id
-                      )
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
+
+            {/* New folder creation inline */}
+            {isCreatingFolder && (
+              <div className="flex items-center gap-2 p-2 border rounded-lg bg-muted/50">
+                <FolderPlus className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleCreateFolder()
+                    if (e.key === "Escape") {
+                      setIsCreatingFolder(false)
+                      setNewFolderName("")
                     }
-                  >
-                    {context.name}
-                  </Badge>
-                ))}
+                  }}
+                  placeholder="Folder name"
+                  className="h-7 text-sm flex-1"
+                  autoFocus
+                  disabled={isFolderLoading}
+                  maxLength={100}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={handleCreateFolder}
+                  disabled={isFolderLoading}
+                >
+                  {isFolderLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => {
+                    setIsCreatingFolder(false)
+                    setNewFolderName("")
+                  }}
+                  disabled={isFolderLoading}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             )}
 
@@ -528,85 +765,12 @@ export function EnhancedNoteEditor({
                 content={content}
                 onChange={setContent}
                 onAIAssist={hasAIConsent ? handleAIAssist : undefined}
+                onTextSelect={handleTextSelect}
                 placeholder="Start writing your note..."
                 className="min-h-[400px]"
                 editorClassName="min-h-[350px]"
               />
             </div>
-
-            {/* AI Features Panel */}
-            {hasAIConsent && (
-              <div className="border rounded-lg p-4 bg-gradient-to-r from-violet-500/5 to-purple-500/5 border-violet-200 dark:border-violet-800">
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="h-5 w-5 text-violet-500" />
-                  <span className="font-medium text-violet-700 dark:text-violet-300">AI Features</span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Use AI Assist in the toolbar above to improve, simplify, expand, or continue your writing.
-                  Extract thoughts from this note using the button in the sidebar.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-violet-300 text-violet-700 hover:bg-violet-50 dark:border-violet-700 dark:text-violet-300 dark:hover:bg-violet-900/20"
-                    onClick={handleExtractThoughts}
-                    disabled={isExtracting || !content.trim()}
-                  >
-                    {isExtracting ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Wand2 className="h-4 w-4 mr-2" />
-                    )}
-                    Extract Thoughts from Note
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Extracted Thoughts Results */}
-            {extractedThoughts.length > 0 && (
-              <div className="border rounded-lg p-4 bg-amber-500/5 border-amber-200 dark:border-amber-800">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Lightbulb className="h-5 w-5 text-amber-500" />
-                    <span className="font-medium text-amber-700 dark:text-amber-300">
-                      Extracted Thoughts ({selectedExtracted.size} selected)
-                    </span>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={handleSaveExtractedThoughts}
-                    disabled={selectedExtracted.size === 0}
-                    className="bg-amber-500 hover:bg-amber-600 text-white"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Save Selected
-                  </Button>
-                </div>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {extractedThoughts.map((thought, index) => (
-                    <div
-                      key={index}
-                      onClick={() => toggleExtractedSelection(index)}
-                      className={cn(
-                        "p-3 rounded-lg border cursor-pointer transition-colors",
-                        selectedExtracted.has(index)
-                          ? "bg-amber-100 border-amber-300 dark:bg-amber-900/30 dark:border-amber-700"
-                          : "bg-background hover:bg-muted"
-                      )}
-                    >
-                      <p className="text-sm">{thought.content}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="outline" className="text-xs">
-                          {thought.context_tag}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Right Sidebar */}
@@ -726,7 +890,7 @@ export function EnhancedNoteEditor({
                       variant="outline"
                       size="sm"
                       className="flex-1 text-xs border-violet-300 text-violet-700 hover:bg-violet-50 dark:border-violet-700 dark:text-violet-300"
-                      onClick={handleExtractThoughts}
+                      onClick={() => handleExtractThoughts(false)}
                       disabled={isExtracting}
                     >
                       {isExtracting ? (
@@ -815,8 +979,280 @@ export function EnhancedNoteEditor({
                     </div>
                   </div>
                 )}
+
+                {/* Create thought from selection or manual entry */}
+                {(selectedText || showCreateThought) && (
+                  <div className="border rounded-lg p-2 bg-amber-500/5 border-amber-200 dark:border-amber-800 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                        {selectedText ? "Create from selection" : "Create new thought"}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5"
+                        onClick={() => {
+                          setShowCreateThought(false)
+                          setSelectedText("")
+                          setNewThoughtContent("")
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={newThoughtContent || selectedText}
+                      onChange={(e) => setNewThoughtContent(e.target.value)}
+                      placeholder="Enter thought content..."
+                      className="min-h-[60px] text-xs resize-none"
+                      maxLength={200}
+                    />
+                    <div className="flex items-center gap-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-7 text-xs flex-1">
+                            <Badge
+                              variant="outline"
+                              className={cn("mr-1", CONTEXT_TAG_COLORS[newThoughtContextTag])}
+                            >
+                              {CONTEXT_TAG_LABELS[newThoughtContextTag]}
+                            </Badge>
+                            <ChevronDown className="h-3 w-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-40">
+                          {Object.entries(CONTEXT_TAG_LABELS).map(([value, label]) => (
+                            <DropdownMenuItem
+                              key={value}
+                              onClick={() => setNewThoughtContextTag(value as ContextTag)}
+                              className={cn(newThoughtContextTag === value && "bg-muted")}
+                            >
+                              {label}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs bg-amber-500 hover:bg-amber-600 text-white"
+                        onClick={handleCreateThought}
+                        disabled={isCreatingThought || (!newThoughtContent.trim() && !selectedText.trim())}
+                      >
+                        {isCreatingThought ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <>
+                            <Plus className="h-3 w-3 mr-1" />
+                            Save
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Create thought button when no selection */}
+                {!selectedText && !showCreateThought && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-300"
+                    onClick={() => setShowCreateThought(true)}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Create thought manually
+                  </Button>
+                )}
               </CollapsibleContent>
             </Collapsible>
+
+            {/* AI Extracted Thoughts Section */}
+            {hasAIConsent && (
+              <Collapsible open={extractedOpen} onOpenChange={setExtractedOpen}>
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-muted transition-colors">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-violet-500" />
+                    <span className="font-medium">AI Extraction</span>
+                    {extractedThoughts.length > 0 && (
+                      <Badge variant="secondary" className="text-xs bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                        {extractedThoughts.length}
+                      </Badge>
+                    )}
+                  </div>
+                  {extractedOpen ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-2 space-y-2">
+                  {/* Extract actions */}
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-xs border-violet-300 text-violet-700 hover:bg-violet-50 dark:border-violet-700 dark:text-violet-300"
+                      onClick={() => handleExtractThoughts(false)}
+                      disabled={isExtracting || !content.trim()}
+                    >
+                      {isExtracting ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <Wand2 className="h-3 w-3 mr-1" />
+                      )}
+                      Extract
+                    </Button>
+                    {extractedThoughts.length > 0 && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => handleExtractMore()}
+                          disabled={isExtracting}
+                          title="Extract more thoughts"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => handleTryAgain()}
+                          disabled={isExtracting}
+                          title="Try again"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Extracted thoughts list */}
+                  {extractedThoughts.length > 0 && (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {selectedExtracted.size} of {extractedThoughts.length} selected
+                        </span>
+                        <Button
+                          size="sm"
+                          className="h-6 text-xs bg-violet-500 hover:bg-violet-600 text-white"
+                          onClick={handleSaveExtractedThoughts}
+                          disabled={selectedExtracted.size === 0 || isSavingExtracted}
+                        >
+                          {isSavingExtracted ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <>
+                              <Plus className="h-3 w-3 mr-1" />
+                              Save
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {extractedThoughts.map((thought, index) => (
+                          <div
+                            key={index}
+                            className={cn(
+                              "p-2 rounded-lg border transition-colors",
+                              selectedExtracted.has(index)
+                                ? "bg-violet-100 border-violet-300 dark:bg-violet-900/30 dark:border-violet-700"
+                                : "bg-background hover:bg-muted border-border"
+                            )}
+                          >
+                            {thought.isEditing ? (
+                              <div className="space-y-2">
+                                <Textarea
+                                  value={thought.editedContent || ""}
+                                  onChange={(e) => handleUpdateExtractedContent(index, e.target.value)}
+                                  className="min-h-[50px] text-xs resize-none"
+                                  maxLength={200}
+                                />
+                                <div className="flex items-center gap-1">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="outline" size="sm" className="h-6 text-xs flex-1">
+                                        {CONTEXT_TAG_LABELS[thought.editedContextTag as ContextTag] || thought.editedContextTag}
+                                        <ChevronDown className="h-3 w-3 ml-1" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start" className="w-36">
+                                      {Object.entries(CONTEXT_TAG_LABELS).map(([value, label]) => (
+                                        <DropdownMenuItem
+                                          key={value}
+                                          onClick={() => handleUpdateExtractedContextTag(index, value)}
+                                        >
+                                          {label}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => handleSaveEditedExtracted(index)}
+                                  >
+                                    <Check className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => handleCancelEditExtracted(index)}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-1">
+                                <div className="flex items-start gap-2">
+                                  <button
+                                    onClick={() => toggleExtractedSelection(index)}
+                                    className={cn(
+                                      "mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors shrink-0",
+                                      selectedExtracted.has(index)
+                                        ? "bg-violet-500 border-violet-500"
+                                        : "border-gray-300 hover:border-violet-400"
+                                    )}
+                                  >
+                                    {selectedExtracted.has(index) && <Check className="h-2.5 w-2.5 text-white" />}
+                                  </button>
+                                  <p className="text-xs flex-1 line-clamp-2">{thought.content}</p>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-5 w-5 shrink-0"
+                                    onClick={() => handleEditExtracted(index)}
+                                  >
+                                    <Pencil className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                                <Badge
+                                  variant="outline"
+                                  className={cn("text-xs", CONTEXT_TAG_COLORS[thought.context_tag as ContextTag])}
+                                >
+                                  {CONTEXT_TAG_LABELS[thought.context_tag as ContextTag] || thought.context_tag}
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {extractedThoughts.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-2">
+                      Extract thoughts from your note content using AI
+                    </p>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
+            )}
           </div>
         </div>
 

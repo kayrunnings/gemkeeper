@@ -40,14 +40,31 @@ export function NoteCard({
     })
   }
 
-  // Get a plain text preview of the content (strip any markdown-like formatting)
+  // Get a plain text preview of the content (strip HTML and markdown formatting)
   const getPreview = (content: string | null, maxLength: number = 120) => {
     if (!content) return ""
-    const plainText = content
+
+    // First strip HTML tags
+    const withoutHtml = content
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "") // Remove style blocks
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "") // Remove script blocks
+      .replace(/<[^>]+>/g, " ") // Remove all HTML tags
+      .replace(/&nbsp;/g, " ") // Replace non-breaking spaces
+      .replace(/&amp;/g, "&") // Decode ampersands
+      .replace(/&lt;/g, "<") // Decode less than
+      .replace(/&gt;/g, ">") // Decode greater than
+      .replace(/&quot;/g, '"') // Decode quotes
+      .replace(/&#39;/g, "'") // Decode apostrophes
+
+    // Then strip markdown-like formatting
+    const plainText = withoutHtml
       .replace(/\*\*(.*?)\*\*/g, "$1") // Bold
       .replace(/\*(.*?)\*/g, "$1") // Italic
       .replace(/^[-*]\s/gm, "") // List items
       .replace(/^\d+\.\s/gm, "") // Numbered lists
+      .replace(/\s+/g, " ") // Collapse multiple spaces
+      .trim()
+
     return plainText.length > maxLength
       ? plainText.substring(0, maxLength) + "..."
       : plainText

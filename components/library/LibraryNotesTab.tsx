@@ -254,17 +254,23 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
   }
 
   // Note operations
-  const handleSaveNote = async (noteInput: NoteInput & { context_id?: string }, existingId?: string) => {
+  const handleSaveNote = async (noteInput: NoteInput & { context_id?: string; folder_id?: string | null }, existingId?: string) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
     if (existingId) {
+      const updateData: { title: string | null; content: string | null; folder_id?: string | null } = {
+        title: noteInput.title || null,
+        content: noteInput.content || null,
+      }
+      // Only update folder_id if explicitly provided
+      if (noteInput.folder_id !== undefined) {
+        updateData.folder_id = noteInput.folder_id
+      }
+
       const { data, error } = await supabase
         .from("notes")
-        .update({
-          title: noteInput.title || null,
-          content: noteInput.content || null,
-        })
+        .update(updateData)
         .eq("id", existingId)
         .select()
         .single()
@@ -277,8 +283,9 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
       setNotes((prev) => prev.map((note) => (note.id === existingId ? data : note)))
       showSuccess("Note updated")
     } else {
-      let folderId: string | null = null
-      if (typeof selectedFilter === "object" && selectedFilter.folderId) {
+      // Use folder_id from noteInput if provided, otherwise from selected filter
+      let folderId: string | null = noteInput.folder_id ?? null
+      if (folderId === null && typeof selectedFilter === "object" && selectedFilter.folderId) {
         folderId = selectedFilter.folderId
       }
 
@@ -377,6 +384,19 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
       showSuccess("Draft deleted")
     } else {
       showError(new Error(error), "Failed to delete draft")
+    }
+  }
+
+  // Create folder from within the note editor
+  const handleCreateFolderFromEditor = async (name: string): Promise<Folder | null> => {
+    const { folder, error } = await createFolderAction(name)
+    if (!error && folder) {
+      setFolders(prev => [...prev, folder].sort((a, b) => a.name.localeCompare(b.name)))
+      showSuccess("Folder created")
+      return folder
+    } else {
+      showError(new Error(error || "Failed to create folder"), "Error")
+      return null
     }
   }
 
@@ -867,6 +887,8 @@ export function LibraryNotesTab({ searchQuery, sortOrder = "desc", contexts: pro
         availableThoughts={availableThoughts}
         hasAIConsent={hasAIConsent}
         isDraft={!!editingDraft}
+        folders={folders}
+        onCreateFolder={handleCreateFolderFromEditor}
       />
 
       {/* Extract gems from note modal */}

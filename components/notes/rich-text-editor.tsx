@@ -7,6 +7,7 @@ import Link from "@tiptap/extension-link"
 import Image from "@tiptap/extension-image"
 import Underline from "@tiptap/extension-underline"
 import TextAlign from "@tiptap/extension-text-align"
+import { TextStyle, FontFamily, FontSize as TiptapFontSize } from "@tiptap/extension-text-style"
 import { Table, TableRow, TableCell, TableHeader } from "@tiptap/extension-table"
 import { useCallback, useEffect, useState, useRef } from "react"
 import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react"
@@ -39,6 +40,8 @@ import {
   AlignJustify,
   Minus as HorizontalRuleIcon,
   Smile,
+  Type,
+  ALargeSmall,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -58,10 +61,33 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+
+// Available fonts and sizes
+const FONT_FAMILIES = [
+  { label: "Default", value: "" },
+  { label: "Sans Serif", value: "Inter, ui-sans-serif, system-ui, sans-serif" },
+  { label: "Serif", value: "Georgia, ui-serif, serif" },
+  { label: "Mono", value: "ui-monospace, SFMono-Regular, monospace" },
+  { label: "Arial", value: "Arial, Helvetica, sans-serif" },
+  { label: "Times New Roman", value: "Times New Roman, Times, serif" },
+  { label: "Verdana", value: "Verdana, Geneva, sans-serif" },
+  { label: "Courier New", value: "Courier New, monospace" },
+]
+
+const FONT_SIZES = [
+  { label: "Small", value: "12px" },
+  { label: "Normal", value: "" },
+  { label: "Medium", value: "16px" },
+  { label: "Large", value: "18px" },
+  { label: "X-Large", value: "24px" },
+  { label: "XX-Large", value: "32px" },
+]
+
 interface RichTextEditorProps {
   content: string
   onChange: (content: string) => void
   onAIAssist?: (prompt: string, selectedText: string) => Promise<string>
+  onTextSelect?: (selectedText: string) => void
   placeholder?: string
   className?: string
   editorClassName?: string
@@ -102,6 +128,7 @@ export function RichTextEditor({
   content,
   onChange,
   onAIAssist,
+  onTextSelect,
   placeholder = "Start writing...",
   className,
   editorClassName,
@@ -114,6 +141,8 @@ export function RichTextEditor({
   const [aiMenuOpen, setAiMenuOpen] = useState(false)
   const [tableMenuOpen, setTableMenuOpen] = useState(false)
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false)
+  const [fontMenuOpen, setFontMenuOpen] = useState(false)
+  const [fontSizeMenuOpen, setFontSizeMenuOpen] = useState(false)
   const emojiPickerRef = useRef<HTMLDivElement>(null)
 
   // Close emoji picker when clicking outside
@@ -158,6 +187,9 @@ export function RichTextEditor({
         },
       }),
       Underline,
+      TextStyle,
+      FontFamily,
+      TiptapFontSize,
       TextAlign.configure({
         types: ["heading", "paragraph"],
         alignments: ["left", "center", "right", "justify"],
@@ -250,6 +282,15 @@ export function RichTextEditor({
     },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML())
+    },
+    onSelectionUpdate: ({ editor }) => {
+      if (onTextSelect) {
+        const { from, to } = editor.state.selection
+        const selectedText = editor.state.doc.textBetween(from, to, " ")
+        if (selectedText.trim()) {
+          onTextSelect(selectedText)
+        }
+      }
     },
     // Enable parsing of pasted content
     parseOptions: {
@@ -381,6 +422,81 @@ export function RichTextEditor({
         >
           <UnderlineIcon className="h-4 w-4" />
         </ToolbarButton>
+
+        <ToolbarDivider />
+
+        {/* Font Family */}
+        <DropdownMenu open={fontMenuOpen} onOpenChange={setFontMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1 px-2 min-w-[80px] justify-between"
+              title="Font family"
+            >
+              <Type className="h-4 w-4" />
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            {FONT_FAMILIES.map((font) => (
+              <DropdownMenuItem
+                key={font.label}
+                onClick={() => {
+                  if (font.value) {
+                    editor.chain().focus().setFontFamily(font.value).run()
+                  } else {
+                    editor.chain().focus().unsetFontFamily().run()
+                  }
+                  setFontMenuOpen(false)
+                }}
+                className={cn(
+                  font.value && editor.isActive("textStyle", { fontFamily: font.value }) && "bg-muted"
+                )}
+                style={{ fontFamily: font.value || undefined }}
+              >
+                {font.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Font Size */}
+        <DropdownMenu open={fontSizeMenuOpen} onOpenChange={setFontSizeMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1 px-2 min-w-[70px] justify-between"
+              title="Font size"
+            >
+              <ALargeSmall className="h-4 w-4" />
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-32">
+            {FONT_SIZES.map((size) => (
+              <DropdownMenuItem
+                key={size.label}
+                onClick={() => {
+                  if (size.value) {
+                    editor.chain().focus().setFontSize(size.value).run()
+                  } else {
+                    editor.chain().focus().unsetFontSize().run()
+                  }
+                  setFontSizeMenuOpen(false)
+                }}
+                className={cn(
+                  size.value && editor.isActive("textStyle", { fontSize: size.value }) && "bg-muted"
+                )}
+              >
+                {size.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <ToolbarDivider />
 
