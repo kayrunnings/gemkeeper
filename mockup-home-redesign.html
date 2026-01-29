@@ -613,87 +613,206 @@
       color: var(--highlight);
     }
 
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 16px;
+    /* Streak banner */
+    .streak-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(239, 68, 68, 0.1));
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      border-radius: calc(var(--radius) - 2px);
+      margin-bottom: 14px;
     }
 
-    .stat-item {
-      text-align: center;
-      padding: 14px 8px;
+    .streak-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .streak-fire {
+      font-size: 20px;
+    }
+
+    .streak-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .streak-days {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+
+    .streak-best {
+      font-size: 11px;
+      color: var(--muted-foreground);
+    }
+
+    .streak-weekly {
+      display: flex;
+      gap: 3px;
+    }
+
+    .streak-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
       background: var(--glass-input-bg);
-      border-radius: calc(var(--radius) - 2px);
       border: 1px solid var(--glass-card-border);
     }
 
-    .stat-number {
-      font-size: 26px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
+    .streak-dot.active {
+      background: rgba(249, 115, 22, 0.6);
+      border-color: rgba(249, 115, 22, 0.8);
     }
 
-    .stat-number.violet { color: var(--highlight); }
-    .stat-number.amber { color: var(--warning); }
-    .stat-number.green { color: var(--success); }
+    .streak-dot.today {
+      background: var(--primary);
+      border-color: var(--primary);
+      box-shadow: 0 0 6px var(--ai-glow);
+    }
 
-    .stat-label {
+    /* This week stats */
+    .week-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .week-stat {
+      padding: 10px 12px;
+      background: var(--glass-input-bg);
+      border: 1px solid var(--glass-card-border);
+      border-radius: calc(var(--radius) - 2px);
+    }
+
+    .week-stat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .week-stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--foreground);
+    }
+
+    .week-stat-trend {
       font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .week-stat-trend.up {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--success);
+    }
+
+    .week-stat-trend.down {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    .week-stat-label {
+      font-size: 11px;
       color: var(--muted-foreground);
-      margin-top: 4px;
+    }
+
+    /* Close to graduation */
+    .graduation-callout {
+      padding: 12px;
+      background: linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(245, 158, 11, 0.05));
+      border: 1px solid rgba(234, 179, 8, 0.2);
+      border-radius: calc(var(--radius) - 2px);
+      margin-bottom: 14px;
+    }
+
+    .graduation-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .graduation-icon {
+      font-size: 14px;
+    }
+
+    .graduation-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--warning);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
-    .streak-section {
-      margin-bottom: 14px;
-    }
-
-    .streak-header {
+    .graduation-item {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      justify-content: space-between;
+      padding: 6px 0;
     }
 
-    .streak-label {
-      font-size: 11px;
+    .graduation-item:not(:last-child) {
+      border-bottom: 1px solid rgba(234, 179, 8, 0.1);
+    }
+
+    .graduation-thought {
+      font-size: 12px;
+      color: var(--foreground);
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-right: 8px;
+    }
+
+    .graduation-remaining {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--warning);
+      white-space: nowrap;
+    }
+
+    /* Compact stats footer */
+    .stats-footer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--glass-card-border);
+    }
+
+    .stat-compact {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+
+    .stat-compact-value {
+      font-weight: 600;
+      color: var(--foreground);
+    }
+
+    .stat-compact-label {
       color: var(--muted-foreground);
     }
 
-    .streak-count {
-      font-size: 11px;
-      color: var(--highlight);
-      font-weight: 600;
-    }
-
-    .weekly-grid {
-      display: flex;
-      gap: 4px;
-    }
-
-    .week-day {
-      flex: 1;
-      aspect-ratio: 1;
-      border-radius: 4px;
-      background: var(--glass-input-bg);
-      border: 1px solid var(--glass-card-border);
-    }
-
-    .week-day.active {
-      background: rgba(167, 139, 250, 0.3);
-      border-color: rgba(167, 139, 250, 0.4);
-    }
-
-    .week-day.today {
-      background: var(--highlight);
-      border-color: var(--highlight);
-      box-shadow: 0 0 12px rgba(167, 139, 250, 0.5);
-    }
-
-    .progress-bar-section {
-      margin-bottom: 8px;
+    .stat-compact-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--muted-foreground);
+      opacity: 0.5;
     }
 
     .progress-bar-bg {
@@ -956,44 +1075,75 @@
         </div>
 
         <div class="quadrant-content">
-          <div class="stats-row">
-            <div class="stat-item">
-              <div class="stat-number violet">12</div>
-              <div class="stat-label">Active</div>
+          <!-- Streak Banner -->
+          <div class="streak-banner">
+            <div class="streak-main">
+              <span class="streak-fire">🔥</span>
+              <div class="streak-info">
+                <span class="streak-days">5 day streak</span>
+                <span class="streak-best">Best: 12 days</span>
+              </div>
             </div>
-            <div class="stat-item">
-              <div class="stat-number amber">8</div>
-              <div class="stat-label">Graduated</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number green">47</div>
-              <div class="stat-label">Applied</div>
-            </div>
-          </div>
-
-          <div class="streak-section">
-            <div class="streak-header">
-              <span class="streak-label">This week</span>
-              <span class="streak-count">5 day streak 🔥</span>
-            </div>
-            <div class="weekly-grid">
-              <div class="week-day active"></div>
-              <div class="week-day active"></div>
-              <div class="week-day active"></div>
-              <div class="week-day active"></div>
-              <div class="week-day today"></div>
-              <div class="week-day"></div>
-              <div class="week-day"></div>
+            <div class="streak-weekly">
+              <div class="streak-dot active"></div>
+              <div class="streak-dot active"></div>
+              <div class="streak-dot active"></div>
+              <div class="streak-dot active"></div>
+              <div class="streak-dot today"></div>
+              <div class="streak-dot"></div>
+              <div class="streak-dot"></div>
             </div>
           </div>
 
-          <div class="progress-bar-section">
-            <div class="streak-header">
-              <span class="streak-label">Graduation progress</span>
-              <span class="streak-count">8 of 20</span>
+          <!-- This Week Stats -->
+          <div class="week-stats">
+            <div class="week-stat">
+              <div class="week-stat-header">
+                <span class="week-stat-value">8</span>
+                <span class="week-stat-trend up">↑ 60%</span>
+              </div>
+              <div class="week-stat-label">Applications</div>
             </div>
-            <div class="progress-bar-bg">
-              <div class="progress-bar-fill" style="width: 40%"></div>
+            <div class="week-stat">
+              <div class="week-stat-header">
+                <span class="week-stat-value">3</span>
+                <span class="week-stat-trend up">↑ 2</span>
+              </div>
+              <div class="week-stat-label">New captures</div>
+            </div>
+          </div>
+
+          <!-- Close to Graduation -->
+          <div class="graduation-callout">
+            <div class="graduation-header">
+              <span class="graduation-icon">🏆</span>
+              <span class="graduation-title">Close to Graduation</span>
+            </div>
+            <div class="graduation-item">
+              <span class="graduation-thought">"Deep listening builds trust..."</span>
+              <span class="graduation-remaining">1 more!</span>
+            </div>
+            <div class="graduation-item">
+              <span class="graduation-thought">"Start with why before how"</span>
+              <span class="graduation-remaining">2 more</span>
+            </div>
+          </div>
+
+          <!-- Compact Stats Footer -->
+          <div class="stats-footer">
+            <div class="stat-compact">
+              <span class="stat-compact-value">12</span>
+              <span class="stat-compact-label">active</span>
+            </div>
+            <div class="stat-compact-dot"></div>
+            <div class="stat-compact">
+              <span class="stat-compact-value">8</span>
+              <span class="stat-compact-label">graduated</span>
+            </div>
+            <div class="stat-compact-dot"></div>
+            <div class="stat-compact">
+              <span class="stat-compact-value">47</span>
+              <span class="stat-compact-label">applied</span>
             </div>
           </div>
         </div>
