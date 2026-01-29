@@ -133,12 +133,11 @@
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: var(--primary);
+      background: linear-gradient(90deg, var(--ai-gradient-start), var(--ai-gradient-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       margin-bottom: 4px;
-    }
-
-    .tf-label.reflects {
-      color: var(--highlight);
     }
 
     .tf-message {
@@ -153,6 +152,11 @@
     }
 
     .tf-message .highlight {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .tf-message .context {
       color: var(--highlight);
       font-weight: 500;
     }
@@ -1177,13 +1181,13 @@
       <div class="tf-insight">
         <div class="tf-icon">✨</div>
         <div class="tf-content">
-          <div class="tf-label reflects">TF reflects</div>
+          <div class="tf-label">TF thinks</div>
           <div class="tf-message">
-            Your calendar shows <strong>4 meetings</strong> tomorrow. Based on your patterns, you apply <span class="highlight">"Meetings"</span> thoughts 2x more on heavy meeting days.
+            Tomorrow looks busy — <strong>4 meetings</strong> on your calendar. You tend to apply <span class="context">"Meetings"</span> thoughts <span class="highlight">2x more</span> on days like this.
           </div>
           <div class="tf-suggestion">
             <span class="tf-suggestion-icon">💡</span>
-            <span class="tf-suggestion-text">"Ask questions before giving answers" — from your Active List</span>
+            <span class="tf-suggestion-text">"Ask questions before giving answers" — ready in your Active List</span>
             <span class="tf-suggestion-arrow">→</span>
           </div>
         </div>
