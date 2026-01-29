@@ -181,7 +181,7 @@ gemkeeper/
 | Runtime | React | 19.2.3 |
 | Styling | Tailwind CSS | 4.x |
 | UI Components | shadcn/ui + Radix UI | Latest |
-| Rich Text Editor | TipTap (@tiptap/react, extension-table, extension-text-align) | 2.x |
+| Rich Text Editor | TipTap (@tiptap/react, extension-table, extension-text-align, extension-text-style) | 2.x |
 | Emoji Picker | emoji-picker-react | Latest |
 | Database | Supabase (PostgreSQL) | Latest |
 | Authentication | Supabase Auth (@supabase/ssr) | 0.8.0 |
@@ -1095,6 +1095,8 @@ interface SearchResult {
 #### Rich Text Editor Features
 The `RichTextEditor` component uses TipTap and provides:
 - **Text formatting:** Bold, italic, underline, headings (H1, H2, H3)
+- **Font selection:** Font family dropdown (Sans Serif, Serif, Mono, Arial, Times, Verdana, Courier)
+- **Font size:** Size dropdown (Small, Normal, Medium, Large, X-Large, XX-Large)
 - **Lists:** Bullet lists, numbered lists, blockquotes
 - **Text alignment:** Left, center, right, justify alignment for paragraphs and headings
 - **Media:** Links, images (via URL)
@@ -1104,18 +1106,32 @@ The `RichTextEditor` component uses TipTap and provides:
 - **History:** Undo/redo support
 - **AI Assist:** Writing assistance dropdown (improve, simplify, expand, summarize, fix grammar, continue) - requires AI consent
 - **Paste handling:** Preserves formatting when pasting from Notion and other rich text sources
+- **Sticky toolbar:** Toolbar remains fixed at top when scrolling through long notes
+- **Text selection callback:** Notifies parent when text is selected (for thought creation)
 
 #### Enhanced Note Editor Layout
 The note editor modal (95vw x 90vh) features a modern layout:
-- **Main content area:** Title input, context badges, rich text editor
-- **AI Features panel:** Prominent violet-themed section with "Extract Thoughts from Note" button
-- **Right sidebar (desktop):** Collapsible sections for Attachments and Linked Thoughts
-- **AI Thought extraction:** Extract thoughts directly from note content, select and save as passive thoughts
+- **Main content area:** Title input, folder selector, rich text editor
+- **Folder management:** Dropdown to select existing folder or create new folder inline
+- **Right sidebar (desktop):** Collapsible sections for Attachments, Linked Thoughts, and AI Extraction
+- **AI Thought extraction in sidebar:** Extract thoughts directly from note content with:
+  - **Extract button:** Generate AI-powered thought suggestions
+  - **Extract more:** Append additional extractions to existing list
+  - **Try again:** Re-run extraction with fresh results
+  - **Edit extracted thoughts:** Inline editing of content and context tag before saving
+  - **Context tag selection:** Choose category for each extracted thought
+  - **Batch save:** Select and save multiple thoughts at once, auto-linked to note
+- **Create thought from selection:** When text is selected in editor, sidebar shows:
+  - Pre-filled thought content from selection
+  - Context tag dropdown for categorization
+  - Save button to create thought and link to note
+- **Manual thought creation:** Create thoughts by typing directly (not just from selection)
 - **Inline attachments:** Upload files directly from sidebar without switching tabs
-- **Link/Extract buttons:** Quick actions to link existing thoughts or extract new ones with AI
-- **Auto-save drafts:** Drafts are automatically saved to localStorage after 2 seconds of inactivity
+- **Link existing thoughts:** Search and link existing thoughts to the note
+- **Auto-save drafts:** Drafts are automatically saved to database after 3 seconds of inactivity
 - **Draft restoration:** On opening a new note, users are prompted to restore any previous unsaved drafts
 - **Minimize functionality:** Minimize button saves current content as draft and closes the editor; draft can be restored later
+- **Note:** Context tags are NOT shown for notes (only for Thoughts) - folder organization is used instead
 
 ### Discovery Components
 | Component | File | Purpose |
