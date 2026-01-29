@@ -122,6 +122,20 @@
       transform: translateY(-2px);
     }
 
+    /* Quadrant-specific hover glows */
+    .capture:hover {
+      box-shadow: var(--glass-card-shadow), 0 0 30px rgba(16, 185, 129, 0.15);
+    }
+    .grow:hover {
+      box-shadow: var(--glass-card-shadow), 0 0 30px var(--ai-glow);
+    }
+    .apply:hover {
+      box-shadow: var(--glass-card-shadow), 0 0 30px rgba(245, 158, 11, 0.15);
+    }
+    .progress-quad:hover {
+      box-shadow: var(--glass-card-shadow), 0 0 30px rgba(167, 139, 250, 0.15);
+    }
+
     .quadrant-header {
       display: flex;
       align-items: center;
@@ -224,6 +238,26 @@
     .smart-capture-badge:hover {
       transform: scale(1.05);
       box-shadow: 0 0 12px var(--ai-glow);
+    }
+
+    /* Subtle pulse animation for AI elements */
+    @keyframes subtle-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { box-shadow: 0 0 8px var(--ai-glow); }
+      50% { box-shadow: 0 0 16px var(--ai-glow), 0 0 24px var(--ai-glow); }
+    }
+
+    .smart-capture-badge {
+      animation: glow-pulse 2s ease-in-out infinite;
+    }
+
+    .smart-capture-input textarea::placeholder {
+      color: var(--muted-foreground);
+      font-size: 12px;
     }
 
     .capture-quick-actions {
@@ -781,6 +815,69 @@
       white-space: nowrap;
     }
 
+    .graduation-remaining.soon {
+      background: linear-gradient(135deg, rgba(234, 179, 8, 0.3), rgba(245, 158, 11, 0.2));
+      padding: 2px 8px;
+      border-radius: 4px;
+      animation: subtle-pulse 2s ease-in-out infinite;
+    }
+
+    /* Surprise me button */
+    .surprise-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(59, 130, 246, 0.1));
+      border: 1px dashed rgba(249, 115, 22, 0.3);
+      border-radius: calc(var(--radius) - 2px);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-top: 8px;
+    }
+
+    .surprise-btn:hover {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(59, 130, 246, 0.15));
+      border-color: rgba(249, 115, 22, 0.5);
+      transform: translateY(-1px);
+    }
+
+    /* Application progress on thought */
+    .thought-progress {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(245, 158, 11, 0.1);
+    }
+
+    .thought-progress-bar {
+      flex: 1;
+      height: 4px;
+      background: rgba(245, 158, 11, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .thought-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--warning), var(--primary));
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .thought-progress-text {
+      font-size: 10px;
+      color: var(--warning);
+      white-space: nowrap;
+    }
+
     /* Compact stats footer */
     .stats-footer {
       display: flex;
@@ -921,7 +1018,7 @@
     <!-- Header -->
     <div class="header">
       <h1 class="greeting">Good afternoon, Sarah</h1>
-      <p class="subtitle">12 active thoughts ready to apply</p>
+      <p class="subtitle">You're on a roll — 5 day streak 🔥 One thought is 1 away from graduating!</p>
     </div>
 
     <!-- Four Quadrants -->
@@ -939,7 +1036,7 @@
         <div class="quadrant-content">
           <!-- Smart AI Capture Input -->
           <div class="smart-capture-input">
-            <textarea placeholder="Paste anything... text, URL, or image"></textarea>
+            <textarea placeholder="Paste a quote, URL, screenshot, meeting notes..."></textarea>
             <span class="smart-capture-badge">✨ AI</span>
           </div>
 
@@ -1002,7 +1099,7 @@
             <span class="context-chip">Leadership</span>
             <span class="context-chip">Focus</span>
             <span class="context-chip">Meetings</span>
-            <span class="context-chip">Surprise me</span>
+            <span class="context-chip">Relationships</span>
           </div>
 
           <div class="suggestion-item">
@@ -1019,6 +1116,11 @@
               <div class="suggestion-text">Building Trust Through Questions</div>
               <div class="suggestion-source">Knowledge Project Podcast</div>
             </div>
+          </div>
+
+          <div class="surprise-btn">
+            <span>🎲</span>
+            <span>Surprise me with something new</span>
           </div>
         </div>
 
@@ -1042,6 +1144,12 @@
             <div class="thought-meta">
               <span class="thought-context">Relationships</span>
               <span class="thought-source">from Radical Candor</span>
+            </div>
+            <div class="thought-progress">
+              <div class="thought-progress-bar">
+                <div class="thought-progress-fill" style="width: 60%"></div>
+              </div>
+              <span class="thought-progress-text">3/5 to graduate</span>
             </div>
             <div class="thought-actions">
               <button class="btn btn-primary">Check In</button>
@@ -1117,11 +1225,11 @@
           <div class="graduation-callout">
             <div class="graduation-header">
               <span class="graduation-icon">🏆</span>
-              <span class="graduation-title">Close to Graduation</span>
+              <span class="graduation-title">Almost there!</span>
             </div>
             <div class="graduation-item">
               <span class="graduation-thought">"Deep listening builds trust..."</span>
-              <span class="graduation-remaining">1 more!</span>
+              <span class="graduation-remaining soon">1 more!</span>
             </div>
             <div class="graduation-item">
               <span class="graduation-thought">"Start with why before how"</span>
