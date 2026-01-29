@@ -172,58 +172,92 @@
       color: var(--success);
     }
 
-    .capture-options {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 16px;
+    .smart-capture-input {
+      position: relative;
+      margin-bottom: 12px;
     }
 
-    .capture-btn {
+    .smart-capture-input textarea {
+      width: 100%;
+      background: var(--glass-input-bg);
+      border: 1px solid var(--glass-input-border);
+      border-radius: calc(var(--radius) - 2px);
+      padding: 12px 14px;
+      padding-right: 70px;
+      color: var(--foreground);
+      font-size: 13px;
+      font-family: inherit;
+      resize: none;
+      min-height: 70px;
+      transition: all 0.15s ease;
+    }
+
+    .smart-capture-input textarea::placeholder {
+      color: var(--muted-foreground);
+    }
+
+    .smart-capture-input textarea:focus {
+      outline: none;
+      border-color: var(--ring);
+      box-shadow: 0 0 0 3px var(--ai-glow);
+    }
+
+    .smart-capture-badge {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, var(--ai-gradient-start), var(--ai-gradient-end));
+      color: white;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .smart-capture-badge:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 12px var(--ai-glow);
+    }
+
+    .capture-quick-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .capture-quick-btn {
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 16px 12px;
+      gap: 6px;
+      padding: 10px 12px;
       background: var(--glass-input-bg);
       border: 1px solid var(--glass-input-border);
       border-radius: calc(var(--radius) - 2px);
       cursor: pointer;
       transition: all 0.15s ease;
-      text-align: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted-foreground);
     }
 
-    .capture-btn:hover {
+    .capture-quick-btn:hover {
       background: var(--glass-hover-bg);
       border-color: var(--glass-hover-border);
+      color: var(--foreground);
       transform: translateY(-1px);
     }
 
-    .capture-btn-icon {
-      font-size: 20px;
-      margin-bottom: 6px;
-    }
-
-    .capture-btn-label {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--foreground);
-    }
-
-    .capture-btn-desc {
-      font-size: 10px;
-      color: var(--muted-foreground);
-      margin-top: 2px;
-    }
-
-    .capture-btn.ai {
-      border-color: rgba(249, 115, 22, 0.2);
-      background: linear-gradient(135deg, rgba(249, 115, 22, 0.08), rgba(59, 130, 246, 0.05));
-    }
-
-    .capture-btn.ai:hover {
-      border-color: rgba(249, 115, 22, 0.4);
-      box-shadow: 0 0 20px var(--ai-glow);
+    .capture-quick-btn .icon {
+      font-size: 14px;
     }
 
     .ai-badge {
@@ -261,6 +295,46 @@
 
     .recent-item:last-child {
       border-bottom: none;
+    }
+
+    .recent-item-type {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .recent-item-type.thought {
+      background: rgba(167, 139, 250, 0.2);
+      color: var(--highlight);
+    }
+
+    .recent-item-type.note {
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+    }
+
+    .recent-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .recent-item-text {
+      font-size: 12px;
+      color: var(--foreground);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .recent-item-meta {
+      font-size: 10px;
+      color: var(--muted-foreground);
+      margin-top: 1px;
     }
 
     .context-badge {
@@ -744,32 +818,49 @@
         </div>
 
         <div class="quadrant-content">
-          <div class="capture-options">
-            <div class="capture-btn">
-              <span class="capture-btn-icon">✏️</span>
-              <span class="capture-btn-label">Quick Add</span>
-              <span class="capture-btn-desc">Type a thought</span>
+          <!-- Smart AI Capture Input -->
+          <div class="smart-capture-input">
+            <textarea placeholder="Paste anything... text, URL, or image"></textarea>
+            <span class="smart-capture-badge">✨ AI</span>
+          </div>
+
+          <!-- Quick action buttons -->
+          <div class="capture-quick-actions">
+            <div class="capture-quick-btn">
+              <span class="icon">📝</span>
+              <span>New Note</span>
             </div>
-            <div class="capture-btn ai">
-              <span class="capture-btn-icon">✨</span>
-              <span class="capture-btn-label">Extract</span>
-              <span class="capture-btn-desc">From URL or text</span>
-              <span class="ai-badge">AI</span>
+            <div class="capture-quick-btn">
+              <span class="icon">💭</span>
+              <span>Quick Thought</span>
             </div>
           </div>
 
-          <div class="recent-label">Recent captures</div>
+          <div class="recent-label">Recent</div>
           <div class="recent-item">
-            <span class="context-badge blue">Meetings</span>
-            "Start with why before how"
+            <span class="recent-item-type thought">💎</span>
+            <div class="recent-item-content">
+              <div class="recent-item-text">"Start with why before how"</div>
+              <div class="recent-item-meta">Thought · Meetings · 2h ago</div>
+            </div>
           </div>
           <div class="recent-item">
-            <span class="context-badge orange">Focus</span>
-            "Deep work needs 90-min blocks"
+            <span class="recent-item-type note">📝</span>
+            <div class="recent-item-content">
+              <div class="recent-item-text">Q1 Planning Meeting Notes</div>
+              <div class="recent-item-meta">Note · Yesterday</div>
+            </div>
+          </div>
+          <div class="recent-item">
+            <span class="recent-item-type thought">💎</span>
+            <div class="recent-item-content">
+              <div class="recent-item-text">"Deep work needs 90-min blocks"</div>
+              <div class="recent-item-meta">Thought · Focus · 2 days ago</div>
+            </div>
           </div>
         </div>
 
-        <div class="view-all">View all thoughts →</div>
+        <div class="view-all">View library →</div>
       </div>
 
       <!-- GROW -->
