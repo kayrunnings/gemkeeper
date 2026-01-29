@@ -71,7 +71,7 @@
 
     /* Header */
     .header {
-      margin-bottom: 28px;
+      margin-bottom: 24px;
     }
 
     .greeting {
@@ -79,12 +79,166 @@
       font-weight: 700;
       color: var(--foreground);
       letter-spacing: -0.02em;
+      margin-bottom: 16px;
     }
 
-    .subtitle {
-      color: var(--muted-foreground);
-      margin-top: 4px;
+    /* TF Insight Card */
+    .tf-insight {
+      background: var(--glass-card-bg);
+      backdrop-filter: blur(var(--glass-card-blur));
+      border: 1px solid var(--glass-card-border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tf-insight::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--ai-gradient-start), var(--ai-gradient-end));
+    }
+
+    .tf-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, var(--ai-gradient-start), var(--ai-gradient-end));
+      color: white;
+      box-shadow: 0 0 20px var(--ai-glow);
+    }
+
+    .tf-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .tf-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .tf-label.reflects {
+      color: var(--highlight);
+    }
+
+    .tf-message {
       font-size: 14px;
+      color: var(--foreground);
+      line-height: 1.5;
+    }
+
+    .tf-message strong {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .tf-message .highlight {
+      color: var(--highlight);
+      font-weight: 500;
+    }
+
+    .tf-suggestion {
+      margin-top: 8px;
+      padding: 10px 12px;
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(139, 92, 246, 0.05));
+      border: 1px solid rgba(167, 139, 250, 0.2);
+      border-radius: calc(var(--radius) - 4px);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tf-suggestion:hover {
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.15), rgba(139, 92, 246, 0.1));
+      border-color: rgba(167, 139, 250, 0.3);
+      transform: translateX(4px);
+    }
+
+    .tf-suggestion-icon {
+      font-size: 14px;
+    }
+
+    .tf-suggestion-text {
+      flex: 1;
+      font-size: 12px;
+      color: var(--foreground);
+    }
+
+    .tf-suggestion-arrow {
+      color: var(--highlight);
+      font-size: 14px;
+    }
+
+    .tf-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .tf-action-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--glass-input-bg);
+      border: 1px solid var(--glass-card-border);
+      color: var(--muted-foreground);
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.15s ease;
+    }
+
+    .tf-action-btn:hover {
+      background: var(--glass-hover-bg);
+      color: var(--foreground);
+    }
+
+    .tf-dots {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .tf-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--glass-card-border);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tf-dot.active {
+      background: var(--primary);
+      width: 16px;
+      border-radius: 3px;
     }
 
     /* Four Quadrants Grid */
@@ -1018,7 +1172,31 @@
     <!-- Header -->
     <div class="header">
       <h1 class="greeting">Good afternoon, Sarah</h1>
-      <p class="subtitle">You're on a roll — 5 day streak 🔥 One thought is 1 away from graduating!</p>
+
+      <!-- TF Insight Card -->
+      <div class="tf-insight">
+        <div class="tf-icon">✨</div>
+        <div class="tf-content">
+          <div class="tf-label reflects">TF reflects</div>
+          <div class="tf-message">
+            Your calendar shows <strong>4 meetings</strong> tomorrow. Based on your patterns, you apply <span class="highlight">"Meetings"</span> thoughts 2x more on heavy meeting days.
+          </div>
+          <div class="tf-suggestion">
+            <span class="tf-suggestion-icon">💡</span>
+            <span class="tf-suggestion-text">"Ask questions before giving answers" — from your Active List</span>
+            <span class="tf-suggestion-arrow">→</span>
+          </div>
+        </div>
+        <div class="tf-actions">
+          <button class="tf-action-btn" title="Refresh">↻</button>
+          <button class="tf-action-btn" title="Dismiss">✕</button>
+        </div>
+      </div>
+      <div class="tf-dots">
+        <div class="tf-dot"></div>
+        <div class="tf-dot active"></div>
+        <div class="tf-dot"></div>
+      </div>
     </div>
 
     <!-- Four Quadrants -->
