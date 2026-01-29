@@ -161,40 +161,6 @@
       font-weight: 500;
     }
 
-    .tf-suggestion {
-      margin-top: 8px;
-      padding: 10px 12px;
-      background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(139, 92, 246, 0.05));
-      border: 1px solid rgba(167, 139, 250, 0.2);
-      border-radius: calc(var(--radius) - 4px);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .tf-suggestion:hover {
-      background: linear-gradient(135deg, rgba(167, 139, 250, 0.15), rgba(139, 92, 246, 0.1));
-      border-color: rgba(167, 139, 250, 0.3);
-      transform: translateX(4px);
-    }
-
-    .tf-suggestion-icon {
-      font-size: 14px;
-    }
-
-    .tf-suggestion-text {
-      flex: 1;
-      font-size: 12px;
-      color: var(--foreground);
-    }
-
-    .tf-suggestion-arrow {
-      color: var(--highlight);
-      font-size: 14px;
-    }
-
     .tf-actions {
       display: flex;
       align-items: center;
@@ -1184,11 +1150,6 @@
           <div class="tf-label">TF thinks</div>
           <div class="tf-message">
             Tomorrow looks busy — <strong>4 meetings</strong> on your calendar. You tend to apply <span class="context">"Meetings"</span> thoughts <span class="highlight">2x more</span> on days like this.
-          </div>
-          <div class="tf-suggestion">
-            <span class="tf-suggestion-icon">💡</span>
-            <span class="tf-suggestion-text">"Ask questions before giving answers" — ready in your Active List</span>
-            <span class="tf-suggestion-arrow">→</span>
           </div>
         </div>
         <div class="tf-actions">

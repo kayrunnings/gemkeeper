@@ -144,11 +144,14 @@ The mockup uses CSS variables from `globals.css` to ensure theme compatibility:
 
 ---
 
+## Design Decisions
+
+1. **TF Thinks carousel:** Yes - show multiple insights with dots for browsing
+2. **Suggestion card (bulb icon):** Removed - keep TF thinks card clean and focused on the insight only
+
 ## Open Questions
 
-1. **TF Thinks carousel:** Do we show multiple insights with dots, or a single insight that rotates/refreshes?
-2. **Suggestion card (bulb icon):** Do we show a related thought from Active List alongside the insight, or keep TF thinks cleaner?
-3. **Calendar integration:** How deep should the Apply quadrant integrate with external calendars?
+1. **Calendar integration:** How deep should the Apply quadrant integrate with external calendars?
 
 ---
 
