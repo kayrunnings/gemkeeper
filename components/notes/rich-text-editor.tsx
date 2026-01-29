@@ -398,8 +398,8 @@ export function RichTextEditor({
 
   return (
     <div className={cn("border rounded-lg overflow-hidden flex flex-col", className)}>
-      {/* Sticky Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 p-1 border-b bg-muted/50 sticky top-0 z-10">
+      {/* Toolbar - fixed at top of editor */}
+      <div className="shrink-0 flex flex-wrap items-center gap-0.5 p-1 border-b bg-muted/50 z-10">
         {/* Text formatting */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}

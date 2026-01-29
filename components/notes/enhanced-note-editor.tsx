@@ -620,27 +620,27 @@ export function EnhancedNoteEditor({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-7xl w-[95vw] h-[90vh] max-h-[90vh] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="shrink-0 px-6 pt-6 pb-4 border-b">
-          <div className="flex items-center justify-between pr-8">
+      <DialogContent className="sm:max-w-7xl w-[95vw] h-[90vh] max-h-[90vh] overflow-hidden flex flex-col p-0 [&>button]:hidden">
+        <DialogHeader className="shrink-0 px-6 pt-4 pb-4 border-b">
+          <div className="flex items-center justify-between">
             <DialogTitle className="text-xl">{note ? "Edit Note" : "New Note"}</DialogTitle>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {/* Draft saved indicator */}
               {draftSaved && (
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Save className="h-3 w-3" />
-                  Draft saved
+                <span className="flex items-center gap-1 text-xs text-muted-foreground animate-in fade-in">
+                  <Check className="h-3 w-3" />
+                  Saved
                 </span>
               )}
-              {/* Minimize button - positioned to avoid close button */}
+              {/* Close button - saves draft and closes */}
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-8 w-8"
+                size="sm"
+                className="h-8 gap-1 text-muted-foreground hover:text-foreground"
                 onClick={handleMinimize}
-                title="Minimize and save draft"
               >
-                <Minimize2 className="h-4 w-4" />
+                <X className="h-4 w-4" />
+                <span className="sr-only sm:not-sr-only">Close</span>
               </Button>
             </div>
           </div>
@@ -658,116 +658,119 @@ export function EnhancedNoteEditor({
 
         <div className="flex-1 flex overflow-hidden">
           {/* Main Content Area */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {/* Title */}
-            <div className="space-y-2">
-              <Input
-                id="title"
-                placeholder="Note title..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="text-xl font-semibold border-0 border-b rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary"
-              />
-            </div>
-
-            {/* Folder selector */}
-            {folders.length > 0 && (
-              <div className="flex items-center gap-2">
-                <FolderIcon className="h-4 w-4 text-muted-foreground" />
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      {selectedFolderId
-                        ? folders.find(f => f.id === selectedFolderId)?.name || "Select folder"
-                        : "No folder"
-                      }
-                      <ChevronDown className="h-3 w-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-56">
-                    <DropdownMenuItem onClick={() => setSelectedFolderId(null)}>
-                      <FileX className="h-4 w-4 mr-2" />
-                      Unfiled
-                      {!selectedFolderId && <Check className="h-4 w-4 ml-auto" />}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {folders.map((folder) => (
-                      <DropdownMenuItem
-                        key={folder.id}
-                        onClick={() => setSelectedFolderId(folder.id)}
-                      >
-                        <FolderIcon className="h-4 w-4 mr-2" />
-                        {folder.name}
-                        {selectedFolderId === folder.id && <Check className="h-4 w-4 ml-auto" />}
-                      </DropdownMenuItem>
-                    ))}
-                    {onCreateFolder && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setIsCreatingFolder(true)}>
-                          <FolderPlus className="h-4 w-4 mr-2" />
-                          New folder...
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )}
-
-            {/* New folder creation inline */}
-            {isCreatingFolder && (
-              <div className="flex items-center gap-2 p-2 border rounded-lg bg-muted/50">
-                <FolderPlus className="h-4 w-4 text-muted-foreground" />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Fixed header area: Title and folder */}
+            <div className="shrink-0 px-6 pt-6 pb-4 space-y-4">
+              {/* Title */}
+              <div className="space-y-2">
                 <Input
-                  value={newFolderName}
-                  onChange={(e) => setNewFolderName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleCreateFolder()
-                    if (e.key === "Escape") {
+                  id="title"
+                  placeholder="Note title..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="text-xl font-semibold border-0 border-b rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary"
+                />
+              </div>
+
+              {/* Folder selector */}
+              {folders.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <FolderIcon className="h-4 w-4 text-muted-foreground" />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-2">
+                        {selectedFolderId
+                          ? folders.find(f => f.id === selectedFolderId)?.name || "Select folder"
+                          : "No folder"
+                        }
+                        <ChevronDown className="h-3 w-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-56">
+                      <DropdownMenuItem onClick={() => setSelectedFolderId(null)}>
+                        <FileX className="h-4 w-4 mr-2" />
+                        Unfiled
+                        {!selectedFolderId && <Check className="h-4 w-4 ml-auto" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {folders.map((folder) => (
+                        <DropdownMenuItem
+                          key={folder.id}
+                          onClick={() => setSelectedFolderId(folder.id)}
+                        >
+                          <FolderIcon className="h-4 w-4 mr-2" />
+                          {folder.name}
+                          {selectedFolderId === folder.id && <Check className="h-4 w-4 ml-auto" />}
+                        </DropdownMenuItem>
+                      ))}
+                      {onCreateFolder && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setIsCreatingFolder(true)}>
+                            <FolderPlus className="h-4 w-4 mr-2" />
+                            New folder...
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
+
+              {/* New folder creation inline */}
+              {isCreatingFolder && (
+                <div className="flex items-center gap-2 p-2 border rounded-lg bg-muted/50">
+                  <FolderPlus className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleCreateFolder()
+                      if (e.key === "Escape") {
+                        setIsCreatingFolder(false)
+                        setNewFolderName("")
+                      }
+                    }}
+                    placeholder="Folder name"
+                    className="h-7 text-sm flex-1"
+                    autoFocus
+                    disabled={isFolderLoading}
+                    maxLength={100}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={handleCreateFolder}
+                    disabled={isFolderLoading}
+                  >
+                    {isFolderLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => {
                       setIsCreatingFolder(false)
                       setNewFolderName("")
-                    }
-                  }}
-                  placeholder="Folder name"
-                  className="h-7 text-sm flex-1"
-                  autoFocus
-                  disabled={isFolderLoading}
-                  maxLength={100}
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={handleCreateFolder}
-                  disabled={isFolderLoading}
-                >
-                  {isFolderLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => {
-                    setIsCreatingFolder(false)
-                    setNewFolderName("")
-                  }}
-                  disabled={isFolderLoading}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
+                    }}
+                    disabled={isFolderLoading}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
 
-            {/* Rich text editor */}
-            <div className="flex-1">
+            {/* Rich text editor - takes remaining space */}
+            <div className="flex-1 overflow-hidden px-6 pb-6">
               <RichTextEditor
                 content={content}
                 onChange={setContent}
                 onAIAssist={hasAIConsent ? handleAIAssist : undefined}
                 onTextSelect={handleTextSelect}
                 placeholder="Start writing your note..."
-                className="min-h-[400px]"
+                className="h-full"
                 editorClassName="min-h-[350px]"
               />
             </div>
@@ -885,22 +888,16 @@ export function EnhancedNoteEditor({
                       Link
                     </Button>
                   )}
-                  {hasAIConsent && content.trim() && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 text-xs border-violet-300 text-violet-700 hover:bg-violet-50 dark:border-violet-700 dark:text-violet-300"
-                      onClick={() => handleExtractThoughts(false)}
-                      disabled={isExtracting}
-                    >
-                      {isExtracting ? (
-                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      ) : (
-                        <Wand2 className="h-3 w-3 mr-1" />
-                      )}
-                      Extract
-                    </Button>
-                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-xs border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-300"
+                    onClick={() => setShowCreateThought(true)}
+                    disabled={showCreateThought || !!selectedText}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Create
+                  </Button>
                 </div>
 
                 {!note?.id && (
@@ -1010,24 +1007,44 @@ export function EnhancedNoteEditor({
                     <div className="flex items-center gap-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-7 text-xs flex-1">
-                            <Badge
-                              variant="outline"
-                              className={cn("mr-1", CONTEXT_TAG_COLORS[newThoughtContextTag])}
-                            >
+                          <Button variant="outline" size="sm" className="h-7 text-xs flex-1 justify-between gap-2">
+                            <span className="flex items-center gap-1.5">
+                              <span className={cn(
+                                "w-2 h-2 rounded-full",
+                                newThoughtContextTag === "meetings" && "bg-blue-500",
+                                newThoughtContextTag === "feedback" && "bg-purple-500",
+                                newThoughtContextTag === "conflict" && "bg-red-500",
+                                newThoughtContextTag === "focus" && "bg-orange-500",
+                                newThoughtContextTag === "health" && "bg-green-500",
+                                newThoughtContextTag === "relationships" && "bg-pink-500",
+                                newThoughtContextTag === "parenting" && "bg-yellow-500",
+                                newThoughtContextTag === "other" && "bg-gray-500"
+                              )} />
                               {CONTEXT_TAG_LABELS[newThoughtContextTag]}
-                            </Badge>
-                            <ChevronDown className="h-3 w-3" />
+                            </span>
+                            <ChevronDown className="h-3 w-3 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-40">
+                        <DropdownMenuContent align="start" className="w-44">
                           {Object.entries(CONTEXT_TAG_LABELS).map(([value, label]) => (
                             <DropdownMenuItem
                               key={value}
                               onClick={() => setNewThoughtContextTag(value as ContextTag)}
-                              className={cn(newThoughtContextTag === value && "bg-muted")}
+                              className={cn("gap-2", newThoughtContextTag === value && "bg-muted")}
                             >
+                              <span className={cn(
+                                "w-2 h-2 rounded-full",
+                                value === "meetings" && "bg-blue-500",
+                                value === "feedback" && "bg-purple-500",
+                                value === "conflict" && "bg-red-500",
+                                value === "focus" && "bg-orange-500",
+                                value === "health" && "bg-green-500",
+                                value === "relationships" && "bg-pink-500",
+                                value === "parenting" && "bg-yellow-500",
+                                value === "other" && "bg-gray-500"
+                              )} />
                               {label}
+                              {newThoughtContextTag === value && <Check className="h-3 w-3 ml-auto" />}
                             </DropdownMenuItem>
                           ))}
                         </DropdownMenuContent>
@@ -1051,18 +1068,6 @@ export function EnhancedNoteEditor({
                   </div>
                 )}
 
-                {/* Create thought button when no selection */}
-                {!selectedText && !showCreateThought && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-xs border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-300"
-                    onClick={() => setShowCreateThought(true)}
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Create thought manually
-                  </Button>
-                )}
               </CollapsibleContent>
             </Collapsible>
 
@@ -1173,18 +1178,44 @@ export function EnhancedNoteEditor({
                                 <div className="flex items-center gap-1">
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                      <Button variant="outline" size="sm" className="h-6 text-xs flex-1">
-                                        {CONTEXT_TAG_LABELS[thought.editedContextTag as ContextTag] || thought.editedContextTag}
-                                        <ChevronDown className="h-3 w-3 ml-1" />
+                                      <Button variant="outline" size="sm" className="h-6 text-xs flex-1 justify-between gap-1">
+                                        <span className="flex items-center gap-1.5">
+                                          <span className={cn(
+                                            "w-2 h-2 rounded-full",
+                                            thought.editedContextTag === "meetings" && "bg-blue-500",
+                                            thought.editedContextTag === "feedback" && "bg-purple-500",
+                                            thought.editedContextTag === "conflict" && "bg-red-500",
+                                            thought.editedContextTag === "focus" && "bg-orange-500",
+                                            thought.editedContextTag === "health" && "bg-green-500",
+                                            thought.editedContextTag === "relationships" && "bg-pink-500",
+                                            thought.editedContextTag === "parenting" && "bg-yellow-500",
+                                            thought.editedContextTag === "other" && "bg-gray-500"
+                                          )} />
+                                          {CONTEXT_TAG_LABELS[thought.editedContextTag as ContextTag] || thought.editedContextTag}
+                                        </span>
+                                        <ChevronDown className="h-3 w-3 opacity-50" />
                                       </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start" className="w-36">
+                                    <DropdownMenuContent align="start" className="w-44">
                                       {Object.entries(CONTEXT_TAG_LABELS).map(([value, label]) => (
                                         <DropdownMenuItem
                                           key={value}
                                           onClick={() => handleUpdateExtractedContextTag(index, value)}
+                                          className={cn("gap-2", thought.editedContextTag === value && "bg-muted")}
                                         >
+                                          <span className={cn(
+                                            "w-2 h-2 rounded-full",
+                                            value === "meetings" && "bg-blue-500",
+                                            value === "feedback" && "bg-purple-500",
+                                            value === "conflict" && "bg-red-500",
+                                            value === "focus" && "bg-orange-500",
+                                            value === "health" && "bg-green-500",
+                                            value === "relationships" && "bg-pink-500",
+                                            value === "parenting" && "bg-yellow-500",
+                                            value === "other" && "bg-gray-500"
+                                          )} />
                                           {label}
+                                          {thought.editedContextTag === value && <Check className="h-3 w-3 ml-auto" />}
                                         </DropdownMenuItem>
                                       ))}
                                     </DropdownMenuContent>
@@ -1257,9 +1288,6 @@ export function EnhancedNoteEditor({
         </div>
 
         <DialogFooter className="shrink-0 border-t px-6 py-4">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
           <Button onClick={handleSave} disabled={isSaving}>
             {isSaving ? (
               <>
