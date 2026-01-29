@@ -76,6 +76,7 @@ export async function updateCalendarSettings(
     lead_time_minutes?: number
     event_filter?: 'all' | 'meetings' | 'custom'
     custom_keywords?: string[]
+    sync_frequency_minutes?: number
   }
 ): Promise<{ error: string | null }> {
   const supabase = createClient()

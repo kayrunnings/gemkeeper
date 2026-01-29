@@ -37,6 +37,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useSidebar } from "@/lib/sidebar-context"
 import { GlobalSearch } from "@/components/search/GlobalSearch"
 import { useGlobalShortcuts } from "@/lib/hooks/useGlobalShortcuts"
+import { useCalendarAutoSync } from "@/lib/hooks/useCalendarAutoSync"
 import { BottomNavigation } from "@/components/layout/BottomNavigation"
 import { FloatingMomentButton } from "@/components/moments/FloatingMomentButton"
 import { AICaptureModal } from "@/components/capture/AICaptureModal"
@@ -108,6 +109,9 @@ export function LayoutShell({
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+
+  // Auto-sync calendar in the background based on user's configured frequency
+  useCalendarAutoSync()
 
   // Sync sidebar state when preference changes (e.g., from settings page)
   useEffect(() => {

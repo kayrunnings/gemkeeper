@@ -81,6 +81,7 @@ export async function connectGoogleCalendar(
         lead_time_minutes: 30,
         event_filter: 'all',
         custom_keywords: [],
+        sync_frequency_minutes: 15, // Default to sync every 15 minutes
       }, {
         onConflict: 'user_id,provider',
       })
@@ -168,6 +169,7 @@ export async function updateCalendarSettings(
     lead_time_minutes?: number
     event_filter?: 'all' | 'meetings' | 'custom'
     custom_keywords?: string[]
+    sync_frequency_minutes?: number
   }
 ): Promise<{ error: string | null }> {
   const supabase = createClient()
