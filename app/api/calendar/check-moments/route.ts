@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getPendingEventsForMoments } from "@/lib/calendar"
+import { matchGemsToMoment } from "@/lib/matching"
 import type { CalendarEvent } from "@/types/calendar"
+import type { GemForMatching } from "@/types/matching"
 
 export async function POST() {
   try {
@@ -23,7 +25,26 @@ export async function POST() {
       return NextResponse.json({ momentsCreated: 0, events: [] })
     }
 
-    const createdMoments: Array<{ event: CalendarEvent; momentId: string }> = []
+    // Get all active and passive gems for AI matching
+    // Moments should search the full knowledge library (both active and passive)
+    const { data: gems, error: gemsError } = await supabase
+      .from("gems")
+      .select("id, content, context_tag, source")
+      .eq("user_id", user.id)
+      .in("status", ["active", "passive"])
+
+    if (gemsError) {
+      console.error("Gems fetch error:", gemsError)
+    }
+
+    const gemsForMatching: GemForMatching[] = gems?.map(g => ({
+      id: g.id,
+      content: g.content,
+      context_tag: g.context_tag,
+      source: g.source,
+    })) || []
+
+    const createdMoments: Array<{ event: CalendarEvent; momentId: string; matchedCount: number }> = []
 
     for (const event of pendingEvents) {
       try {
@@ -44,6 +65,43 @@ export async function POST() {
           .single()
 
         if (!momentError && moment) {
+          let matchedCount = 0
+
+          // Run AI matching if we have gems
+          if (gemsForMatching.length > 0) {
+            try {
+              const matchResult = await matchGemsToMoment(event.title, gemsForMatching)
+
+              if (matchResult.matches.length > 0) {
+                // Insert matched gems into moment_gems table
+                const momentGemsData = matchResult.matches.map((match) => ({
+                  moment_id: moment.id,
+                  gem_id: match.gem_id,
+                  user_id: user.id,
+                  relevance_score: match.relevance_score,
+                  relevance_reason: match.relevance_reason,
+                  was_helpful: null,
+                  was_reviewed: false,
+                }))
+
+                await supabase.from("moment_gems").insert(momentGemsData)
+                matchedCount = matchResult.matches.length
+
+                // Update moment with match count and processing time
+                await supabase
+                  .from("moments")
+                  .update({
+                    gems_matched_count: matchedCount,
+                    ai_processing_time_ms: matchResult.processing_time_ms,
+                  })
+                  .eq("id", moment.id)
+              }
+            } catch (matchError) {
+              console.error(`AI matching error for event: ${event.title}`, matchError)
+              // Continue without matches - moment is still created
+            }
+          }
+
           // Mark event as having moment created
           await supabase
             .from("calendar_events_cache")
@@ -53,7 +111,7 @@ export async function POST() {
             })
             .eq("id", event.id)
 
-          createdMoments.push({ event, momentId: moment.id })
+          createdMoments.push({ event, momentId: moment.id, matchedCount })
         }
       } catch (err) {
         console.error(`Failed to create moment for event: ${event.title}`, err)

@@ -808,6 +808,40 @@ This document tracks key product and technical decisions with their rationale. C
 
 ---
 
+### 2026-01-29: Bug Fix - Calendar Moments Missing AI Matching
+
+**Decision:** Update `/api/calendar/check-moments` endpoint to run AI matching for calendar-imported moments, matching the behavior of manually-created moments.
+
+**Bug Description:** Calendar-imported moments were created without AI matching. The `/api/calendar/check-moments/route.ts` endpoint only inserted moments with `gems_matched_count: 0` and never:
+1. Fetched user's thoughts (active and passive)
+2. Called the AI matching service
+3. Inserted matched thoughts into `moment_gems` table
+
+This caused calendar moments to appear in the dashboard but show "No thoughts matched this moment" when clicked.
+
+**Root Cause:** The endpoint was designed to create moments quickly without the overhead of AI matching, but this broke the core value proposition of moments - matching relevant thoughts for preparation.
+
+**Fix Applied:**
+- Added AI matching logic to `/api/calendar/check-moments/route.ts`
+- Fetches all thoughts with `status IN ('active', 'passive')` for matching
+- Calls `matchGemsToMoment()` for each calendar event
+- Stores matched thoughts in `moment_gems` table
+- Updates moment with match count and processing time
+
+**Additional Improvements:**
+- Enhanced PrepCard to display linked notes with matched thoughts
+- Added visual indicators for source and related notes
+- Prepare page now fetches linked notes via `note_thought_links` table
+
+**Files Changed:**
+- `app/api/calendar/check-moments/route.ts` — Added AI matching
+- `app/moments/[id]/prepare/page.tsx` — Fetch linked notes
+- `components/moments/PrepCard.tsx` — Display linked notes
+
+**Lesson Learned:** When implementing a feature in multiple places (manual moments vs calendar moments), ensure all code paths include the same critical functionality. AI matching is essential for moments to provide value.
+
+---
+
 ## Deferred Decisions
 
 Items we've discussed but intentionally not decided yet:

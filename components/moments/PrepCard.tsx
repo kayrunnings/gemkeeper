@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,20 +15,28 @@ import {
   Sparkles,
   Plus,
   ExternalLink,
+  FileText,
+  BookOpen,
 } from "lucide-react"
 import type { MomentWithThoughts, MomentThought } from "@/types/moments"
 import type { Thought } from "@/lib/types/thought"
+import type { Note } from "@/lib/types"
 import { CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS } from "@/lib/types/thought"
 import { recordMomentThoughtFeedback, markThoughtReviewed, updateMomentStatus } from "@/lib/moments"
 
+// Extended type for moment thought with linked notes
+interface MomentThoughtWithNotes extends MomentThought {
+  linkedNotes?: Note[]
+}
+
 interface PrepCardProps {
-  moment: MomentWithThoughts
+  moment: MomentWithThoughts & { matched_thoughts: MomentThoughtWithNotes[] }
   onComplete?: () => void
   readOnly?: boolean
 }
 
 interface ThoughtCardProps {
-  momentThought: MomentThought & { thought?: Thought }
+  momentThought: MomentThoughtWithNotes & { thought?: Thought }
   onReviewed: () => void
   onFeedback: (wasHelpful: boolean) => void
   readOnly?: boolean
@@ -104,6 +113,7 @@ function MatchedThoughtCard({ momentThought, onReviewed, onFeedback, readOnly }:
         {/* Source */}
         {thought.source && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <BookOpen className="h-3 w-3" />
             <span>Source:</span>
             {thought.source_url ? (
               <a
@@ -118,6 +128,30 @@ function MatchedThoughtCard({ momentThought, onReviewed, onFeedback, readOnly }:
             ) : (
               <span>{thought.source}</span>
             )}
+          </div>
+        )}
+
+        {/* Linked Notes */}
+        {momentThought.linkedNotes && momentThought.linkedNotes.length > 0 && (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <FileText className="h-3 w-3" />
+              <span>Related notes:</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {momentThought.linkedNotes.map((note) => (
+                <Link
+                  key={note.id}
+                  href={`/notes/${note.id}`}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary/50 text-xs hover:bg-secondary transition-colors"
+                >
+                  <FileText className="h-3 w-3 text-muted-foreground" />
+                  <span className="truncate max-w-[150px]">
+                    {note.title || "Untitled Note"}
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
         )}
 

@@ -117,6 +117,14 @@ AI-powered content discovery from the web. Dashboard card with three paths: free
 - Handle errors gracefully with user-friendly messages
 - Follow glassmorphism UI patterns for visual consistency
 
+**Documentation Updates (Required):**
+- **Update documentation at every step** — As you make changes, update the relevant documentation files
+- For bug fixes: Add entry to DECISIONS.md with issue, root cause, fix, and lesson learned
+- For feature-related fixes: Also update the relevant epic file (e.g., `epic-8-moments.md`)
+- For architectural changes: Update ARCHITECTURE.md with new data flows, API changes, or component updates
+- Keep documentation in sync with code — outdated docs are worse than no docs
+- Document "why" not just "what" — future developers (including Claude) need context
+
 ## UI Design System
 
 The app uses a **glassmorphism design system** with:

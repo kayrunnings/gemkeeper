@@ -1,10 +1,16 @@
 import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { PrepCard } from "@/components/moments/PrepCard"
-import type { MomentWithGems } from "@/types/moments"
+import type { MomentWithGems, MomentThought } from "@/types/moments"
+import type { Note } from "@/lib/types"
 
 interface PreparePageProps {
   params: Promise<{ id: string }>
+}
+
+// Extended type for moment thought with linked notes
+export interface MomentThoughtWithNotes extends MomentThought {
+  linkedNotes?: Note[]
 }
 
 export default async function PreparePage({ params }: PreparePageProps) {
@@ -40,9 +46,44 @@ export default async function PreparePage({ params }: PreparePageProps) {
     .eq("user_id", user.id)
     .order("relevance_score", { ascending: false })
 
-  const momentWithGems: MomentWithGems = {
+  // Fetch linked notes for each matched thought
+  const thoughtIds = momentGems?.map(mg => mg.gem_id).filter(Boolean) || []
+  let linkedNotesMap: Record<string, Note[]> = {}
+
+  if (thoughtIds.length > 0) {
+    // Get all note links for the matched thoughts
+    const { data: noteLinks } = await supabase
+      .from("note_thought_links")
+      .select(`
+        gem_id,
+        notes:note_id (id, title, content, created_at, updated_at, user_id, folder_id)
+      `)
+      .in("gem_id", thoughtIds)
+
+    if (noteLinks) {
+      // Group notes by thought id
+      for (const link of noteLinks) {
+        const gemId = link.gem_id
+        const note = link.notes as unknown as Note
+        if (note) {
+          if (!linkedNotesMap[gemId]) {
+            linkedNotesMap[gemId] = []
+          }
+          linkedNotesMap[gemId].push(note)
+        }
+      }
+    }
+  }
+
+  // Enhance moment thoughts with linked notes
+  const enhancedMomentGems: MomentThoughtWithNotes[] = (momentGems || []).map(mg => ({
+    ...mg,
+    linkedNotes: linkedNotesMap[mg.gem_id] || [],
+  }))
+
+  const momentWithGems: MomentWithGems & { matched_thoughts: MomentThoughtWithNotes[] } = {
     ...moment,
-    matched_thoughts: momentGems || [],
+    matched_thoughts: enhancedMomentGems,
   }
 
   return (

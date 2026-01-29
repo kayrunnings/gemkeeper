@@ -262,3 +262,31 @@ Epic 8 was completed in January 2026. Key implementations:
 2. `checkForUpcomingEvents()` — Creates moments from cached events
 
 Both steps must execute for calendar moments to appear.
+
+---
+
+### January 2026: Calendar Moments Missing AI Matching
+
+**Issue:** Calendar-imported moments showed up on the dashboard but:
+1. Users couldn't get relevant thoughts to apply (showed "No thoughts matched this moment")
+2. The `gems_matched_count` was always 0
+
+**Root Cause:** The `/api/calendar/check-moments/route.ts` endpoint created moments but completely skipped AI matching. It only inserted the moment with `gems_matched_count: 0` and never:
+1. Fetched user's thoughts (active and passive)
+2. Called the AI matching service (`matchGemsToMoment`)
+3. Inserted matched thoughts into `moment_gems` table
+
+Compare this to `/api/moments/route.ts` (for manual moments) which did all these steps.
+
+**Fix:** Updated `/api/calendar/check-moments/route.ts` to:
+1. Fetch all thoughts with `status IN ('active', 'passive')` before processing events
+2. For each calendar event, call `matchGemsToMoment()` with the event title
+3. Insert matched thoughts into `moment_gems` table
+4. Update moment with `gems_matched_count` and `ai_processing_time_ms`
+
+**Additional Improvements:**
+- Enhanced PrepCard to display linked notes with matched thoughts
+- Added icons (BookOpen, FileText) for source and notes visual indicators
+- Prepare page now fetches linked notes via `note_thought_links` table
+
+**Key Lesson:** When implementing a feature through multiple code paths (manual moments via `/api/moments` vs calendar moments via `/api/calendar/check-moments`), ensure all paths include the same critical functionality. AI matching is essential for moments to provide value.
