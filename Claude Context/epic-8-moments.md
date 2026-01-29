@@ -262,3 +262,47 @@ Epic 8 was completed in January 2026. Key implementations:
 2. `checkForUpcomingEvents()` — Creates moments from cached events
 
 Both steps must execute for calendar moments to appear.
+
+---
+
+### January 2026: Calendar Moments Missing AI Matching
+
+**Issue:** Calendar-imported moments showed up on the dashboard but:
+1. Users couldn't get relevant thoughts to apply (showed "No thoughts matched this moment")
+2. The `gems_matched_count` was always 0
+
+**Root Cause:** The `/api/calendar/check-moments/route.ts` endpoint created moments but completely skipped AI matching. It only inserted the moment with `gems_matched_count: 0` and never:
+1. Fetched user's thoughts (active and passive)
+2. Called the AI matching service (`matchGemsToMoment`)
+3. Inserted matched thoughts into `moment_gems` table
+
+Compare this to `/api/moments/route.ts` (for manual moments) which did all these steps.
+
+**Fix:** Updated `/api/calendar/check-moments/route.ts` to:
+1. Fetch all thoughts with `status IN ('active', 'passive')` before processing events
+2. For each calendar event, call `matchGemsToMoment()` with the event title
+3. Insert matched thoughts into `moment_gems` table
+4. Update moment with `gems_matched_count` and `ai_processing_time_ms`
+
+**Additional Improvements:**
+- Enhanced PrepCard to display linked notes with matched thoughts
+- Added icons (BookOpen, FileText) for source and notes visual indicators
+- Prepare page now fetches linked notes via `note_thought_links` table
+
+**Key Lesson:** When implementing a feature through multiple code paths (manual moments via `/api/moments` vs calendar moments via `/api/calendar/check-moments`), ensure all paths include the same critical functionality. AI matching is essential for moments to provide value.
+
+---
+
+### January 2026: Calendar Events Not Clickable on Dashboard
+
+**Issue:** Dashboard showed "Upcoming" calendar events but users couldn't click on them to prepare. Events were visible but moments weren't created until the lead time window (15-60 minutes before event).
+
+**Root Cause:** The design assumed moments would only be created when events are imminent (within lead time). But the dashboard showed ALL upcoming events (within 24 hours) from `calendar_events_cache`, creating confusing UX where events were visible but not actionable.
+
+**Fix:**
+1. Created `POST /api/moments/from-event` endpoint for on-demand moment creation
+2. Made calendar events in `UpcomingMomentsCard` clickable with loading state
+3. When clicked, creates moment with full AI matching and navigates to prepare page
+4. Changed badge from "Upcoming" to "Click to prepare" to indicate actionability
+
+**Key Lesson:** If content is visible on the UI, it should be actionable. Don't show events users can't interact with.

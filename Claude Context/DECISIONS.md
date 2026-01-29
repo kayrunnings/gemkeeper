@@ -808,6 +808,71 @@ This document tracks key product and technical decisions with their rationale. C
 
 ---
 
+### 2026-01-29: Bug Fix - Calendar Moments Missing AI Matching
+
+**Decision:** Update `/api/calendar/check-moments` endpoint to run AI matching for calendar-imported moments, matching the behavior of manually-created moments.
+
+**Bug Description:** Calendar-imported moments were created without AI matching. The `/api/calendar/check-moments/route.ts` endpoint only inserted moments with `gems_matched_count: 0` and never:
+1. Fetched user's thoughts (active and passive)
+2. Called the AI matching service
+3. Inserted matched thoughts into `moment_gems` table
+
+This caused calendar moments to appear in the dashboard but show "No thoughts matched this moment" when clicked.
+
+**Root Cause:** The endpoint was designed to create moments quickly without the overhead of AI matching, but this broke the core value proposition of moments - matching relevant thoughts for preparation.
+
+**Fix Applied:**
+- Added AI matching logic to `/api/calendar/check-moments/route.ts`
+- Fetches all thoughts with `status IN ('active', 'passive')` for matching
+- Calls `matchGemsToMoment()` for each calendar event
+- Stores matched thoughts in `moment_gems` table
+- Updates moment with match count and processing time
+
+**Additional Improvements:**
+- Enhanced PrepCard to display linked notes with matched thoughts
+- Added visual indicators for source and related notes
+- Prepare page now fetches linked notes via `note_thought_links` table
+
+**Files Changed:**
+- `app/api/calendar/check-moments/route.ts` — Added AI matching
+- `app/moments/[id]/prepare/page.tsx` — Fetch linked notes
+- `components/moments/PrepCard.tsx` — Display linked notes
+
+**Lesson Learned:** When implementing a feature in multiple places (manual moments vs calendar moments), ensure all code paths include the same critical functionality. AI matching is essential for moments to provide value.
+
+---
+
+### 2026-01-29: On-Demand Moment Creation from Calendar Events
+
+**Decision:** Allow users to create moments from calendar events on-demand by clicking on them in the dashboard, rather than waiting for the lead time window.
+
+**Issue:** Dashboard showed "Upcoming" calendar events from `calendar_events_cache`, but users couldn't click on them to prepare. Moments were only created when events were within the lead time window (e.g., 15-60 minutes before). This created confusing UX where events were visible but not actionable.
+
+**Solution:**
+1. Created new API endpoint `POST /api/moments/from-event` that creates a moment from a specific cached calendar event
+2. Made calendar events in `UpcomingMomentsCard` clickable with visual feedback
+3. When clicked, the endpoint creates the moment with AI matching and navigates to the prepare page
+4. Changed badge from "Upcoming" to "Click to prepare" to indicate actionability
+
+**Files Created/Changed:**
+- `app/api/moments/from-event/route.ts` — New endpoint for on-demand moment creation
+- `components/home/UpcomingMomentsCard.tsx` — Made events clickable, added loading state
+
+**UX Improvement:**
+- Before: Events show "Upcoming" badge, not clickable, confusing
+- After: Events show "Click to prepare" badge, clickable, creates moment with AI matching
+
+**Rationale:**
+- Users expect to prepare for visible events immediately
+- Waiting for lead time window (15-60 min) is frustrating
+- On-demand creation provides immediate value
+
+**Alternatives Considered:**
+- Always create moments when syncing calendar → Rejected: would create many unused moments
+- Hide events until within lead time → Rejected: less useful, users want to see upcoming events
+
+---
+
 ## Deferred Decisions
 
 Items we've discussed but intentionally not decided yet:
