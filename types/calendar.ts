@@ -12,6 +12,7 @@ export interface CalendarConnection {
   lead_time_minutes: number
   event_filter: 'all' | 'meetings' | 'custom'
   custom_keywords: string[]
+  sync_frequency_minutes: number
   last_sync_at: string | null
   sync_error: string | null
   created_at: string
@@ -59,4 +60,13 @@ export const EVENT_FILTER_OPTIONS = [
   { value: 'all', label: 'All events' },
   { value: 'meetings', label: 'Meetings only' },
   { value: 'custom', label: 'Custom keywords' },
+] as const
+
+// Sync frequency options (in minutes) - 0 means manual only
+export const SYNC_FREQUENCY_OPTIONS = [
+  { value: 0, label: 'Manual only' },
+  { value: 5, label: 'Every 5 minutes' },
+  { value: 15, label: 'Every 15 minutes' },
+  { value: 30, label: 'Every 30 minutes' },
+  { value: 60, label: 'Every hour' },
 ] as const

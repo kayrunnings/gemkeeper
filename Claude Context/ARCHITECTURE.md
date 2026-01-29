@@ -146,7 +146,8 @@ gemkeeper/
 │   │   └── gem.ts                # Legacy gem types (backward compat)
 │   ├── hooks/                    # React hooks
 │   │   ├── useGlobalShortcuts.ts # Global keyboard shortcuts (Cmd+K, Cmd+N)
-│   │   └── useScrollVisibility.ts # Scroll-based visibility (ThoughtFolio 2.0)
+│   │   ├── useScrollVisibility.ts # Scroll-based visibility (ThoughtFolio 2.0)
+│   │   └── useCalendarAutoSync.ts # Background calendar auto-sync
 │   ├── contexts.ts               # Context service functions
 │   ├── thoughts.ts               # Thought service functions
 │   ├── discovery.ts              # Discovery service functions
@@ -395,8 +396,12 @@ OAuth tokens for connected calendars.
 | token_expires_at | TIMESTAMPTZ | Token expiration |
 | is_active | BOOLEAN | Connection active |
 | auto_moment_enabled | BOOLEAN | Auto-create moments |
-| lead_time_minutes | INTEGER | Minutes before event |
+| lead_time_minutes | INTEGER | Minutes before event (15/30/60/120) |
+| event_filter | TEXT | 'all', 'meetings', or 'custom' |
+| custom_keywords | TEXT[] | Keywords for custom filter |
+| sync_frequency_minutes | INTEGER | Auto-sync interval (0=manual, 5/15/30/60) |
 | last_sync_at | TIMESTAMPTZ | Last sync time |
+| sync_error | TEXT | Last sync error message |
 | created_at | TIMESTAMPTZ | |
 | updated_at | TIMESTAMPTZ | |
 
@@ -1351,6 +1356,20 @@ useGlobalShortcuts(): {
 
 Handles Cmd+K (search) and Cmd+N (capture) keyboard shortcuts globally.
 
+### Calendar Auto-Sync Hook (`lib/hooks/useCalendarAutoSync.ts`)
+```typescript
+useCalendarAutoSync(): { runAutoSync: () => Promise<void> }
+```
+
+Background sync hook that automatically syncs calendar connections based on user's configured `sync_frequency_minutes`. Runs in `LayoutShell` to provide app-wide auto-sync.
+
+**Behavior:**
+- Checks every 60 seconds if any calendars need syncing
+- Compares `last_sync_at` with `sync_frequency_minutes` to determine if sync is due
+- Only syncs connections where `sync_frequency_minutes > 0` (excludes manual-only)
+- After syncing, automatically calls `/api/calendar/check-moments` to create moments
+- Prevents concurrent sync operations
+
 ---
 
 ## 8. Data Flows
@@ -1399,28 +1418,42 @@ Handles Cmd+K (search) and Cmd+N (capture) keyboard shortcuts globally.
 ### Calendar Sync & Moment Creation Flow
 ```
 1. User connects Google Calendar via OAuth
-2. On sync (manual or after connection):
+2. User configures sync settings:
+   - Auto-sync frequency: Manual only, Every 5/15/30/60 minutes
+   - Lead time: 15/30/60/120 minutes before event
+   - Event filter: All events, Meetings only, Custom keywords
+3. On sync (manual button, after connection, or auto-sync):
    a. Call POST /api/calendar/sync → syncCalendarEvents() in lib/calendar.ts
    b. Fetch events from Google Calendar API for next 24 hours
    c. Filter events based on user settings (all/meetings/custom keywords)
    d. Upsert events to calendar_events_cache table (moment_created = false)
-3. After sync completes, call POST /api/calendar/check-moments:
+4. After sync completes, call POST /api/calendar/check-moments:
    a. Query calendar_events_cache for events where:
       - moment_created = false
       - start_time is within lead_time_minutes from now
    b. For each qualifying event:
       - Create moment in database with source = 'calendar'
       - Mark cache event as moment_created = true
-4. Moments appear in dashboard Upcoming Moments card and Moments page
+5. Moments appear in dashboard Upcoming Moments card and Moments page
+6. Auto-sync (via useCalendarAutoSync hook in LayoutShell):
+   a. Every 60 seconds, checks if any calendars need syncing
+   b. If last_sync_at + sync_frequency_minutes < now, triggers sync
+   c. After sync, automatically calls check-moments endpoint
 ```
 
 **Key Files:**
 - `lib/calendar.ts` — Server-side Google Calendar API integration
 - `lib/calendar-client.ts` — Client-safe calendar functions
+- `lib/hooks/useCalendarAutoSync.ts` — Background auto-sync hook
 - `app/api/calendar/check-moments/route.ts` — API route for moment creation from cached events
 - `components/settings/CalendarSettings.tsx` — Calendar settings UI
+- `components/home/UpcomingMomentsCard.tsx` — Dashboard display (shows cached events + moments)
 
 **Important:** The `/api/calendar/check-moments` endpoint MUST be called after `/api/calendar/sync` to convert cached calendar events into moments. Without this call, events are cached but no moments are created. Client components should use the API route (not import `lib/calendar-sync.ts` directly) to avoid bundling server-only dependencies.
+
+**Dashboard Display:** The `UpcomingMomentsCard` displays both:
+- **Moments** (solid background) — Events within lead time that have become moments
+- **Upcoming events** (dashed border) — Events synced from calendar but not yet within lead time
 
 ### Retire Flow
 ```

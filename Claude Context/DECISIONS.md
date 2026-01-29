@@ -755,6 +755,59 @@ This document tracks key product and technical decisions with their rationale. C
 
 ---
 
+### 2026-01-29: Calendar Auto-Sync with Configurable Frequency
+
+**Decision:** Add automatic background calendar syncing with user-configurable frequency options.
+
+**Rationale:**
+- Users reported calendar events not showing up without manual sync
+- Moments only appear when events are within lead time — users need events synced regularly
+- Auto-sync reduces friction for calendar integration
+- Configurable frequency gives users control over battery/data usage
+
+**Implementation:**
+1. **Database:** Added `sync_frequency_minutes` column to `calendar_connections` (default: 15)
+2. **Types:** Added `SYNC_FREQUENCY_OPTIONS` constant with 5 options: Manual only (0), 5/15/30/60 minutes
+3. **UI:** Added "Auto-sync frequency" setting in CalendarSettings with button options
+4. **Hook:** Created `useCalendarAutoSync` in `lib/hooks/useCalendarAutoSync.ts`
+5. **Integration:** Hook runs in `LayoutShell` to provide app-wide background sync
+6. **Dashboard:** Updated `UpcomingMomentsCard` to show calendar events from cache even if moments not yet created
+
+**Auto-sync Behavior:**
+- Hook checks every 60 seconds if any calendars need syncing
+- Compares `last_sync_at` + `sync_frequency_minutes` against current time
+- Only syncs connections where `sync_frequency_minutes > 0`
+- After syncing, automatically calls `/api/calendar/check-moments` to create moments
+- Prevents concurrent sync operations
+
+**Dashboard Display:**
+- **Moments** (solid blue background) — Events within lead time that have been converted to moments
+- **Upcoming events** (dashed border) — Events synced from calendar but not yet within lead time
+- Shows contextual message when calendar connected but no events: "No events in the next 24 hours"
+- Only shows "Connect Calendar" button when calendar is NOT connected
+
+**Files Changed:**
+- `types/calendar.ts` — Added `sync_frequency_minutes` to CalendarConnection, added SYNC_FREQUENCY_OPTIONS
+- `lib/calendar.ts` — Default sync_frequency_minutes: 15 on new connections
+- `lib/calendar-client.ts` — Added sync_frequency_minutes to updateCalendarSettings
+- `lib/hooks/useCalendarAutoSync.ts` — New hook for background auto-sync
+- `components/settings/CalendarSettings.tsx` — Added auto-sync frequency UI
+- `components/layout-shell.tsx` — Integrated useCalendarAutoSync hook
+- `components/home/UpcomingMomentsCard.tsx` — Shows cached events + calendarConnected prop
+- `app/home/page.tsx` — Pass calendarConnected prop to UpcomingMomentsCard
+
+**Alternatives Considered:**
+- Server-side cron job → Rejected: adds infrastructure complexity, harder to debug
+- Sync on every page load → Rejected: too aggressive, poor UX
+- No auto-sync (manual only) → Rejected: too much friction for users
+
+**Consequences:**
+- Requires database migration: `ALTER TABLE calendar_connections ADD COLUMN sync_frequency_minutes INTEGER DEFAULT 15;`
+- Background interval consumes some battery/resources (mitigated by 60s check interval)
+- Users have full control via Manual only option
+
+---
+
 ## Deferred Decisions
 
 Items we've discussed but intentionally not decided yet:

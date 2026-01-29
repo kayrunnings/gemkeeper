@@ -210,9 +210,7 @@ export default function HomePage() {
         <QuickActionsRow className="mb-6" hasAIConsent={hasAIConsent} />
 
         {/* Upcoming Moments - Time-sensitive, shown early */}
-        {moments.length > 0 && (
-          <UpcomingMomentsCard moments={moments} className="mb-6" />
-        )}
+        <UpcomingMomentsCard moments={moments} calendarConnected={calendarConnected} className="mb-6" />
 
         {/* Discover Something New - AI-powered discovery */}
         <div className="mb-6">

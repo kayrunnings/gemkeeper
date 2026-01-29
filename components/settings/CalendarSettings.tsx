@@ -19,7 +19,7 @@ import {
   Clock,
 } from "lucide-react"
 import type { CalendarConnection } from "@/types/calendar"
-import { LEAD_TIME_OPTIONS, EVENT_FILTER_OPTIONS } from "@/types/calendar"
+import { LEAD_TIME_OPTIONS, EVENT_FILTER_OPTIONS, SYNC_FREQUENCY_OPTIONS } from "@/types/calendar"
 import {
   getCalendarConnections,
   disconnectCalendar,
@@ -270,8 +270,8 @@ export function CalendarSettings({ className }: CalendarSettingsProps) {
                 <>
                   <AlertCircle className="h-4 w-4 text-destructive" />
                   <span className="text-destructive">
-                    {typeof googleConnection.sync_error === 'string' 
-                      ? googleConnection.sync_error 
+                    {typeof googleConnection.sync_error === 'string'
+                      ? googleConnection.sync_error
                       : 'Sync error occurred. Please try again.'}
                   </span>
                 </>
@@ -281,6 +281,36 @@ export function CalendarSettings({ className }: CalendarSettingsProps) {
                   <span>Last sync: {formatLastSync(googleConnection.last_sync_at)}</span>
                 </>
               )}
+            </div>
+
+            {/* Auto-sync frequency */}
+            <div className="space-y-2">
+              <Label>Auto-sync frequency</Label>
+              <p className="text-sm text-muted-foreground">
+                How often to automatically sync your calendar
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {SYNC_FREQUENCY_OPTIONS.map((opt) => (
+                  <Button
+                    key={opt.value}
+                    variant={
+                      (googleConnection.sync_frequency_minutes ?? 15) === opt.value
+                        ? "default"
+                        : "outline"
+                    }
+                    size="sm"
+                    onClick={() =>
+                      handleSettingChange(
+                        googleConnection.id,
+                        "sync_frequency_minutes",
+                        opt.value
+                      )
+                    }
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+              </div>
             </div>
 
             {/* Auto-moment toggle */}

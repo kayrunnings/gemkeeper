@@ -38,6 +38,7 @@ describe('Calendar Types', () => {
         lead_time_minutes: 30,
         event_filter: 'all',
         custom_keywords: [],
+        sync_frequency_minutes: 15,
         last_sync_at: null,
         sync_error: null,
         created_at: new Date().toISOString(),
