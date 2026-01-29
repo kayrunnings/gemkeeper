@@ -53,6 +53,10 @@ export const LEAD_TIME_OPTIONS = [
   { value: 30, label: '30 minutes' },
   { value: 60, label: '1 hour' },
   { value: 120, label: '2 hours' },
+  { value: 1440, label: '1 day' },
+  { value: 2880, label: '2 days' },
+  { value: 4320, label: '3 days' },
+  { value: 10080, label: '1 week' },
 ]
 
 // Event filter options
