@@ -25,6 +25,19 @@ const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024 // 4MB
 const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
 export async function POST(request: NextRequest) {
+  // Wrap entire handler to ensure we always return a response
+  try {
+    return await handleAnalyzeRequest(request)
+  } catch (outerError) {
+    console.error("CRITICAL: Unhandled error in capture/analyze:", outerError)
+    return NextResponse.json(
+      { error: outerError instanceof Error ? outerError.message : "Internal server error" },
+      { status: 500 }
+    )
+  }
+}
+
+async function handleAnalyzeRequest(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -80,6 +93,9 @@ export async function POST(request: NextRequest) {
     // Handle URL content
     if (contentType === 'url' && isUrl(trimmedContent)) {
       // Try to extract URL content and analyze it with AI
+      let extractedContent: Awaited<ReturnType<typeof extractFromUrl>>['content'] = null
+      let extractionError: string | null = null
+
       try {
         // Call the extraction function directly instead of making an HTTP request
         // This avoids authentication issues and relative URL problems
@@ -88,10 +104,18 @@ export async function POST(request: NextRequest) {
         const timeoutPromise = new Promise<{ content: null; error: string }>((resolve) =>
           setTimeout(() => resolve({ content: null, error: 'Extraction timed out' }), 8500)
         )
-        const { content: extractedContent, error: extractionError } = await Promise.race([
+        const result = await Promise.race([
           extractionPromise,
           timeoutPromise,
         ])
+        extractedContent = result.content
+        extractionError = result.error
+      } catch (extractErr) {
+        console.error("URL extraction threw:", extractErr)
+        extractionError = extractErr instanceof Error ? extractErr.message : 'Extraction failed'
+      }
+
+      try {
 
         if (!extractionError && extractedContent) {
           // Extract the article content from the response
