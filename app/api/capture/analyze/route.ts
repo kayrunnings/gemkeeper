@@ -92,6 +92,9 @@ async function handleAnalyzeRequest(request: NextRequest) {
 
     // Handle URL content
     if (contentType === 'url' && isUrl(trimmedContent)) {
+      // TEMPORARY: Skip extraction and go straight to fallback to debug empty response issue
+      const skipExtraction = true
+
       // Try to extract URL content and analyze it with AI
       // Type matches the return type of extractFromUrl from url-extractor
       let extractedContent: {
@@ -105,31 +108,33 @@ async function handleAnalyzeRequest(request: NextRequest) {
       } | null = null
       let extractionError: string | null = null
 
-      try {
-        // Dynamically import extractFromUrl to avoid JSDOM loading issues at module level
-        const { extractFromUrl } = await import("@/lib/url-extractor")
+      if (!skipExtraction) {
+        try {
+          // Dynamically import extractFromUrl to avoid JSDOM loading issues at module level
+          const { extractFromUrl } = await import("@/lib/url-extractor")
 
-        // Call the extraction function directly instead of making an HTTP request
-        // This avoids authentication issues and relative URL problems
-        // Use a shorter timeout (8s) to leave room for AI analysis before server timeout
-        const extractionPromise = extractFromUrl(trimmedContent, 8000)
-        const timeoutPromise = new Promise<{ content: null; error: string }>((resolve) =>
-          setTimeout(() => resolve({ content: null, error: 'Extraction timed out' }), 8500)
-        )
-        const result = await Promise.race([
-          extractionPromise,
-          timeoutPromise,
-        ])
-        extractedContent = result.content
-        extractionError = result.error
-      } catch (extractErr) {
-        console.error("URL extraction threw:", extractErr)
-        extractionError = extractErr instanceof Error ? extractErr.message : 'Extraction failed'
+          // Call the extraction function directly instead of making an HTTP request
+          // This avoids authentication issues and relative URL problems
+          // Use a shorter timeout (8s) to leave room for AI analysis before server timeout
+          const extractionPromise = extractFromUrl(trimmedContent, 8000)
+          const timeoutPromise = new Promise<{ content: null; error: string }>((resolve) =>
+            setTimeout(() => resolve({ content: null, error: 'Extraction timed out' }), 8500)
+          )
+          const result = await Promise.race([
+            extractionPromise,
+            timeoutPromise,
+          ])
+          extractedContent = result.content
+          extractionError = result.error
+        } catch (extractErr) {
+          console.error("URL extraction threw:", extractErr)
+          extractionError = extractErr instanceof Error ? extractErr.message : 'Extraction failed'
+        }
       }
 
       try {
 
-        if (!extractionError && extractedContent) {
+        if (!skipExtraction && !extractionError && extractedContent) {
           // Extract the article content from the response
           const articleTitle = extractedContent.title || ''
           const articleText = extractedContent.content || ''
