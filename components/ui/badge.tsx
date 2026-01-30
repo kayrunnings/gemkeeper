@@ -18,16 +18,15 @@ const badgeVariants = cva(
         gem: "border-thought/40 bg-thought/20 text-thought-foreground",
         success: "border-success/40 bg-success/20 text-success",
         warning: "border-warning/40 bg-warning/20 text-warning",
-        // Context tag variants - muted pastels for glass compatibility
-        // 20% bg opacity, 40% border opacity, full color text
-        meetings: "border-[#60A5FA]/40 bg-[#60A5FA]/20 text-[#60A5FA]",
-        feedback: "border-[#FB923C]/40 bg-[#FB923C]/20 text-[#FB923C]",
-        conflict: "border-[#F87171]/40 bg-[#F87171]/20 text-[#F87171]",
-        focus: "border-[#A78BFA]/40 bg-[#A78BFA]/20 text-[#A78BFA]",
-        health: "border-[#4ADE80]/40 bg-[#4ADE80]/20 text-[#4ADE80]",
-        relationships: "border-[#F472B6]/40 bg-[#F472B6]/20 text-[#F472B6]",
-        parenting: "border-[#FACC15]/40 bg-[#FACC15]/20 text-[#FACC15]",
-        other: "border-[#9CA3AF]/40 bg-[#9CA3AF]/20 text-[#9CA3AF]",
+        // Context tag variants - using theme CSS variables for consistency
+        meetings: "border-tag-meetings-foreground/40 bg-tag-meetings text-tag-meetings-foreground",
+        feedback: "border-tag-feedback-foreground/40 bg-tag-feedback text-tag-feedback-foreground",
+        conflict: "border-tag-conflict-foreground/40 bg-tag-conflict text-tag-conflict-foreground",
+        focus: "border-tag-focus-foreground/40 bg-tag-focus text-tag-focus-foreground",
+        health: "border-tag-health-foreground/40 bg-tag-health text-tag-health-foreground",
+        relationships: "border-tag-relationships-foreground/40 bg-tag-relationships text-tag-relationships-foreground",
+        parenting: "border-tag-parenting-foreground/40 bg-tag-parenting text-tag-parenting-foreground",
+        other: "border-tag-other-foreground/40 bg-tag-other text-tag-other-foreground",
       },
     },
     defaultVariants: {

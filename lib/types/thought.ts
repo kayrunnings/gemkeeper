@@ -69,16 +69,28 @@ export const CONTEXT_TAG_LABELS: Record<ContextTag, string> = {
   other: "Other",
 }
 
-// Colors for context tag badges (per KAY-32 requirements)
+// Colors for context tag badges - using theme CSS variables for consistency
 export const CONTEXT_TAG_COLORS: Record<ContextTag, string> = {
-  meetings: "bg-blue-100 text-blue-800 border-blue-200",
-  feedback: "bg-purple-100 text-purple-800 border-purple-200",
-  conflict: "bg-red-100 text-red-800 border-red-200",
-  focus: "bg-orange-100 text-orange-800 border-orange-200",
-  health: "bg-green-100 text-green-800 border-green-200",
-  relationships: "bg-pink-100 text-pink-800 border-pink-200",
-  parenting: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  other: "bg-gray-100 text-gray-800 border-gray-200",
+  meetings: "bg-tag-meetings text-tag-meetings-foreground border-tag-meetings-foreground/30",
+  feedback: "bg-tag-feedback text-tag-feedback-foreground border-tag-feedback-foreground/30",
+  conflict: "bg-tag-conflict text-tag-conflict-foreground border-tag-conflict-foreground/30",
+  focus: "bg-tag-focus text-tag-focus-foreground border-tag-focus-foreground/30",
+  health: "bg-tag-health text-tag-health-foreground border-tag-health-foreground/30",
+  relationships: "bg-tag-relationships text-tag-relationships-foreground border-tag-relationships-foreground/30",
+  parenting: "bg-tag-parenting text-tag-parenting-foreground border-tag-parenting-foreground/30",
+  other: "bg-tag-other text-tag-other-foreground border-tag-other-foreground/30",
+}
+
+// Background colors for context tag dot indicators - uses foreground color for visibility
+export const CONTEXT_TAG_DOT_COLORS: Record<ContextTag, string> = {
+  meetings: "bg-tag-meetings-foreground",
+  feedback: "bg-tag-feedback-foreground",
+  conflict: "bg-tag-conflict-foreground",
+  focus: "bg-tag-focus-foreground",
+  health: "bg-tag-health-foreground",
+  relationships: "bg-tag-relationships-foreground",
+  parenting: "bg-tag-parenting-foreground",
+  other: "bg-tag-other-foreground",
 }
 
 // Maximum number of thoughts on Active List (for daily prompts)
