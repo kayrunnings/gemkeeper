@@ -1351,6 +1351,536 @@
   --tag-other-foreground: #475569;
 }
 
+/* ===== THEME 17: GRAPHITE ===== */
+/* Carbon-inspired neutral with silver-blue accents - Ultimate professional dark theme */
+[data-theme="graphite"] {
+  --background: #18181b;
+  --foreground: #e4e4e7;
+  --card: #27272a;
+  --card-foreground: #e4e4e7;
+  --popover: #3f3f46;
+  --popover-foreground: #e4e4e7;
+  --primary: #52525b;
+  --primary-foreground: #fafafa;
+  --secondary: #27272a;
+  --secondary-foreground: #a1a1aa;
+  --muted: #3f3f46;
+  --muted-foreground: #71717a;
+  --accent: #6366f1;
+  --accent-foreground: #fafafa;
+  --thought: #3f3f46;
+  --thought-foreground: #a5b4fc;
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
+  --success: #22c55e;
+  --success-foreground: #0a0a0a;
+  --warning: #f59e0b;
+  --warning-foreground: #0a0a0a;
+  --info: #3b82f6;
+  --info-foreground: #fafafa;
+  --highlight: #a78bfa;
+  --highlight-foreground: #fafafa;
+  --border: #3f3f46;
+  --input: #27272a;
+  --ring: #52525b;
+  --ai-gradient-start: #6366f1;
+  --ai-gradient-end: #8b5cf6;
+  --ai-glow: rgba(99, 102, 241, 0.25);
+  --tag-meetings: #1e3a5f;
+  --tag-meetings-foreground: #93c5fd;
+  --tag-feedback: #4c1d3d;
+  --tag-feedback-foreground: #f9a8d4;
+  --tag-conflict: #450a0a;
+  --tag-conflict-foreground: #fca5a5;
+  --tag-focus: #312e81;
+  --tag-focus-foreground: #a5b4fc;
+  --tag-health: #064e3b;
+  --tag-health-foreground: #6ee7b7;
+  --tag-relationships: #451a03;
+  --tag-relationships-foreground: #fcd34d;
+  --tag-parenting: #3b0764;
+  --tag-parenting-foreground: #d8b4fe;
+  --tag-other: #27272a;
+  --tag-other-foreground: #a1a1aa;
+}
+
+/* ===== THEME 18: MERCURY ===== */
+/* Deep space black with violet luminescence - Sophisticated creativity */
+[data-theme="mercury"] {
+  --background: #0c0c14;
+  --foreground: #f5f3ff;
+  --card: #14141f;
+  --card-foreground: #f5f3ff;
+  --popover: #1c1c2a;
+  --popover-foreground: #f5f3ff;
+  --primary: #8b5cf6;
+  --primary-foreground: #ffffff;
+  --secondary: #1c1c2a;
+  --secondary-foreground: #c4b5fd;
+  --muted: #2a2a3d;
+  --muted-foreground: #7c3aed;
+  --accent: #a78bfa;
+  --accent-foreground: #0c0c14;
+  --thought: #5b21b6;
+  --thought-foreground: #c4b5fd;
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
+  --success: #22c55e;
+  --success-foreground: #0a0a0a;
+  --warning: #f59e0b;
+  --warning-foreground: #0a0a0a;
+  --info: #3b82f6;
+  --info-foreground: #f5f3ff;
+  --highlight: #c084fc;
+  --highlight-foreground: #f5f3ff;
+  --border: #2a2a3d;
+  --input: #1c1c2a;
+  --ring: #8b5cf6;
+  --ai-gradient-start: #8b5cf6;
+  --ai-gradient-end: #ec4899;
+  --ai-glow: rgba(139, 92, 246, 0.3);
+  --tag-meetings: #312e81;
+  --tag-meetings-foreground: #a5b4fc;
+  --tag-feedback: #701a75;
+  --tag-feedback-foreground: #f5d0fe;
+  --tag-conflict: #450a0a;
+  --tag-conflict-foreground: #fca5a5;
+  --tag-focus: #5b21b6;
+  --tag-focus-foreground: #c4b5fd;
+  --tag-health: #064e3b;
+  --tag-health-foreground: #6ee7b7;
+  --tag-relationships: #451a03;
+  --tag-relationships-foreground: #fcd34d;
+  --tag-parenting: #581c87;
+  --tag-parenting-foreground: #e9d5ff;
+  --tag-other: #1c1c2a;
+  --tag-other-foreground: #c4b5fd;
+}
+
+/* ===== THEME 19: TITANIUM ===== */
+/* Deep blue-black with cool cyan accents - Enterprise-grade aerospace */
+[data-theme="titanium"] {
+  --background: #0a1219;
+  --foreground: #e0f2fe;
+  --card: #0f1d28;
+  --card-foreground: #e0f2fe;
+  --popover: #162736;
+  --popover-foreground: #e0f2fe;
+  --primary: #0ea5e9;
+  --primary-foreground: #0a1219;
+  --secondary: #162736;
+  --secondary-foreground: #7dd3fc;
+  --muted: #1e3a4c;
+  --muted-foreground: #0c4a6e;
+  --accent: #38bdf8;
+  --accent-foreground: #0a1219;
+  --thought: #0c4a6e;
+  --thought-foreground: #7dd3fc;
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
+  --success: #22c55e;
+  --success-foreground: #0a0a0a;
+  --warning: #f59e0b;
+  --warning-foreground: #0a0a0a;
+  --info: #38bdf8;
+  --info-foreground: #0a1219;
+  --highlight: #22d3ee;
+  --highlight-foreground: #0a1219;
+  --border: #1e3a4c;
+  --input: #162736;
+  --ring: #0ea5e9;
+  --ai-gradient-start: #0ea5e9;
+  --ai-gradient-end: #22d3ee;
+  --ai-glow: rgba(14, 165, 233, 0.3);
+  --tag-meetings: #164e63;
+  --tag-meetings-foreground: #67e8f9;
+  --tag-feedback: #4c1d3d;
+  --tag-feedback-foreground: #f9a8d4;
+  --tag-conflict: #450a0a;
+  --tag-conflict-foreground: #fca5a5;
+  --tag-focus: #0c4a6e;
+  --tag-focus-foreground: #7dd3fc;
+  --tag-health: #064e3b;
+  --tag-health-foreground: #6ee7b7;
+  --tag-relationships: #451a03;
+  --tag-relationships-foreground: #fcd34d;
+  --tag-parenting: #3b0764;
+  --tag-parenting-foreground: #d8b4fe;
+  --tag-other: #162736;
+  --tag-other-foreground: #7dd3fc;
+}
+
+/* ===== THEME 20: CARBON ===== */
+/* Deep charcoal with warm gold accents - Luxury automotive-inspired */
+[data-theme="carbon"] {
+  --background: #111111;
+  --foreground: #fef3c7;
+  --card: #1a1a1a;
+  --card-foreground: #fef3c7;
+  --popover: #242424;
+  --popover-foreground: #fef3c7;
+  --primary: #f59e0b;
+  --primary-foreground: #111111;
+  --secondary: #242424;
+  --secondary-foreground: #fcd34d;
+  --muted: #2d2d2d;
+  --muted-foreground: #78350f;
+  --accent: #fbbf24;
+  --accent-foreground: #111111;
+  --thought: #78350f;
+  --thought-foreground: #fcd34d;
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
+  --success: #22c55e;
+  --success-foreground: #0a0a0a;
+  --warning: #f59e0b;
+  --warning-foreground: #0a0a0a;
+  --info: #3b82f6;
+  --info-foreground: #fef3c7;
+  --highlight: #fbbf24;
+  --highlight-foreground: #111111;
+  --border: #2d2d2d;
+  --input: #242424;
+  --ring: #f59e0b;
+  --ai-gradient-start: #f59e0b;
+  --ai-gradient-end: #d97706;
+  --ai-glow: rgba(245, 158, 11, 0.3);
+  --tag-meetings: #1e3a5f;
+  --tag-meetings-foreground: #93c5fd;
+  --tag-feedback: #4c1d3d;
+  --tag-feedback-foreground: #f9a8d4;
+  --tag-conflict: #450a0a;
+  --tag-conflict-foreground: #fca5a5;
+  --tag-focus: #78350f;
+  --tag-focus-foreground: #fcd34d;
+  --tag-health: #064e3b;
+  --tag-health-foreground: #6ee7b7;
+  --tag-relationships: #78350f;
+  --tag-relationships-foreground: #fde68a;
+  --tag-parenting: #3b0764;
+  --tag-parenting-foreground: #d8b4fe;
+  --tag-other: #242424;
+  --tag-other-foreground: #fcd34d;
+}
+
+/* ===== THEME 21: VOID ===== */
+/* Absolute black with pure white accents - Maximum contrast OLED */
+[data-theme="void"] {
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #0a0a0a;
+  --card-foreground: #ffffff;
+  --popover: #141414;
+  --popover-foreground: #ffffff;
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: #141414;
+  --secondary-foreground: #a1a1aa;
+  --muted: #1f1f1f;
+  --muted-foreground: #71717a;
+  --accent: #e4e4e7;
+  --accent-foreground: #000000;
+  --thought: #1f1f1f;
+  --thought-foreground: #e4e4e7;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --success: #22c55e;
+  --success-foreground: #000000;
+  --warning: #f59e0b;
+  --warning-foreground: #000000;
+  --info: #3b82f6;
+  --info-foreground: #ffffff;
+  --highlight: #d4d4d8;
+  --highlight-foreground: #000000;
+  --border: #27272a;
+  --input: #141414;
+  --ring: #ffffff;
+  --ai-gradient-start: #e4e4e7;
+  --ai-gradient-end: #a1a1aa;
+  --ai-glow: rgba(255, 255, 255, 0.15);
+  --tag-meetings: #1e293b;
+  --tag-meetings-foreground: #94a3b8;
+  --tag-feedback: #292524;
+  --tag-feedback-foreground: #a8a29e;
+  --tag-conflict: #1c1917;
+  --tag-conflict-foreground: #d6d3d1;
+  --tag-focus: #18181b;
+  --tag-focus-foreground: #a1a1aa;
+  --tag-health: #052e16;
+  --tag-health-foreground: #86efac;
+  --tag-relationships: #1c1917;
+  --tag-relationships-foreground: #d6d3d1;
+  --tag-parenting: #1f1f23;
+  --tag-parenting-foreground: #a1a1aa;
+  --tag-other: #141414;
+  --tag-other-foreground: #a1a1aa;
+}
+
+/* ===== THEME 22: NEBULA ===== */
+/* Deep purple-black with AI-inspired gradients - Cosmic elegance */
+[data-theme="nebula"] {
+  --background: #0a0812;
+  --foreground: #f5f3ff;
+  --card: #120f1a;
+  --card-foreground: #f5f3ff;
+  --popover: #1a1525;
+  --popover-foreground: #f5f3ff;
+  --primary: #a855f7;
+  --primary-foreground: #ffffff;
+  --secondary: #1a1525;
+  --secondary-foreground: #c4b5fd;
+  --muted: #251e33;
+  --muted-foreground: #7c3aed;
+  --accent: #ec4899;
+  --accent-foreground: #ffffff;
+  --thought: #581c87;
+  --thought-foreground: #e9d5ff;
+  --destructive: #f43f5e;
+  --destructive-foreground: #ffffff;
+  --success: #22c55e;
+  --success-foreground: #0a0a0a;
+  --warning: #fbbf24;
+  --warning-foreground: #0a0a0a;
+  --info: #38bdf8;
+  --info-foreground: #f5f3ff;
+  --highlight: #c084fc;
+  --highlight-foreground: #f5f3ff;
+  --border: #251e33;
+  --input: #1a1525;
+  --ring: #a855f7;
+  --ai-gradient-start: #a855f7;
+  --ai-gradient-end: #ec4899;
+  --ai-glow: rgba(168, 85, 247, 0.35);
+  --tag-meetings: #312e81;
+  --tag-meetings-foreground: #a5b4fc;
+  --tag-feedback: #701a75;
+  --tag-feedback-foreground: #f5d0fe;
+  --tag-conflict: #450a0a;
+  --tag-conflict-foreground: #fca5a5;
+  --tag-focus: #581c87;
+  --tag-focus-foreground: #e9d5ff;
+  --tag-health: #064e3b;
+  --tag-health-foreground: #6ee7b7;
+  --tag-relationships: #451a03;
+  --tag-relationships-foreground: #fcd34d;
+  --tag-parenting: #701a75;
+  --tag-parenting-foreground: #f5d0fe;
+  --tag-other: #1a1525;
+  --tag-other-foreground: #c4b5fd;
+}
+
+/* ===== THEME 23: STEEL ===== */
+/* Industrial blue-gray with silver highlights - Precision engineering */
+[data-theme="steel"] {
+  --background: #0f1114;
+  --foreground: #f1f5f9;
+  --card: #1a1d21;
+  --card-foreground: #f1f5f9;
+  --popover: #24282e;
+  --popover-foreground: #f1f5f9;
+  --primary: #94a3b8;
+  --primary-foreground: #0f1114;
+  --secondary: #24282e;
+  --secondary-foreground: #cbd5e1;
+  --muted: #2d333b;
+  --muted-foreground: #64748b;
+  --accent: #cbd5e1;
+  --accent-foreground: #0f1114;
+  --thought: #334155;
+  --thought-foreground: #cbd5e1;
+  --destructive: #ef4444;
+  --destructive-foreground: #fef2f2;
+  --success: #22c55e;
+  --success-foreground: #0a0a0a;
+  --warning: #f59e0b;
+  --warning-foreground: #0a0a0a;
+  --info: #3b82f6;
+  --info-foreground: #f1f5f9;
+  --highlight: #94a3b8;
+  --highlight-foreground: #0f1114;
+  --border: #2d333b;
+  --input: #24282e;
+  --ring: #94a3b8;
+  --ai-gradient-start: #94a3b8;
+  --ai-gradient-end: #64748b;
+  --ai-glow: rgba(148, 163, 184, 0.25);
+  --tag-meetings: #1e3a5f;
+  --tag-meetings-foreground: #93c5fd;
+  --tag-feedback: #4c1d3d;
+  --tag-feedback-foreground: #f9a8d4;
+  --tag-conflict: #450a0a;
+  --tag-conflict-foreground: #fca5a5;
+  --tag-focus: #334155;
+  --tag-focus-foreground: #cbd5e1;
+  --tag-health: #064e3b;
+  --tag-health-foreground: #6ee7b7;
+  --tag-relationships: #451a03;
+  --tag-relationships-foreground: #fcd34d;
+  --tag-parenting: #3b0764;
+  --tag-parenting-foreground: #d8b4fe;
+  --tag-other: #24282e;
+  --tag-other-foreground: #cbd5e1;
+}
+
+/* ===== THEME 24: MANUSCRIPT ===== */
+/* Notion-inspired warm dark gray - Content-first minimalism */
+[data-theme="manuscript"] {
+  --background: #191919;
+  --foreground: #ffffff;
+  --card: #2f3437;
+  --card-foreground: #ffffff;
+  --popover: #37352f;
+  --popover-foreground: #ffffff;
+  --primary: #37352f;
+  --primary-foreground: #ffffff;
+  --secondary: #2f3437;
+  --secondary-foreground: #979a9b;
+  --muted: #454b4e;
+  --muted-foreground: #6b6b6b;
+  --accent: #979a9b;
+  --accent-foreground: #191919;
+  --thought: #454b4e;
+  --thought-foreground: #ffffff;
+  --destructive: #ff7369;
+  --destructive-foreground: #ffffff;
+  --success: #4dab9a;
+  --success-foreground: #191919;
+  --warning: #ffdc49;
+  --warning-foreground: #191919;
+  --info: #529cca;
+  --info-foreground: #ffffff;
+  --highlight: #9a6dd7;
+  --highlight-foreground: #ffffff;
+  --border: #373737;
+  --input: #2f3437;
+  --ring: #979a9b;
+  --ai-gradient-start: #9a6dd7;
+  --ai-gradient-end: #529cca;
+  --ai-glow: rgba(154, 109, 215, 0.2);
+  --tag-meetings: #364954;
+  --tag-meetings-foreground: #529cca;
+  --tag-feedback: #533b4c;
+  --tag-feedback-foreground: #e255a1;
+  --tag-conflict: #594141;
+  --tag-conflict-foreground: #ff7369;
+  --tag-focus: #443f57;
+  --tag-focus-foreground: #9a6dd7;
+  --tag-health: #354c4b;
+  --tag-health-foreground: #4dab9a;
+  --tag-relationships: #59563b;
+  --tag-relationships-foreground: #ffdc49;
+  --tag-parenting: #594a3a;
+  --tag-parenting-foreground: #ffa344;
+  --tag-other: #434040;
+  --tag-other-foreground: #979a9b;
+}
+
+/* ===== THEME 25: PAPER (LIGHT THEME) ===== */
+/* Pure white with ink-blue accents - Clean focused writing */
+[data-theme="paper"] {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #f8fafc;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #475569;
+  --muted: #e2e8f0;
+  --muted-foreground: #64748b;
+  --accent: #3b82f6;
+  --accent-foreground: #ffffff;
+  --thought: #dbeafe;
+  --thought-foreground: #1e40af;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --success: #059669;
+  --success-foreground: #ffffff;
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
+  --info: #0284c7;
+  --info-foreground: #ffffff;
+  --highlight: #7c3aed;
+  --highlight-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #f8fafc;
+  --ring: #2563eb;
+  --ai-gradient-start: #2563eb;
+  --ai-gradient-end: #7c3aed;
+  --ai-glow: rgba(37, 99, 235, 0.15);
+  --tag-meetings: #dbeafe;
+  --tag-meetings-foreground: #1e40af;
+  --tag-feedback: #fce7f3;
+  --tag-feedback-foreground: #9d174d;
+  --tag-conflict: #fee2e2;
+  --tag-conflict-foreground: #991b1b;
+  --tag-focus: #e0e7ff;
+  --tag-focus-foreground: #3730a3;
+  --tag-health: #d1fae5;
+  --tag-health-foreground: #065f46;
+  --tag-relationships: #fef3c7;
+  --tag-relationships-foreground: #92400e;
+  --tag-parenting: #f3e8ff;
+  --tag-parenting-foreground: #6b21a8;
+  --tag-other: #f1f5f9;
+  --tag-other-foreground: #475569;
+}
+
+/* ===== THEME 26: IVORY (LIGHT THEME) ===== */
+/* Warm cream with amber accents - Reduced eye strain */
+[data-theme="ivory"] {
+  --background: #fffdf9;
+  --foreground: #1c1917;
+  --card: #faf8f5;
+  --card-foreground: #1c1917;
+  --popover: #ffffff;
+  --popover-foreground: #1c1917;
+  --primary: #b45309;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f4;
+  --secondary-foreground: #57534e;
+  --muted: #e7e5e4;
+  --muted-foreground: #78716c;
+  --accent: #d97706;
+  --accent-foreground: #ffffff;
+  --thought: #fef3c7;
+  --thought-foreground: #92400e;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --success: #059669;
+  --success-foreground: #ffffff;
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
+  --info: #0284c7;
+  --info-foreground: #ffffff;
+  --highlight: #7c3aed;
+  --highlight-foreground: #ffffff;
+  --border: #e7e5e4;
+  --input: #faf8f5;
+  --ring: #b45309;
+  --ai-gradient-start: #b45309;
+  --ai-gradient-end: #d97706;
+  --ai-glow: rgba(180, 83, 9, 0.15);
+  --tag-meetings: #dbeafe;
+  --tag-meetings-foreground: #1e40af;
+  --tag-feedback: #fce7f3;
+  --tag-feedback-foreground: #9d174d;
+  --tag-conflict: #fee2e2;
+  --tag-conflict-foreground: #991b1b;
+  --tag-focus: #fef3c7;
+  --tag-focus-foreground: #92400e;
+  --tag-health: #d1fae5;
+  --tag-health-foreground: #065f46;
+  --tag-relationships: #fef3c7;
+  --tag-relationships-foreground: #92400e;
+  --tag-parenting: #f3e8ff;
+  --tag-parenting-foreground: #6b21a8;
+  --tag-other: #f5f5f4;
+  --tag-other-foreground: #57534e;
+}
+
 /* Tailwind v4 theme configuration */
 @theme inline {
   --color-background: var(--background);
@@ -1703,6 +2233,148 @@
   --glass-body-gradient-end: #f1f5f9;
 }
 
+/* Graphite - Professional silver-blue */
+[data-theme="graphite"][data-ui-theme="glass"] {
+  --glass-card-bg: rgba(99, 102, 241, 0.03);
+  --glass-card-border: rgba(99, 102, 241, 0.08);
+  --glass-button-primary-bg: rgba(82, 82, 91, 0.9);
+  --glass-button-primary-border: rgba(82, 82, 91, 0.4);
+  --glass-button-primary-shadow: 0 8px 16px rgba(99, 102, 241, 0.2);
+  --glass-hover-bg: rgba(99, 102, 241, 0.06);
+  --glass-body-gradient-start: #18181b;
+  --glass-body-gradient-end: #27272a;
+}
+
+/* Mercury - Violet luminescence */
+[data-theme="mercury"][data-ui-theme="glass"] {
+  --glass-card-bg: rgba(139, 92, 246, 0.04);
+  --glass-card-border: rgba(139, 92, 246, 0.12);
+  --glass-button-primary-bg: rgba(139, 92, 246, 0.85);
+  --glass-button-primary-border: rgba(139, 92, 246, 0.4);
+  --glass-button-primary-shadow: 0 8px 16px rgba(139, 92, 246, 0.3), 0 0 30px rgba(236, 72, 153, 0.1);
+  --glass-hover-bg: rgba(139, 92, 246, 0.08);
+  --glass-body-gradient-start: #0c0c14;
+  --glass-body-gradient-end: #14141f;
+}
+
+/* Titanium - Aerospace cyan */
+[data-theme="titanium"][data-ui-theme="glass"] {
+  --glass-card-bg: rgba(14, 165, 233, 0.03);
+  --glass-card-border: rgba(14, 165, 233, 0.12);
+  --glass-button-primary-bg: rgba(14, 165, 233, 0.85);
+  --glass-button-primary-border: rgba(14, 165, 233, 0.4);
+  --glass-button-primary-shadow: 0 8px 16px rgba(14, 165, 233, 0.3);
+  --glass-hover-bg: rgba(14, 165, 233, 0.08);
+  --glass-body-gradient-start: #0a1219;
+  --glass-body-gradient-end: #0f1d28;
+}
+
+/* Carbon - Luxury gold */
+[data-theme="carbon"][data-ui-theme="glass"] {
+  --glass-card-bg: rgba(245, 158, 11, 0.03);
+  --glass-card-border: rgba(245, 158, 11, 0.1);
+  --glass-button-primary-bg: rgba(245, 158, 11, 0.85);
+  --glass-button-primary-border: rgba(245, 158, 11, 0.4);
+  --glass-button-primary-shadow: 0 8px 16px rgba(245, 158, 11, 0.3);
+  --glass-hover-bg: rgba(245, 158, 11, 0.06);
+  --glass-body-gradient-start: #111111;
+  --glass-body-gradient-end: #1a1a1a;
+}
+
+/* Void - Maximum contrast OLED */
+[data-theme="void"][data-ui-theme="glass"] {
+  --glass-card-bg: rgba(255, 255, 255, 0.01);
+  --glass-card-border: rgba(255, 255, 255, 0.05);
+  --glass-card-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  --glass-sidebar-bg: rgba(255, 255, 255, 0.005);
+  --glass-sidebar-border: rgba(255, 255, 255, 0.03);
+  --glass-button-primary-bg: rgba(255, 255, 255, 0.9);
+  --glass-button-primary-border: rgba(255, 255, 255, 0.5);
+  --glass-button-primary-shadow: 0 8px 16px rgba(255, 255, 255, 0.1);
+  --glass-hover-bg: rgba(255, 255, 255, 0.03);
+  --glass-hover-border: rgba(255, 255, 255, 0.06);
+  --glass-body-gradient-start: #000000;
+  --glass-body-gradient-end: #050505;
+}
+
+/* Nebula - Cosmic purple/pink AI gradients */
+[data-theme="nebula"][data-ui-theme="glass"] {
+  --glass-card-bg: rgba(168, 85, 247, 0.04);
+  --glass-card-border: rgba(168, 85, 247, 0.12);
+  --glass-button-primary-bg: rgba(168, 85, 247, 0.85);
+  --glass-button-primary-border: rgba(168, 85, 247, 0.4);
+  --glass-button-primary-shadow: 0 8px 20px rgba(168, 85, 247, 0.3), 0 0 40px rgba(236, 72, 153, 0.15);
+  --glass-hover-bg: rgba(168, 85, 247, 0.08);
+  --glass-body-gradient-start: #0a0812;
+  --glass-body-gradient-end: #120f1a;
+}
+
+/* Steel - Industrial silver */
+[data-theme="steel"][data-ui-theme="glass"] {
+  --glass-card-bg: rgba(148, 163, 184, 0.04);
+  --glass-card-border: rgba(148, 163, 184, 0.1);
+  --glass-button-primary-bg: rgba(148, 163, 184, 0.85);
+  --glass-button-primary-border: rgba(148, 163, 184, 0.4);
+  --glass-button-primary-shadow: 0 8px 16px rgba(148, 163, 184, 0.2);
+  --glass-hover-bg: rgba(148, 163, 184, 0.06);
+  --glass-body-gradient-start: #0f1114;
+  --glass-body-gradient-end: #1a1d21;
+}
+
+/* Manuscript - Notion-inspired warm */
+[data-theme="manuscript"][data-ui-theme="glass"] {
+  --glass-card-bg: rgba(154, 109, 215, 0.03);
+  --glass-card-border: rgba(154, 109, 215, 0.08);
+  --glass-button-primary-bg: rgba(55, 53, 47, 0.9);
+  --glass-button-primary-border: rgba(55, 53, 47, 0.4);
+  --glass-button-primary-shadow: 0 8px 16px rgba(154, 109, 215, 0.15);
+  --glass-hover-bg: rgba(154, 109, 215, 0.05);
+  --glass-body-gradient-start: #191919;
+  --glass-body-gradient-end: #2f3437;
+}
+
+/* Paper (Light theme) - Clean white with blue */
+[data-theme="paper"][data-ui-theme="glass"] {
+  --glass-card-bg: rgba(255, 255, 255, 0.75);
+  --glass-card-border: rgba(37, 99, 235, 0.08);
+  --glass-sidebar-bg: rgba(255, 255, 255, 0.65);
+  --glass-sidebar-border: rgba(37, 99, 235, 0.06);
+  --glass-modal-bg: rgba(255, 255, 255, 0.9);
+  --glass-modal-border: rgba(37, 99, 235, 0.08);
+  --glass-button-primary-bg: rgba(37, 99, 235, 0.9);
+  --glass-button-primary-border: rgba(37, 99, 235, 0.3);
+  --glass-button-primary-shadow: 0 8px 16px rgba(37, 99, 235, 0.2);
+  --glass-button-secondary-bg: rgba(0, 0, 0, 0.02);
+  --glass-button-secondary-border: rgba(0, 0, 0, 0.06);
+  --glass-input-bg: rgba(255, 255, 255, 0.7);
+  --glass-input-border: rgba(0, 0, 0, 0.06);
+  --glass-hover-bg: rgba(37, 99, 235, 0.04);
+  --glass-hover-border: rgba(37, 99, 235, 0.1);
+  --glass-body-gradient-start: #ffffff;
+  --glass-body-gradient-end: #f8fafc;
+}
+
+/* Ivory (Light theme) - Warm cream with amber */
+[data-theme="ivory"][data-ui-theme="glass"] {
+  --glass-card-bg: rgba(255, 253, 249, 0.7);
+  --glass-card-border: rgba(180, 83, 9, 0.08);
+  --glass-sidebar-bg: rgba(255, 253, 249, 0.6);
+  --glass-sidebar-border: rgba(180, 83, 9, 0.06);
+  --glass-modal-bg: rgba(255, 255, 255, 0.85);
+  --glass-modal-border: rgba(180, 83, 9, 0.08);
+  --glass-button-primary-bg: rgba(180, 83, 9, 0.9);
+  --glass-button-primary-border: rgba(180, 83, 9, 0.3);
+  --glass-button-primary-shadow: 0 8px 16px rgba(180, 83, 9, 0.2);
+  --glass-button-secondary-bg: rgba(0, 0, 0, 0.03);
+  --glass-button-secondary-border: rgba(0, 0, 0, 0.08);
+  --glass-input-bg: rgba(255, 253, 249, 0.6);
+  --glass-input-border: rgba(0, 0, 0, 0.08);
+  --glass-hover-bg: rgba(180, 83, 9, 0.04);
+  --glass-hover-border: rgba(180, 83, 9, 0.1);
+  --glass-body-gradient-start: #fffdf9;
+  --glass-body-gradient-end: #faf8f5;
+}
+
 /* Glass utility classes - Premium glassmorphism with enhanced depth */
 .glass {
   background: var(--glass-card-bg);
@@ -1825,7 +2497,9 @@ html {
 }
 
 html[data-theme="sunrise"],
-html[data-theme="daylight"] {
+html[data-theme="daylight"],
+html[data-theme="paper"],
+html[data-theme="ivory"] {
   color-scheme: light;
 }
 
