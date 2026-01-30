@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { GoogleGenerativeAI } from "@google/generative-ai"
-import { FOR_YOU_SUGGESTIONS_PROMPT } from "@/lib/ai/prompts"
+import { generateDiscoveries } from "@/lib/ai/gemini"
+import type { Context } from "@/lib/types/context"
 
 export interface ForYouSuggestion {
   id: string
@@ -16,17 +16,16 @@ export interface ForYouSuggestion {
 /**
  * GET /api/home/suggestions
  * Fetch personalized "For You" suggestions for the home page
+ * Reuses the existing discovery generation logic that powers the Discover feature
  */
 export async function GET() {
   try {
     // Check if API key is available - return empty if not
-    const apiKey = process.env.GOOGLE_AI_API_KEY
-    if (!apiKey) {
+    if (!process.env.GOOGLE_AI_API_KEY) {
       console.warn("GOOGLE_AI_API_KEY not set, returning empty suggestions")
       return NextResponse.json({ suggestions: [] })
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey)
     const supabase = await createClient()
 
     const {
@@ -38,19 +37,16 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get user's contexts
+    // Get user's contexts (full data for generateDiscoveries)
     const { data: contexts, error: contextsError } = await supabase
       .from("contexts")
-      .select("id, name, slug, thought_count")
+      .select("*")
       .eq("user_id", user.id)
       .order("thought_count", { ascending: false })
 
     if (contextsError) {
       console.error("Contexts fetch error:", contextsError)
-      return NextResponse.json(
-        { error: "Failed to fetch contexts" },
-        { status: 500 }
-      )
+      return NextResponse.json({ suggestions: [] })
     }
 
     // If user has no contexts or very few, return empty suggestions
@@ -58,139 +54,62 @@ export async function GET() {
       return NextResponse.json({ suggestions: [] })
     }
 
-    // Get recent activity for context
-    const { data: recentThoughts } = await supabase
+    // Get sample thoughts for personalization (same as Discovery feature)
+    const { data: sampleThoughts } = await supabase
       .from("gems")
       .select("content, context_id")
       .eq("user_id", user.id)
+      .in("status", ["active", "passive"])
       .order("created_at", { ascending: false })
-      .limit(5)
+      .limit(10)
 
-    // Build recent activity context
-    let recentActivity = ""
-    if (recentThoughts && recentThoughts.length > 0) {
-      const samples = recentThoughts.map((t) => {
-        const context = contexts.find((c) => c.id === t.context_id)
-        return context ? `[${context.name}] ${t.content.slice(0, 100)}...` : t.content.slice(0, 100)
-      })
-      recentActivity = `Recent thoughts the user captured:\n${samples.join("\n")}`
-    }
-
-    // Build the prompt - format contexts inline (simpler type handling)
-    const contextsList = contexts
-      .map((c) => `- ${c.slug}: ${c.name}`)
-      .join('\n')
-    const systemPrompt = FOR_YOU_SUGGESTIONS_PROMPT
-      .replace("{contexts_list}", contextsList)
-      .replace("{recent_activity}", recentActivity)
-
-    let parsed: { suggestions?: unknown[] } = { suggestions: [] }
-
-    // Try with Google Search grounding first
-    try {
-      console.log("Attempting For You suggestions with Google Search grounding...")
-      const groundedModel = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
-        generationConfig: {
-          responseMimeType: "application/json",
-          maxOutputTokens: 1024,
-        },
-        tools: [
-          {
-            googleSearchRetrieval: {},
-          },
-        ],
-      })
-
-      const result = await groundedModel.generateContent([
-        { text: systemPrompt },
-        { text: "Find 3 trending, high-quality articles that would interest this user based on their contexts and recent activity." },
-      ])
-
-      const response = result.response
-      const text = response.text()
-      console.log("Grounded response received:", text.slice(0, 200))
-
-      try {
-        parsed = JSON.parse(text)
-      } catch {
-        const jsonMatch = text.match(/\{[\s\S]*\}/)
-        if (jsonMatch) {
-          parsed = JSON.parse(jsonMatch[0])
-        }
+    // Format thoughts for the AI
+    const thoughtsWithContext = (sampleThoughts || []).map((t) => {
+      const context = contexts.find((c) => c.id === t.context_id)
+      return {
+        content: t.content,
+        context_name: context?.name,
       }
-    } catch (groundingError) {
-      console.warn("Google Search grounding failed, trying fallback:", groundingError)
-    }
+    })
 
-    // Fallback: use standard model without grounding if no results
-    if (!parsed.suggestions || parsed.suggestions.length === 0) {
-      try {
-        console.log("Using fallback model for suggestions...")
-        const fallbackModel = genAI.getGenerativeModel({
-          model: "gemini-2.0-flash-001",
-          generationConfig: {
-            responseMimeType: "application/json",
-            maxOutputTokens: 1024,
-          },
-        })
+    // Use the existing generateDiscoveries function (curated mode)
+    // This is the same function that powers the working Discover feature
+    console.log("Generating For You suggestions using existing discovery logic...")
+    const { discoveries } = await generateDiscoveries(
+      "curated",
+      contexts as Context[],
+      thoughtsWithContext,
+      undefined, // no specific query
+      undefined  // no specific context
+    )
 
-        const fallbackPrompt = `Based on the user's interests, suggest 3 well-known books, articles, or resources they might find valuable.
-
-User's interests:
-${contextsList}
-
-${recentActivity}
-
-For each suggestion, provide:
-- title: A real, well-known book or article title
-- source: The author or publication
-- url: Use format "https://www.google.com/search?q=" followed by the URL-encoded title
-- context_slug: Which context this matches
-- teaser: Why they should check this out (max 80 chars)
-
-Return valid JSON: { "suggestions": [...] }`
-
-        const result = await fallbackModel.generateContent([
-          { text: fallbackPrompt },
-        ])
-
-        const text = result.response.text()
-        console.log("Fallback response received:", text.slice(0, 200))
-
-        try {
-          parsed = JSON.parse(text)
-        } catch {
-          const jsonMatch = text.match(/\{[\s\S]*\}/)
-          if (jsonMatch) {
-            parsed = JSON.parse(jsonMatch[0])
+    // Convert discoveries to ForYouSuggestion format (take top 3)
+    const suggestions: ForYouSuggestion[] = discoveries
+      .slice(0, 3)
+      .map((d, index) => {
+        const matchedContext = contexts.find((c) => c.slug === d.suggested_context_slug)
+        // Extract hostname from URL for source display, or use source_type as fallback
+        let sourceName: string = d.source_type
+        if (d.source_url) {
+          try {
+            sourceName = new URL(d.source_url).hostname.replace("www.", "")
+          } catch {
+            // Keep source_type if URL parsing fails
           }
         }
-      } catch (fallbackError) {
-        console.error("Fallback also failed:", fallbackError)
-      }
-    }
-
-    // Validate and format suggestions
-    const suggestions: ForYouSuggestion[] = (parsed.suggestions || [])
-      .slice(0, 3)
-      .map((s: unknown, index: number) => {
-        const suggestion = s as Record<string, unknown>
-        const contextSlug = String(suggestion.context_slug || "other")
-        const matchedContext = contexts.find((c) => c.slug === contextSlug)
-
         return {
           id: `suggestion-${index}-${Date.now()}`,
-          title: String(suggestion.title || "").slice(0, 60),
-          source: String(suggestion.source || ""),
-          url: String(suggestion.url || ""),
-          contextSlug,
+          title: d.source_title.slice(0, 60),
+          source: sourceName,
+          url: d.source_url || `https://www.google.com/search?q=${encodeURIComponent(d.source_title)}`,
+          contextSlug: d.suggested_context_slug,
           contextName: matchedContext?.name,
-          teaser: String(suggestion.teaser || "").slice(0, 80),
+          teaser: d.relevance_reason.slice(0, 80),
         }
       })
-      .filter((s) => s.title && s.url && s.url.startsWith("http"))
+      .filter((s) => s.title && s.url)
 
+    console.log(`Generated ${suggestions.length} For You suggestions`)
     return NextResponse.json({ suggestions })
   } catch (error) {
     console.error("Home suggestions error:", error)
