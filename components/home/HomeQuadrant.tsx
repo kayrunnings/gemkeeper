@@ -56,7 +56,7 @@ export function HomeQuadrant({
   return (
     <div
       className={cn(
-        "glass-card min-h-[280px] flex flex-col transition-all duration-200",
+        "glass-card p-4 flex flex-col transition-all duration-200",
         "hover:bg-[var(--glass-hover-bg)] hover:border-[var(--glass-hover-border)] hover:-translate-y-0.5",
         styles.hoverGlow,
         className
@@ -77,9 +77,13 @@ export function HomeQuadrant({
           <h3 className="text-[15px] font-semibold tracking-tight">{title}</h3>
         </div>
         {stat && (
-          <div className="text-[11px] text-muted-foreground bg-[var(--glass-card-bg)] px-2.5 py-1 rounded-full border border-[var(--glass-card-border)]">
-            {stat}
-          </div>
+          typeof stat === "string" ? (
+            <div className="text-[11px] text-muted-foreground bg-[var(--glass-card-bg)] px-2.5 py-1 rounded-full border border-[var(--glass-card-border)]">
+              {stat}
+            </div>
+          ) : (
+            stat
+          )
         )}
       </div>
 

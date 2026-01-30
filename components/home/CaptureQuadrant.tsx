@@ -22,7 +22,7 @@ interface RecentCapture {
 interface CaptureQuadrantProps {
   weeklyCaptures: number
   recentCaptures: RecentCapture[]
-  onOpenAICapture?: () => void
+  onOpenAICapture?: (content: string) => void
   onOpenNoteEditor?: () => void
   onOpenThoughtForm?: () => void
   className?: string
@@ -42,7 +42,7 @@ export function CaptureQuadrant({
   const handleAICapture = (content: string) => {
     setIsCapturing(true)
     // Trigger AI capture modal with the content
-    onOpenAICapture?.()
+    onOpenAICapture?.(content)
     setIsCapturing(false)
   }
 

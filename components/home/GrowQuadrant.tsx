@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Sparkle, MagnifyingGlass, Shuffle, BookOpen, Headphones } from "@phosphor-icons/react"
+import { Sparkle, MagnifyingGlass, Shuffle, BookOpen, Headphones, TrendUp, Lightbulb, Brain, ChatCircleDots } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 import { HomeQuadrant } from "./HomeQuadrant"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,13 @@ interface Suggestion {
   source: string
   type: "article" | "podcast" | "video" | "research"
 }
+
+// Trending topics for quick discovery
+const TRENDING_TOPICS = [
+  { id: "productivity", label: "Productivity", query: "productivity tips", icon: Lightbulb },
+  { id: "mindfulness", label: "Mindfulness", query: "mindfulness practices", icon: Brain },
+  { id: "communication", label: "Communication", query: "effective communication", icon: ChatCircleDots },
+]
 
 interface GrowQuadrantProps {
   contexts: ContextWithCount[]
@@ -125,8 +132,8 @@ export function GrowQuadrant({
         ))}
       </div>
 
-      {/* AI Suggestions */}
-      {suggestions.length > 0 && (
+      {/* AI Suggestions or Trending Topics */}
+      {suggestions.length > 0 ? (
         <div className="space-y-2 mb-2">
           {suggestions.slice(0, 2).map((suggestion) => (
             <div
@@ -151,6 +158,33 @@ export function GrowQuadrant({
               </div>
             </div>
           ))}
+        </div>
+      ) : (
+        <div className="mb-3">
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-wider mb-2">
+            <TrendUp className="w-3 h-3" />
+            <span>Trending</span>
+          </div>
+          <div className="space-y-1.5">
+            {TRENDING_TOPICS.map((topic) => (
+              <button
+                key={topic.id}
+                onClick={() => onDiscoverTopic?.(topic.query)}
+                className={cn(
+                  "flex items-center gap-2.5 w-full p-2",
+                  "bg-[var(--glass-input-bg)] rounded-[calc(var(--radius)-2px)]",
+                  "border border-transparent cursor-pointer transition-all",
+                  "hover:border-[var(--glass-card-border)] hover:bg-[var(--glass-hover-bg)]",
+                  "text-left"
+                )}
+              >
+                <span className="w-6 h-6 flex items-center justify-center bg-gradient-to-br from-orange-500/20 to-blue-500/10 rounded text-orange-500">
+                  <topic.icon weight="fill" className="w-3.5 h-3.5" />
+                </span>
+                <span className="text-xs text-foreground">{topic.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Loader2, TrendingUp, Compass, BookOpen, Brain, Heart, Briefcase, Lightbulb } from "lucide-react"
@@ -13,6 +13,9 @@ import type { Discovery } from "@/lib/types/discovery"
 
 interface ExploreTabProps {
   contexts: ContextWithCount[]
+  initialQuery?: string
+  initialContextId?: string
+  autoSurprise?: boolean
   className?: string
 }
 
@@ -26,8 +29,8 @@ const EXPLORE_TOPICS = [
   { label: "Creativity", icon: Compass, query: "creativity and innovation techniques" },
 ]
 
-export function ExploreTab({ contexts, className }: ExploreTabProps) {
-  const [query, setQuery] = useState("")
+export function ExploreTab({ contexts, initialQuery, initialContextId, autoSurprise, className }: ExploreTabProps) {
+  const [query, setQuery] = useState(initialQuery || "")
   const [isLoading, setIsLoading] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [discoveries, setDiscoveries] = useState<Discovery[]>([])
@@ -35,6 +38,125 @@ export function ExploreTab({ contexts, className }: ExploreTabProps) {
   const [searchedQuery, setSearchedQuery] = useState("")
   const [lastSearchContext, setLastSearchContext] = useState<ContextWithCount | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const hasAutoTriggered = useRef(false)
+
+  // Auto-trigger search when initialQuery, initialContextId, or autoSurprise is provided
+  useEffect(() => {
+    if (hasAutoTriggered.current) return
+
+    if (initialQuery) {
+      hasAutoTriggered.current = true
+      handleSearchInternal(initialQuery)
+    } else if (initialContextId && contexts.length > 0) {
+      const context = contexts.find(c => c.id === initialContextId)
+      if (context) {
+        hasAutoTriggered.current = true
+        handleContextExploreInternal(context)
+      }
+    } else if (autoSurprise) {
+      hasAutoTriggered.current = true
+      handleSurpriseInternal()
+    }
+  }, [initialQuery, initialContextId, autoSurprise, contexts])
+
+  const handleSurpriseInternal = async () => {
+    setIsLoading(true)
+    setError(null)
+    setSearchedQuery("Surprise discoveries")
+
+    try {
+      const response = await fetch("/api/discover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "curated",
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || "Failed to get surprise discoveries")
+        return
+      }
+
+      setDiscoveries(data.discoveries || [])
+      setShowGrid(true)
+    } catch (err) {
+      console.error("Surprise error:", err)
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSearchInternal = async (searchQuery: string) => {
+    if (!searchQuery.trim()) return
+
+    setIsLoading(true)
+    setError(null)
+    setSearchedQuery(searchQuery)
+    setLastSearchContext(null)
+
+    try {
+      const response = await fetch("/api/discover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "directed",
+          query: searchQuery.trim(),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || "Failed to explore this topic")
+        return
+      }
+
+      setDiscoveries(data.discoveries || [])
+      setShowGrid(true)
+    } catch (err) {
+      console.error("Explore error:", err)
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleContextExploreInternal = async (context: ContextWithCount) => {
+    setIsLoading(true)
+    setError(null)
+    setSearchedQuery(context.name)
+    setLastSearchContext(context)
+
+    try {
+      const response = await fetch("/api/discover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "curated",
+          context_id: context.id,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || "Failed to explore this context")
+        return
+      }
+
+      setDiscoveries(data.discoveries || [])
+      setShowGrid(true)
+    } catch (err) {
+      console.error("Explore error:", err)
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleSearch = async (searchQuery: string, isRefresh = false) => {
     if (!searchQuery.trim()) return

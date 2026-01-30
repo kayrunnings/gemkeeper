@@ -22,6 +22,7 @@ interface AICaptureModalProps {
   isOpen: boolean
   onClose: () => void
   contexts?: ContextWithCount[]
+  initialContent?: string
 }
 
 type ModalState = 'empty' | 'input' | 'analyzing' | 'suggestions' | 'saving' | 'success' | 'error'
@@ -42,6 +43,7 @@ export function AICaptureModal({
   isOpen,
   onClose,
   contexts = [],
+  initialContent,
 }: AICaptureModalProps) {
   const [content, setContent] = useState("")
   const [state, setState] = useState<ModalState>('empty')
@@ -52,19 +54,29 @@ export function AICaptureModal({
   const [images, setImages] = useState<PastedImage[]>([])
   const [imageError, setImageError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const hasAutoAnalyzed = useRef(false)
 
   // Reset state when modal opens/closes
   useEffect(() => {
     if (isOpen) {
-      setContent("")
-      setState('empty')
+      // If there's initial content, use it
+      if (initialContent && initialContent.trim()) {
+        setContent(initialContent)
+        setState('input')
+        hasAutoAnalyzed.current = false
+      } else {
+        setContent("")
+        setState('empty')
+      }
       setSuggestions([])
       setContentType(null)
       setError(null)
       setImages([])
       setImageError(null)
+    } else {
+      hasAutoAnalyzed.current = false
     }
-  }, [isOpen])
+  }, [isOpen, initialContent])
 
   // Determine if we have content (text or images)
   const hasContent = content.trim().length > 0 || images.length > 0
@@ -77,6 +89,24 @@ export function AICaptureModal({
       setState('empty')
     }
   }, [hasContent, state])
+
+  // Auto-analyze when there's initial content
+  useEffect(() => {
+    if (
+      isOpen &&
+      initialContent &&
+      initialContent.trim() &&
+      state === 'input' &&
+      !hasAutoAnalyzed.current
+    ) {
+      hasAutoAnalyzed.current = true
+      // Small delay to let the UI render first
+      const timer = setTimeout(() => {
+        handleAnalyzeWithContent(initialContent.trim())
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen, initialContent, state])
 
   // Handle paste events for images
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
@@ -126,6 +156,46 @@ export function AICaptureModal({
 
   const removeImage = (index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  // Internal function to analyze specific content (used for auto-analyze)
+  const handleAnalyzeWithContent = async (contentToAnalyze: string) => {
+    if (!contentToAnalyze.trim()) return
+
+    setState('analyzing')
+    setError(null)
+
+    try {
+      const response = await fetch('/api/capture/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: contentToAnalyze,
+          images: images.length > 0 ? images.map(img => ({
+            mimeType: img.mimeType,
+            data: img.data,
+          })) : undefined,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to analyze content')
+      }
+
+      const data = await response.json()
+
+      if (data.suggestions.length === 0) {
+        throw new Error('No insights detected in the content. Try adding more context or paste different content.')
+      }
+
+      setSuggestions(data.suggestions)
+      setContentType(data.contentType)
+      setState('suggestions')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+      setState('error')
+    }
   }
 
   const handleAnalyze = async () => {

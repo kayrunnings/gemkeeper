@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { getContexts } from "@/lib/contexts"
 import { LayoutShell } from "@/components/layout-shell"
@@ -13,8 +13,15 @@ import { useToast } from "@/components/error-toast"
 import { Sparkles } from "lucide-react"
 import type { ContextWithCount } from "@/lib/types/context"
 
-export default function DiscoverPage() {
-  const [activeTab, setActiveTab] = useState<DiscoverTab>("for-you")
+function DiscoverPageContent() {
+  const searchParams = useSearchParams()
+  const initialQuery = searchParams.get("q") || undefined
+  const initialContextId = searchParams.get("context") || undefined
+  const autoSurprise = searchParams.get("surprise") === "true"
+
+  // Auto-switch to explore tab when params are present
+  const hasInitialParams = initialQuery || initialContextId || autoSurprise
+  const [activeTab, setActiveTab] = useState<DiscoverTab>(hasInitialParams ? "explore" : "for-you")
   const [contexts, setContexts] = useState<ContextWithCount[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
@@ -110,7 +117,12 @@ export default function DiscoverPage() {
         )}
 
         {activeTab === "explore" && (
-          <ExploreTab contexts={contexts} />
+          <ExploreTab
+            contexts={contexts}
+            initialQuery={initialQuery}
+            initialContextId={initialContextId}
+            autoSurprise={autoSurprise}
+          />
         )}
 
         {activeTab === "saved" && (
@@ -125,5 +137,24 @@ export default function DiscoverPage() {
         )}
       </div>
     </LayoutShell>
+  )
+}
+
+export default function DiscoverPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+              <Sparkles className="h-8 w-8 text-white" />
+            </div>
+            <p className="text-muted-foreground">Loading discoveries...</p>
+          </div>
+        </div>
+      }
+    >
+      <DiscoverPageContent />
+    </Suspense>
   )
 }

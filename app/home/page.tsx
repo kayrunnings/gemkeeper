@@ -77,6 +77,7 @@ export default function HomePage() {
   const [isThoughtFormOpen, setIsThoughtFormOpen] = useState(false)
   const [isAICaptureOpen, setIsAICaptureOpen] = useState(false)
   const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false)
+  const [captureInitialContent, setCaptureInitialContent] = useState<string | undefined>(undefined)
 
   const router = useRouter()
   const supabase = createClient()
@@ -216,6 +217,20 @@ export default function HomePage() {
     router.push("/discover?surprise=true")
   }, [router])
 
+  const handleShuffleDailyThought = useCallback(async () => {
+    try {
+      const response = await fetch("/api/thoughts/shuffle", { method: "POST" })
+      if (response.ok) {
+        const data = await response.json()
+        if (data.thought) {
+          setDailyThought(data.thought)
+        }
+      }
+    } catch (err) {
+      showError(err, "Failed to shuffle thought")
+    }
+  }, [showError])
+
   if (isLoading) {
     return (
       <LoadingState variant="fullscreen" message="Gathering your thoughts..." />
@@ -251,15 +266,29 @@ export default function HomePage() {
     )
   }).length
 
+  // Filter to only upcoming moments (future events)
+  const now = new Date()
+  const upcomingMoments = moments
+    .filter((m) => {
+      const eventTime = m.calendar_event_start || m.created_at
+      if (!eventTime) return false
+      return new Date(eventTime) >= now
+    })
+    .sort((a, b) => {
+      const aTime = new Date(a.calendar_event_start || a.created_at || 0)
+      const bTime = new Date(b.calendar_event_start || b.created_at || 0)
+      return aTime.getTime() - bTime.getTime()
+    })
+
   return (
     <LayoutShell
       userEmail={userEmail}
       contexts={contexts}
       calendarConnected={calendarConnected}
     >
-      <div className="p-4 md:p-8 max-w-[1100px] mx-auto">
+      <div className="p-4 md:p-6 max-w-[1100px] mx-auto">
         {/* Header with greeting */}
-        <div className="mb-4">
+        <div className="mb-3">
           <h1 className="text-2xl md:text-[26px] font-bold tracking-tight">
             {timeGreeting}, {displayName}
           </h1>
@@ -271,17 +300,20 @@ export default function HomePage() {
             insights={tfInsights}
             onRefresh={fetchTFInsights}
             isLoading={isLoadingInsights}
-            className="mb-6"
+            className="mb-4"
           />
         )}
 
         {/* Four Quadrants Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Capture Quadrant */}
           <CaptureQuadrant
             weeklyCaptures={homeStats?.weeklyCaptures || 0}
             recentCaptures={recentCaptures}
-            onOpenAICapture={() => setIsAICaptureOpen(true)}
+            onOpenAICapture={(content) => {
+              setCaptureInitialContent(content)
+              setIsAICaptureOpen(true)
+            }}
             onOpenNoteEditor={() => setIsNoteEditorOpen(true)}
             onOpenThoughtForm={() => setIsThoughtFormOpen(true)}
           />
@@ -300,8 +332,9 @@ export default function HomePage() {
               dailyThought={dailyThought}
               alreadyCheckedIn={alreadyCheckedIn}
               contexts={contexts}
-              upcomingMoments={moments}
+              upcomingMoments={upcomingMoments}
               todayMomentsCount={todayMomentsCount}
+              onShuffle={handleShuffleDailyThought}
             />
           )}
 
@@ -352,8 +385,12 @@ export default function HomePage() {
       {hasAIConsent && (
         <AICaptureModal
           isOpen={isAICaptureOpen}
-          onClose={() => setIsAICaptureOpen(false)}
+          onClose={() => {
+            setIsAICaptureOpen(false)
+            setCaptureInitialContent(undefined)
+          }}
           contexts={contexts}
+          initialContent={captureInitialContent}
         />
       )}
 
