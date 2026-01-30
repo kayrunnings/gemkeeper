@@ -78,16 +78,7 @@ export async function POST(request: NextRequest) {
 
     // Handle URL content
     if (contentType === 'url' && isUrl(trimmedContent)) {
-      // For URLs, return suggestion to use URL extractor
-      const suggestion: CaptureItem = {
-        id: randomUUID(),
-        type: 'thought',
-        content: `Content from: ${trimmedContent}`,
-        sourceUrl: trimmedContent,
-        selected: true,
-      }
-
-      // Try to extract URL content
+      // Try to extract URL content and analyze it with AI
       try {
         const urlResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/extract/url`, {
           method: 'POST',
@@ -98,50 +89,87 @@ export async function POST(request: NextRequest) {
         if (urlResponse.ok) {
           const urlData = await urlResponse.json()
 
-          const suggestions: CaptureItem[] = []
+          // Extract the article content from the response
+          const articleTitle = urlData.content?.title || ''
+          const articleText = urlData.content?.text || ''
+          const articleByline = urlData.content?.byline || ''
+          const siteName = urlData.content?.siteName || ''
 
-          // Add source
-          if (urlData.source_title) {
-            suggestions.push({
-              id: randomUUID(),
-              type: 'source',
-              content: urlData.source_title,
-              sourceUrl: trimmedContent,
-              selected: true,
+          if (articleText && articleText.length > 50) {
+            // We have article content - run it through AI analysis
+            const model = genAI.getGenerativeModel({
+              model: "gemini-2.0-flash-001",
+              generationConfig: {
+                responseMimeType: "application/json",
+                maxOutputTokens: 2048,
+              },
             })
-          }
 
-          // Add extracted thoughts
-          if (urlData.thoughts && Array.isArray(urlData.thoughts)) {
-            for (const thought of urlData.thoughts.slice(0, 5)) {
+            // Build context for the AI
+            const sourceInfo = [articleTitle, articleByline, siteName].filter(Boolean).join(' - ')
+            const contentToAnalyze = `Source: ${sourceInfo}\n\n${articleText}`
+
+            const result = await model.generateContent([
+              { text: buildCapturePrompt() },
+              { text: `Content to analyze:\n\n${contentToAnalyze}` },
+            ])
+
+            const response = result.response
+            const text = response.text()
+            const parsed = JSON.parse(text)
+
+            const suggestions: CaptureItem[] = []
+
+            // Add the source first
+            if (articleTitle) {
               suggestions.push({
                 id: randomUUID(),
-                type: 'thought',
-                content: thought.content,
-                source: urlData.source_title,
+                type: 'source',
+                content: articleTitle,
+                source: articleByline || siteName,
                 sourceUrl: trimmedContent,
                 selected: true,
               })
             }
-          }
 
-          if (suggestions.length > 0) {
-            return NextResponse.json({
-              success: true,
-              contentType,
-              suggestions,
-            } satisfies CaptureAnalyzeResponse)
+            // Add AI-extracted items
+            for (const item of (parsed.items || [])) {
+              suggestions.push({
+                id: randomUUID(),
+                type: item.type === 'note' ? 'note' : item.type === 'source' ? 'source' : 'thought',
+                content: String(item.content || '').slice(0, item.type === 'note' ? 5000 : 300),
+                source: articleTitle || item.source,
+                sourceUrl: trimmedContent,
+                selected: true,
+              })
+            }
+
+            if (suggestions.length > 0) {
+              return NextResponse.json({
+                success: true,
+                contentType,
+                suggestions,
+              } satisfies CaptureAnalyzeResponse)
+            }
           }
         }
       } catch (err) {
         console.warn("URL extraction failed:", err)
       }
 
-      // Fallback for URL
+      // Fallback for URL - just return the URL as a source to save
+      const fallbackSuggestion: CaptureItem = {
+        id: randomUUID(),
+        type: 'source',
+        content: trimmedContent,
+        sourceUrl: trimmedContent,
+        selected: true,
+      }
+
       return NextResponse.json({
         success: true,
         contentType,
-        suggestions: [suggestion],
+        suggestions: [fallbackSuggestion],
       } satisfies CaptureAnalyzeResponse)
     }
 
