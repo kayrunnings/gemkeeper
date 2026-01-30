@@ -28,6 +28,7 @@ Before starting work, read these files in `Claude Context/`:
 | `PRD.md` | Product requirements and feature specifications |
 | `PRODUCT-BRIEF.md` | Vision, positioning, target user, principles |
 | `STANDARDS.md` | Code conventions, patterns, things to avoid |
+| `AI-PROMPTS-REVIEW.md` | All AI prompts documented with rationale and improvements |
 
 ## Current State (January 2026)
 
@@ -57,6 +58,31 @@ Check `/Tasks/` for any active task files. Each file represents a scoped body of
 | Auth | Supabase Auth | Latest |
 | AI | Google Gemini API | 2.0 Flash |
 | Hosting | Vercel | Latest |
+
+## AI System
+
+All AI prompts are centralized in `lib/ai/prompts.ts` (v2.0.0). This includes:
+
+| Feature | Prompt | Purpose |
+|---------|--------|---------|
+| Thought Extraction | `THOUGHT_EXTRACTION_PROMPT` | Extract insights from text |
+| Multimedia Extraction | `MULTIMEDIA_EXTRACTION_PROMPT` | Extract from images/audio |
+| Capture Analysis | `CAPTURE_ANALYSIS_PROMPT` | Categorize pasted content |
+| Image Analysis | `IMAGE_ANALYSIS_PROMPT` | Process pasted images |
+| Write Assist | `buildWriteAssistPrompt()` | Help improve notes |
+| TF Thinks | `TF_THINKS_PROMPT` | Generate user insights |
+| Discovery (Web) | `DISCOVERY_WEB_SEARCH_PROMPT` | Find web content |
+| Discovery (Fallback) | `DISCOVERY_FALLBACK_PROMPT` | Recommend without web |
+| Schedule Parse | `SCHEDULE_PARSE_PROMPT` | Parse NL schedules |
+| Moment Matching | `MOMENT_MATCHING_PROMPT` | Match thoughts to moments |
+
+**Key conventions:**
+- 300 character limit for extracted thoughts (was 200)
+- Dynamic `{contexts_list}` placeholder for user's contexts
+- Quality over quantity - no hard-coded extraction limits
+- Good/bad examples in prompts to guide AI behavior
+
+See `Claude Context/AI-PROMPTS-REVIEW.md` for detailed prompt documentation.
 
 ## Key Concepts
 

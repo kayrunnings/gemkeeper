@@ -9,32 +9,9 @@ import {
   MIN_RELEVANCE_SCORE,
   MATCHING_TIMEOUT_MS
 } from "@/types/matching"
+import { MOMENT_MATCHING_PROMPT } from "@/lib/ai/prompts"
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
-
-const MATCHING_SYSTEM_PROMPT = `You are a wisdom matching assistant. Given a user's upcoming moment/situation and their collection of saved insights (gems), identify which gems are most relevant.
-
-MOMENT: {moment_description}
-
-USER'S GEMS:
-{gems_list}
-
-For each gem, consider:
-1. Direct topical relevance (does the gem's advice apply to this situation?)
-2. Context tag match (e.g., "meetings" tag for a meeting moment)
-3. Underlying principles (even if not directly mentioned, could this wisdom help?)
-
-Return a JSON array of relevant gems (max 5, minimum relevance 0.5):
-[
-  {
-    "gem_id": "uuid",
-    "relevance_score": 0.85,
-    "relevance_reason": "Brief explanation of why this gem applies..."
-  }
-]
-
-If no gems are relevant, return an empty array: []
-Respond with ONLY the JSON array, no additional text.`
 
 /**
  * Format gems for the prompt
@@ -123,7 +100,7 @@ export async function matchGemsToMoment(
       },
     })
 
-    const prompt = MATCHING_SYSTEM_PROMPT
+    const prompt = MOMENT_MATCHING_PROMPT
       .replace('{moment_description}', momentDescription)
       .replace('{gems_list}', formatGemsForPrompt(gems))
 

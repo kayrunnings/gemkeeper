@@ -5,50 +5,14 @@ import { detectContentType, isUrl, extractBulletPoints, isQuoteLike } from "@/li
 import { extractSourceAttribution } from "@/lib/ai/content-splitter"
 import type { CaptureItem, ContentType, CaptureAnalyzeResponse } from "@/lib/types/capture"
 import { randomUUID } from "crypto"
+import { CAPTURE_ANALYSIS_PROMPT, IMAGE_ANALYSIS_PROMPT, DEFAULT_CONTEXTS } from "@/lib/ai/prompts"
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
 
-const CAPTURE_ANALYSIS_PROMPT = `You are a knowledge extraction assistant for ThoughtFolio, helping users capture insights from various content types.
-
-Analyze the provided content and identify:
-1. **Thoughts**: Key insights, quotes, or wisdom (max 200 characters each)
-2. **Notes**: Longer reflections, meeting notes, or commentary
-3. **Sources**: Books, articles, or media being referenced
-
-For each item:
-- Determine if it's a thought (short insight), note (longer content), or source (a referenced work)
-- Extract the core content
-- Identify any source attribution (author, book, article)
-- Suggest the best context for applying this insight
-
-Available contexts:
-- meetings: Professional meetings, 1:1s, team discussions
-- feedback: Giving/receiving feedback, reviews
-- conflict: Difficult conversations, disagreements
-- focus: Productivity, deep work, time management
-- health: Physical/mental wellness, self-care
-- relationships: Personal relationships, communication
-- parenting: Family, teaching kids
-- other: General wisdom
-
-Guidelines:
-- Quotes under 200 chars → thought
-- Long reflections/notes → note
-- Book/article references → source
-- If content has both quotes and commentary, separate them
-- For bullet lists, each bullet can be a separate thought
-
-Return valid JSON only:
-{
-  "items": [
-    {
-      "type": "thought|note|source",
-      "content": "The extracted content",
-      "source": "Author or source name if mentioned",
-      "sourceUrl": "URL if available"
-    }
-  ]
-}`
+// Build capture analysis prompt with default contexts
+function buildCapturePrompt(): string {
+  return CAPTURE_ANALYSIS_PROMPT.replace('{contexts_list}', DEFAULT_CONTEXTS)
+}
 
 interface ImageInput {
   mimeType: string
@@ -226,7 +190,7 @@ export async function POST(request: NextRequest) {
     })
 
     const result = await model.generateContent([
-      { text: CAPTURE_ANALYSIS_PROMPT },
+      { text: buildCapturePrompt() },
       { text: `Content to analyze:\n\n${trimmedContent}` },
     ])
 
@@ -242,7 +206,7 @@ export async function POST(request: NextRequest) {
     }) => ({
       id: randomUUID(),
       type: item.type === 'note' ? 'note' : item.type === 'source' ? 'source' : 'thought',
-      content: String(item.content || '').slice(0, item.type === 'note' ? 5000 : 200),
+      content: String(item.content || '').slice(0, item.type === 'note' ? 5000 : 300),
       source: item.source,
       sourceUrl: item.sourceUrl,
       selected: true,
@@ -264,31 +228,6 @@ export async function POST(request: NextRequest) {
 }
 
 async function handleImageAnalysis(textContent: string, images: ImageInput[]) {
-  const IMAGE_ANALYSIS_PROMPT = `You are a knowledge extraction assistant. Analyze the provided image(s) and any accompanying text to extract valuable insights.
-
-Identify:
-1. **Thoughts**: Key insights, quotes, or wisdom from the image (max 200 characters each)
-2. **Notes**: Longer observations, context, or commentary about the content
-3. **Sources**: Any books, articles, or references visible/mentioned
-
-For images of:
-- Book pages/highlights: Extract the key quotes and insights
-- Screenshots of articles: Extract main points
-- Notes/handwriting: Transcribe and organize the content
-- Diagrams/charts: Describe key takeaways
-- Social media posts: Extract notable quotes or insights
-
-Return valid JSON only:
-{
-  "items": [
-    {
-      "type": "thought|note|source",
-      "content": "The extracted content",
-      "source": "Author or source name if visible"
-    }
-  ]
-}`
-
   try {
     const model = genAI.getGenerativeModel({
       model: "gemini-2.0-flash-001",
@@ -331,7 +270,7 @@ Return valid JSON only:
     }) => ({
       id: randomUUID(),
       type: item.type === 'note' ? 'note' : item.type === 'source' ? 'source' : 'thought',
-      content: String(item.content || '').slice(0, item.type === 'note' ? 5000 : 200),
+      content: String(item.content || '').slice(0, item.type === 'note' ? 5000 : 300),
       source: item.source,
       sourceUrl: item.sourceUrl,
       selected: true,
