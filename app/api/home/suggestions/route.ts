@@ -3,8 +3,6 @@ import { createClient } from "@/lib/supabase/server"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { FOR_YOU_SUGGESTIONS_PROMPT } from "@/lib/ai/prompts"
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
-
 export interface ForYouSuggestion {
   id: string
   title: string
@@ -21,6 +19,14 @@ export interface ForYouSuggestion {
  */
 export async function GET() {
   try {
+    // Check if API key is available - return empty if not
+    const apiKey = process.env.GOOGLE_AI_API_KEY
+    if (!apiKey) {
+      console.warn("GOOGLE_AI_API_KEY not set, returning empty suggestions")
+      return NextResponse.json({ suggestions: [] })
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey)
     const supabase = await createClient()
 
     const {
