@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { Sparkle, MagnifyingGlass, Shuffle, BookOpen, Headphones, TrendUp, Lightbulb, Brain, ChatCircleDots } from "@phosphor-icons/react"
+import { Sparkle, MagnifyingGlass, Shuffle, BookOpen, Headphones, TrendUp, Lightbulb, Brain, ChatCircleDots, Star } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 import { HomeQuadrant } from "./HomeQuadrant"
 import { Button } from "@/components/ui/button"
@@ -16,8 +16,8 @@ interface Suggestion {
   type: "article" | "podcast" | "video" | "research"
 }
 
-// Trending topics for quick discovery
-const TRENDING_TOPICS = [
+// Fallback trending topics when user has no contexts
+const FALLBACK_TOPICS = [
   { id: "productivity", label: "Productivity", query: "productivity tips", icon: Lightbulb },
   { id: "mindfulness", label: "Mindfulness", query: "mindfulness practices", icon: Brain },
   { id: "communication", label: "Communication", query: "effective communication", icon: ChatCircleDots },
@@ -42,6 +42,27 @@ export function GrowQuadrant({
 }: GrowQuadrantProps) {
   const router = useRouter()
   const [searchTopic, setSearchTopic] = useState("")
+
+  // Generate personalized trending topics based on user's contexts
+  // Uses contexts with the most content (highest count) for relevance
+  const trendingTopics = useMemo(() => {
+    if (contexts.length === 0) {
+      return FALLBACK_TOPICS
+    }
+
+    // Sort contexts by count (most active first) and take top 3
+    const topContexts = [...contexts]
+      .sort((a, b) => (b.count || 0) - (a.count || 0))
+      .slice(0, 3)
+
+    return topContexts.map((context) => ({
+      id: context.id,
+      label: context.name,
+      query: `latest insights and tips about ${context.name.toLowerCase()}`,
+      icon: Star, // Use Star icon for personalized topics
+      isPersonalized: true,
+    }))
+  }, [contexts])
 
   const handleSearch = useCallback(() => {
     if (searchTopic.trim()) {
@@ -162,11 +183,20 @@ export function GrowQuadrant({
       ) : (
         <div className="mb-3">
           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-wider mb-2">
-            <TrendUp className="w-3 h-3" />
-            <span>Trending</span>
+            {contexts.length > 0 ? (
+              <>
+                <Star className="w-3 h-3" />
+                <span>For You</span>
+              </>
+            ) : (
+              <>
+                <TrendUp className="w-3 h-3" />
+                <span>Trending</span>
+              </>
+            )}
           </div>
           <div className="space-y-1.5">
-            {TRENDING_TOPICS.map((topic) => (
+            {trendingTopics.map((topic) => (
               <button
                 key={topic.id}
                 onClick={() => onDiscoverTopic?.(topic.query)}
