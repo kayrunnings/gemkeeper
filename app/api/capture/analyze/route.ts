@@ -2,11 +2,122 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { detectContentType, isUrl, extractBulletPoints, isQuoteLike } from "@/lib/ai/content-detector"
-import { extractTitleFromUrl, extractDomainFromUrl } from "@/lib/url-extractor"
+// NOTE: Do NOT import from url-extractor here - it loads JSDOM which crashes Vercel serverless
 import { extractSourceAttribution } from "@/lib/ai/content-splitter"
 import type { CaptureItem, ContentType, CaptureAnalyzeResponse } from "@/lib/types/capture"
 import { randomUUID } from "crypto"
 import { CAPTURE_ANALYSIS_PROMPT, IMAGE_ANALYSIS_PROMPT, DEFAULT_CONTEXTS } from "@/lib/ai/prompts"
+
+// Inline URL utility functions to avoid loading JSDOM
+function extractTitleFromUrl(url: string): string {
+  try {
+    const parsed = new URL(url)
+    const path = parsed.pathname
+    const segments = path.split("/").filter(Boolean)
+
+    if (segments.length === 0) {
+      return parsed.hostname
+    }
+
+    let bestSegment = segments[segments.length - 1]
+    let bestScore = 0
+
+    for (const segment of segments) {
+      const cleaned = segment.replace(/\.[^.]+$/, "")
+      if (cleaned.length < 10 && /^[a-z]{1,3}[-_]?[A-Za-z0-9]+$/i.test(cleaned)) {
+        continue
+      }
+      const hyphenCount = (cleaned.match(/-/g) || []).length
+      const score = cleaned.length + (hyphenCount * 5)
+      if (score > bestScore) {
+        bestScore = score
+        bestSegment = cleaned
+      }
+    }
+
+    return bestSegment
+      .replace(/\.[^.]+$/, "")
+      .replace(/[-_]/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+  } catch {
+    return "Untitled"
+  }
+}
+
+function extractDomainFromUrl(url: string): string {
+  try {
+    const parsed = new URL(url)
+    return parsed.hostname.replace(/^www\./, "")
+  } catch {
+    return ""
+  }
+}
+
+// Fetch webpage metadata without JSDOM - uses Open Graph tags and simple regex
+async function fetchUrlMetadata(url: string): Promise<{
+  title: string
+  description: string
+  siteName: string
+  error?: string
+}> {
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8000)
+
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        'Accept': 'text/html',
+      },
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      return { title: '', description: '', siteName: '', error: `HTTP ${response.status}` }
+    }
+
+    const html = await response.text()
+
+    // Extract Open Graph metadata using regex (no DOM parser needed)
+    const ogTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i)?.[1]
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i)?.[1]
+
+    const ogDescription = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i)?.[1]
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:description["']/i)?.[1]
+      || html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)?.[1]
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i)?.[1]
+
+    const ogSiteName = html.match(/<meta[^>]*property=["']og:site_name["'][^>]*content=["']([^"']+)["']/i)?.[1]
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:site_name["']/i)?.[1]
+
+    // Fallback to <title> tag
+    const titleTag = html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]
+
+    // Decode HTML entities
+    const decode = (str: string) => str
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ')
+
+    return {
+      title: decode(ogTitle || titleTag || '').trim(),
+      description: decode(ogDescription || '').trim(),
+      siteName: decode(ogSiteName || extractDomainFromUrl(url)).trim(),
+    }
+  } catch (err) {
+    return {
+      title: '',
+      description: '',
+      siteName: extractDomainFromUrl(url),
+      error: err instanceof Error ? err.message : 'Failed to fetch'
+    }
+  }
+}
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
 
@@ -25,6 +136,18 @@ const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024 // 4MB
 const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
 export async function POST(request: NextRequest) {
+  try {
+    return await handleAnalyzeRequest(request)
+  } catch (outerError) {
+    console.error("CRITICAL: Unhandled error in capture/analyze:", outerError)
+    return NextResponse.json(
+      { error: outerError instanceof Error ? outerError.message : "Internal server error" },
+      { status: 500 }
+    )
+  }
+}
+
+async function handleAnalyzeRequest(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -77,69 +200,53 @@ export async function POST(request: NextRequest) {
     const trimmedContent = content!.trim()
     const contentType = detectContentType(trimmedContent)
 
-    // Handle URL content
+    // Handle URL content - fetch metadata and analyze with AI
     if (contentType === 'url' && isUrl(trimmedContent)) {
-      // Try to extract URL content and analyze it with AI
-      try {
-        const urlResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/extract/url`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: trimmedContent }),
-        })
+      // Fetch metadata from the URL (uses Open Graph tags, no JSDOM needed)
+      const metadata = await fetchUrlMetadata(trimmedContent)
 
-        if (urlResponse.ok) {
-          const urlData = await urlResponse.json()
+      // If we have meaningful content, analyze it with AI
+      if (metadata.title && metadata.description && metadata.description.length > 30) {
+        try {
+          const model = genAI.getGenerativeModel({
+            model: "gemini-2.0-flash-001",
+            generationConfig: {
+              responseMimeType: "application/json",
+              maxOutputTokens: 2048,
+            },
+          })
 
-          // Extract the article content from the response
-          const articleTitle = urlData.content?.title || ''
-          const articleText = urlData.content?.text || ''
-          const articleByline = urlData.content?.byline || ''
-          const siteName = urlData.content?.siteName || ''
+          const contentToAnalyze = `Article: ${metadata.title}\nSource: ${metadata.siteName}\n\nSummary: ${metadata.description}`
 
-          if (articleText && articleText.length > 50) {
-            // We have article content - run it through AI analysis
-            const model = genAI.getGenerativeModel({
-              model: "gemini-2.0-flash-001",
-              generationConfig: {
-                responseMimeType: "application/json",
-                maxOutputTokens: 2048,
-              },
-            })
+          const result = await model.generateContent([
+            { text: buildCapturePrompt() },
+            { text: `Content to analyze:\n\n${contentToAnalyze}` },
+          ])
 
-            // Build context for the AI
-            const sourceInfo = [articleTitle, articleByline, siteName].filter(Boolean).join(' - ')
-            const contentToAnalyze = `Source: ${sourceInfo}\n\n${articleText}`
+          const response = result.response
+          const text = response.text()
 
-            const result = await model.generateContent([
-              { text: buildCapturePrompt() },
-              { text: `Content to analyze:\n\n${contentToAnalyze}` },
-            ])
-
-            const response = result.response
-            const text = response.text()
+          if (text && text.trim()) {
             const parsed = JSON.parse(text)
-
             const suggestions: CaptureItem[] = []
 
             // Add the source first
-            if (articleTitle) {
-              suggestions.push({
-                id: randomUUID(),
-                type: 'source',
-                content: articleTitle,
-                source: articleByline || siteName,
-                sourceUrl: trimmedContent,
-                selected: true,
-              })
-            }
+            suggestions.push({
+              id: randomUUID(),
+              type: 'source',
+              content: metadata.title,
+              source: metadata.siteName,
+              sourceUrl: trimmedContent,
+              selected: true,
+            })
 
-            // Add AI-extracted items
+            // Add AI-extracted thoughts/notes
             for (const item of (parsed.items || [])) {
               suggestions.push({
                 id: randomUUID(),
                 type: item.type === 'note' ? 'note' : item.type === 'source' ? 'source' : 'thought',
                 content: String(item.content || '').slice(0, item.type === 'note' ? 5000 : 300),
-                source: articleTitle || item.source,
+                source: metadata.title,
                 sourceUrl: trimmedContent,
                 selected: true,
               })
@@ -153,20 +260,18 @@ export async function POST(request: NextRequest) {
               } satisfies CaptureAnalyzeResponse)
             }
           }
+        } catch (aiError) {
+          console.warn("AI analysis of URL failed:", aiError)
+          // Fall through to simple metadata response
         }
-      } catch (err) {
-        console.warn("URL extraction failed:", err)
       }
 
-      // Fallback for URL - extract title from URL slug and return as a source
-      const extractedTitle = extractTitleFromUrl(trimmedContent)
-      const siteName = extractDomainFromUrl(trimmedContent)
-
-      const fallbackSuggestion: CaptureItem = {
+      // Fallback: just return the source with metadata
+      const suggestion: CaptureItem = {
         id: randomUUID(),
         type: 'source',
-        content: extractedTitle !== 'Untitled' ? extractedTitle : trimmedContent,
-        source: siteName,
+        content: metadata.title || extractTitleFromUrl(trimmedContent),
+        source: metadata.siteName || extractDomainFromUrl(trimmedContent),
         sourceUrl: trimmedContent,
         selected: true,
       }
@@ -174,9 +279,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         contentType,
-        suggestions: [fallbackSuggestion],
-        extractionFailed: true, // Signal to UI that we couldn't fetch content
-      } satisfies CaptureAnalyzeResponse & { extractionFailed?: boolean })
+        suggestions: [suggestion],
+      } satisfies CaptureAnalyzeResponse)
     }
 
     // Handle bullet list
@@ -230,6 +334,15 @@ export async function POST(request: NextRequest) {
 
     const response = result.response
     const text = response.text()
+
+    // Handle empty AI response
+    if (!text || text.trim() === '') {
+      return NextResponse.json(
+        { error: "AI returned an empty response. Please try again." },
+        { status: 500 }
+      )
+    }
+
     const parsed = JSON.parse(text)
 
     const suggestions: CaptureItem[] = (parsed.items || []).map((item: {
@@ -254,12 +367,16 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("Capture analyze error:", error)
+    const errorMessage = error instanceof Error ? error.message : "Failed to analyze content"
     return NextResponse.json(
-      { error: "Failed to analyze content" },
+      { error: errorMessage },
       { status: 500 }
     )
   }
 }
+
+// Export config to set a reasonable timeout
+export const maxDuration = 30 // 30 seconds max
 
 async function handleImageAnalysis(textContent: string, images: ImageInput[]) {
   try {
@@ -294,6 +411,15 @@ async function handleImageAnalysis(textContent: string, images: ImageInput[]) {
     const result = await model.generateContent(parts)
     const response = result.response
     const text = response.text()
+
+    // Handle empty AI response
+    if (!text || text.trim() === '') {
+      return NextResponse.json(
+        { error: "AI returned an empty response. Please try again." },
+        { status: 500 }
+      )
+    }
+
     const parsed = JSON.parse(text)
 
     const suggestions: CaptureItem[] = (parsed.items || []).map((item: {

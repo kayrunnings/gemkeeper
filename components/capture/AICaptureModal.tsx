@@ -21,6 +21,7 @@ import type { ContextWithCount } from "@/lib/types/context"
 interface AICaptureModalProps {
   isOpen: boolean
   onClose: () => void
+  onSuccess?: () => void  // Called after successful save to refresh data
   contexts?: ContextWithCount[]
   initialContent?: string
 }
@@ -42,6 +43,7 @@ const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/we
 export function AICaptureModal({
   isOpen,
   onClose,
+  onSuccess,
   contexts = [],
   initialContent,
 }: AICaptureModalProps) {
@@ -158,6 +160,20 @@ export function AICaptureModal({
     setImages(prev => prev.filter((_, i) => i !== index))
   }
 
+  // Helper to safely parse JSON response
+  const safeParseResponse = async (response: Response): Promise<{ data?: Record<string, unknown>; error?: string }> => {
+    try {
+      const text = await response.text()
+      if (!text || text.trim() === '') {
+        return { error: 'Server returned an empty response' }
+      }
+      const data = JSON.parse(text)
+      return { data }
+    } catch {
+      return { error: 'Failed to parse server response' }
+    }
+  }
+
   // Internal function to analyze specific content (used for auto-analyze)
   const handleAnalyzeWithContent = async (contentToAnalyze: string) => {
     if (!contentToAnalyze.trim()) return
@@ -178,19 +194,22 @@ export function AICaptureModal({
         }),
       })
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to analyze content')
+      const { data, error: parseError } = await safeParseResponse(response)
+
+      if (parseError) {
+        throw new Error(parseError)
       }
 
-      const data = await response.json()
+      if (!response.ok) {
+        throw new Error((data?.error as string) || 'Failed to analyze content')
+      }
 
-      if (data.suggestions.length === 0) {
+      if (!data?.suggestions || (data.suggestions as unknown[]).length === 0) {
         throw new Error('No insights detected in the content. Try adding more context or paste different content.')
       }
 
-      setSuggestions(data.suggestions)
-      setContentType(data.contentType)
+      setSuggestions(data.suggestions as CaptureItem[])
+      setContentType(data.contentType as ContentType)
       setState('suggestions')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -217,19 +236,22 @@ export function AICaptureModal({
         }),
       })
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to analyze content')
+      const { data, error: parseError } = await safeParseResponse(response)
+
+      if (parseError) {
+        throw new Error(parseError)
       }
 
-      const data = await response.json()
+      if (!response.ok) {
+        throw new Error((data?.error as string) || 'Failed to analyze content')
+      }
 
-      if (data.suggestions.length === 0) {
+      if (!data?.suggestions || (data.suggestions as unknown[]).length === 0) {
         throw new Error('No insights detected in the content. Try adding more context or paste different content.')
       }
 
-      setSuggestions(data.suggestions)
-      setContentType(data.contentType)
+      setSuggestions(data.suggestions as CaptureItem[])
+      setContentType(data.contentType as ContentType)
       setState('suggestions')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -248,14 +270,21 @@ export function AICaptureModal({
         body: JSON.stringify({ items }),
       })
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to save items')
+      const { data, error: parseError } = await safeParseResponse(response)
+
+      if (parseError) {
+        throw new Error(parseError)
       }
 
-      const data = await response.json()
-      setSavedCount(data.created)
+      if (!response.ok) {
+        throw new Error((data?.error as string) || 'Failed to save items')
+      }
+
+      setSavedCount(data?.created as { thoughts: number; notes: number; sources: number })
       setState('success')
+
+      // Call onSuccess to refresh data in parent component
+      onSuccess?.()
 
       // Auto-close after success
       setTimeout(() => {
