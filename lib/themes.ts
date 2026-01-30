@@ -1,7 +1,7 @@
 // Theme definitions for ThoughtFolio multi-theme system
 
 export const THEMES = [
-  // Dark themes
+  // Dark themes - Original
   "midnight",
   "obsidian",
   "amethyst",
@@ -16,9 +16,20 @@ export const THEMES = [
   "aurora",
   "ember",
   "onyx",
+  // Dark themes - Premium
+  "graphite",
+  "mercury",
+  "titanium",
+  "carbon",
+  "void",
+  "nebula",
+  "steel",
+  "manuscript",
   // Light themes
   "sunrise",
   "daylight",
+  "paper",
+  "ivory",
 ] as const
 
 export type Theme = (typeof THEMES)[number]
@@ -27,10 +38,12 @@ export type Theme = (typeof THEMES)[number]
 export const DARK_THEMES: Theme[] = [
   "midnight", "obsidian", "amethyst", "ocean", "ruby",
   "forest", "rose", "nord", "cyber", "copper",
-  "slate", "aurora", "ember", "onyx"
+  "slate", "aurora", "ember", "onyx",
+  "graphite", "mercury", "titanium", "carbon", "void",
+  "nebula", "steel", "manuscript"
 ]
 
-export const LIGHT_THEMES: Theme[] = ["sunrise", "daylight"]
+export const LIGHT_THEMES: Theme[] = ["sunrise", "daylight", "paper", "ivory"]
 
 export const THEME_INFO: Record<Theme, { name: string; description: string; preview: string }> = {
   midnight: {
@@ -103,6 +116,46 @@ export const THEME_INFO: Record<Theme, { name: string; description: string; prev
     description: "Pure black with silver accents - true OLED black",
     preview: "#000000",
   },
+  graphite: {
+    name: "Graphite",
+    description: "Carbon-neutral with silver-blue accents",
+    preview: "#18181b",
+  },
+  mercury: {
+    name: "Mercury",
+    description: "Deep space black with violet luminescence",
+    preview: "#0c0c14",
+  },
+  titanium: {
+    name: "Titanium",
+    description: "Aerospace-inspired blue-black with cyan",
+    preview: "#0a1219",
+  },
+  carbon: {
+    name: "Carbon",
+    description: "Luxury charcoal with warm gold accents",
+    preview: "#111111",
+  },
+  void: {
+    name: "Void",
+    description: "Absolute black with pure white - OLED",
+    preview: "#000000",
+  },
+  nebula: {
+    name: "Nebula",
+    description: "Cosmic purple-black with AI gradients",
+    preview: "#0a0812",
+  },
+  steel: {
+    name: "Steel",
+    description: "Industrial blue-gray with silver highlights",
+    preview: "#0f1114",
+  },
+  manuscript: {
+    name: "Manuscript",
+    description: "Notion-inspired warm gray - content-first",
+    preview: "#191919",
+  },
   sunrise: {
     name: "Sunrise",
     description: "Warm off-white with amber accents",
@@ -112,6 +165,16 @@ export const THEME_INFO: Record<Theme, { name: string; description: string; prev
     name: "Daylight",
     description: "Cool white with crisp blue accents",
     preview: "#f8fafc",
+  },
+  paper: {
+    name: "Paper",
+    description: "Pure white with ink-blue accents",
+    preview: "#ffffff",
+  },
+  ivory: {
+    name: "Ivory",
+    description: "Warm cream with amber - easy on eyes",
+    preview: "#fffdf9",
   },
 }
 

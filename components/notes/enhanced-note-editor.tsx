@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { Note, NoteInput, Folder } from "@/lib/types"
-import { Thought, ContextTag, CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS } from "@/lib/types/thought"
+import { Thought, ContextTag, CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS, CONTEXT_TAG_DOT_COLORS } from "@/lib/types/thought"
 import {
   Dialog,
   DialogContent,
@@ -648,9 +648,9 @@ export function EnhancedNoteEditor({
 
         {/* Draft indicator banner */}
         {isDraft && (
-          <div className="mx-6 mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-200 dark:border-amber-800 flex items-center gap-2">
-            <Save className="h-4 w-4 text-amber-500" />
-            <span className="text-sm text-amber-700 dark:text-amber-300">
+          <div className="mx-6 mt-4 p-3 rounded-lg bg-warning/10 border border-warning/30 flex items-center gap-2">
+            <Save className="h-4 w-4 text-warning" />
+            <span className="text-sm text-warning">
               Editing draft - changes auto-save. Click &quot;Publish Note&quot; when ready.
             </span>
           </div>
@@ -891,7 +891,7 @@ export function EnhancedNoteEditor({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 text-xs border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-300"
+                    className="flex-1 text-xs border-warning/50 text-warning hover:bg-warning/10"
                     onClick={() => setShowCreateThought(true)}
                     disabled={showCreateThought || !!selectedText}
                   >
@@ -912,7 +912,7 @@ export function EnhancedNoteEditor({
                     key={thought.id}
                     className="flex items-start gap-2 p-2 rounded-lg border bg-background"
                   >
-                    <Lightbulb className="h-3 w-3 mt-1 text-amber-500 shrink-0" />
+                    <Lightbulb className="h-3 w-3 mt-1 text-warning shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs line-clamp-2">{thought.content}</p>
                     </div>
@@ -979,9 +979,9 @@ export function EnhancedNoteEditor({
 
                 {/* Create thought from selection or manual entry */}
                 {(selectedText || showCreateThought) && (
-                  <div className="border rounded-lg p-2 bg-amber-500/5 border-amber-200 dark:border-amber-800 space-y-2">
+                  <div className="border rounded-lg p-2 bg-warning/5 border-warning/30 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                      <span className="text-xs font-medium text-warning">
                         {selectedText ? "Create from selection" : "Create new thought"}
                       </span>
                       <Button
@@ -1011,14 +1011,7 @@ export function EnhancedNoteEditor({
                             <span className="flex items-center gap-1.5">
                               <span className={cn(
                                 "w-2 h-2 rounded-full",
-                                newThoughtContextTag === "meetings" && "bg-blue-500",
-                                newThoughtContextTag === "feedback" && "bg-purple-500",
-                                newThoughtContextTag === "conflict" && "bg-red-500",
-                                newThoughtContextTag === "focus" && "bg-orange-500",
-                                newThoughtContextTag === "health" && "bg-green-500",
-                                newThoughtContextTag === "relationships" && "bg-pink-500",
-                                newThoughtContextTag === "parenting" && "bg-yellow-500",
-                                newThoughtContextTag === "other" && "bg-gray-500"
+                                CONTEXT_TAG_DOT_COLORS[newThoughtContextTag]
                               )} />
                               {CONTEXT_TAG_LABELS[newThoughtContextTag]}
                             </span>
@@ -1034,14 +1027,7 @@ export function EnhancedNoteEditor({
                             >
                               <span className={cn(
                                 "w-2 h-2 rounded-full",
-                                value === "meetings" && "bg-blue-500",
-                                value === "feedback" && "bg-purple-500",
-                                value === "conflict" && "bg-red-500",
-                                value === "focus" && "bg-orange-500",
-                                value === "health" && "bg-green-500",
-                                value === "relationships" && "bg-pink-500",
-                                value === "parenting" && "bg-yellow-500",
-                                value === "other" && "bg-gray-500"
+                                CONTEXT_TAG_DOT_COLORS[value as ContextTag]
                               )} />
                               {label}
                               {newThoughtContextTag === value && <Check className="h-3 w-3 ml-auto" />}
@@ -1051,7 +1037,7 @@ export function EnhancedNoteEditor({
                       </DropdownMenu>
                       <Button
                         size="sm"
-                        className="h-7 text-xs bg-amber-500 hover:bg-amber-600 text-white"
+                        className="h-7 text-xs bg-warning hover:bg-warning/90 text-warning-foreground"
                         onClick={handleCreateThought}
                         disabled={isCreatingThought || (!newThoughtContent.trim() && !selectedText.trim())}
                       >
@@ -1076,10 +1062,10 @@ export function EnhancedNoteEditor({
               <Collapsible open={extractedOpen} onOpenChange={setExtractedOpen}>
                 <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-muted transition-colors">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-violet-500" />
+                    <Sparkles className="h-4 w-4 text-highlight" />
                     <span className="font-medium">AI Extraction</span>
                     {extractedThoughts.length > 0 && (
-                      <Badge variant="secondary" className="text-xs bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                      <Badge variant="secondary" className="text-xs bg-highlight/20 text-highlight">
                         {extractedThoughts.length}
                       </Badge>
                     )}
@@ -1096,7 +1082,7 @@ export function EnhancedNoteEditor({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 text-xs border-violet-300 text-violet-700 hover:bg-violet-50 dark:border-violet-700 dark:text-violet-300"
+                      className="flex-1 text-xs border-highlight/50 text-highlight hover:bg-highlight/10"
                       onClick={() => handleExtractThoughts(false)}
                       disabled={isExtracting || !content.trim()}
                     >
@@ -1142,7 +1128,7 @@ export function EnhancedNoteEditor({
                         </span>
                         <Button
                           size="sm"
-                          className="h-6 text-xs bg-violet-500 hover:bg-violet-600 text-white"
+                          className="h-6 text-xs bg-highlight hover:bg-highlight/90 text-highlight-foreground"
                           onClick={handleSaveExtractedThoughts}
                           disabled={selectedExtracted.size === 0 || isSavingExtracted}
                         >
@@ -1163,7 +1149,7 @@ export function EnhancedNoteEditor({
                             className={cn(
                               "p-2 rounded-lg border transition-colors",
                               selectedExtracted.has(index)
-                                ? "bg-violet-100 border-violet-300 dark:bg-violet-900/30 dark:border-violet-700"
+                                ? "bg-highlight/20 border-highlight/50"
                                 : "bg-background hover:bg-muted border-border"
                             )}
                           >
@@ -1182,14 +1168,7 @@ export function EnhancedNoteEditor({
                                         <span className="flex items-center gap-1.5">
                                           <span className={cn(
                                             "w-2 h-2 rounded-full",
-                                            thought.editedContextTag === "meetings" && "bg-blue-500",
-                                            thought.editedContextTag === "feedback" && "bg-purple-500",
-                                            thought.editedContextTag === "conflict" && "bg-red-500",
-                                            thought.editedContextTag === "focus" && "bg-orange-500",
-                                            thought.editedContextTag === "health" && "bg-green-500",
-                                            thought.editedContextTag === "relationships" && "bg-pink-500",
-                                            thought.editedContextTag === "parenting" && "bg-yellow-500",
-                                            thought.editedContextTag === "other" && "bg-gray-500"
+                                            thought.editedContextTag && CONTEXT_TAG_DOT_COLORS[thought.editedContextTag as ContextTag]
                                           )} />
                                           {CONTEXT_TAG_LABELS[thought.editedContextTag as ContextTag] || thought.editedContextTag}
                                         </span>
@@ -1205,14 +1184,7 @@ export function EnhancedNoteEditor({
                                         >
                                           <span className={cn(
                                             "w-2 h-2 rounded-full",
-                                            value === "meetings" && "bg-blue-500",
-                                            value === "feedback" && "bg-purple-500",
-                                            value === "conflict" && "bg-red-500",
-                                            value === "focus" && "bg-orange-500",
-                                            value === "health" && "bg-green-500",
-                                            value === "relationships" && "bg-pink-500",
-                                            value === "parenting" && "bg-yellow-500",
-                                            value === "other" && "bg-gray-500"
+                                            CONTEXT_TAG_DOT_COLORS[value as ContextTag]
                                           )} />
                                           {label}
                                           {thought.editedContextTag === value && <Check className="h-3 w-3 ml-auto" />}
@@ -1246,8 +1218,8 @@ export function EnhancedNoteEditor({
                                     className={cn(
                                       "mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors shrink-0",
                                       selectedExtracted.has(index)
-                                        ? "bg-violet-500 border-violet-500"
-                                        : "border-gray-300 hover:border-violet-400"
+                                        ? "bg-highlight border-highlight"
+                                        : "border-border hover:border-highlight"
                                     )}
                                   >
                                     {selectedExtracted.has(index) && <Check className="h-2.5 w-2.5 text-white" />}

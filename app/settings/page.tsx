@@ -166,8 +166,18 @@ function getThemeColor(theme: Theme): string {
     aurora: "#22d3ee",
     ember: "#ea580c",
     onyx: "#a1a1aa",
+    graphite: "#52525b",
+    mercury: "#8b5cf6",
+    titanium: "#0ea5e9",
+    carbon: "#f59e0b",
+    void: "#ffffff",
+    nebula: "#a855f7",
+    steel: "#94a3b8",
+    manuscript: "#37352f",
     sunrise: "#f59e0b",
     daylight: "#0ea5e9",
+    paper: "#2563eb",
+    ivory: "#b45309",
   }
   return colors[theme]
 }
