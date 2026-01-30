@@ -10,8 +10,8 @@ import { getRecentMoments } from "@/lib/moments"
 import { getContexts } from "@/lib/contexts"
 import { LayoutShell } from "@/components/layout-shell"
 import { TFInsight, TFInsightData } from "@/components/home/TFInsight"
-import { CaptureQuadrant } from "@/components/home/CaptureQuadrant"
-import { GrowQuadrant } from "@/components/home/GrowQuadrant"
+import { CaptureQuadrant, RecentCapture } from "@/components/home/CaptureQuadrant"
+import { GrowQuadrant, ForYouSuggestion } from "@/components/home/GrowQuadrant"
 import { ApplyQuadrant } from "@/components/home/ApplyQuadrant"
 import { TrackQuadrant } from "@/components/home/TrackQuadrant"
 import { ThoughtForm } from "@/components/thought-form"
@@ -70,6 +70,10 @@ export default function HomePage() {
   const [tfInsights, setTfInsights] = useState<TFInsightData[]>([])
   const [isLoadingInsights, setIsLoadingInsights] = useState(false)
 
+  // For You suggestions state
+  const [forYouSuggestions, setForYouSuggestions] = useState<ForYouSuggestion[]>([])
+  const [isLoadingForYou, setIsLoadingForYou] = useState(false)
+
   // Home stats state
   const [homeStats, setHomeStats] = useState<HomeStats | null>(null)
 
@@ -109,6 +113,22 @@ export default function HomePage() {
       }
     } catch (err) {
       console.error("Failed to fetch home stats:", err)
+    }
+  }, [])
+
+  // Fetch For You suggestions
+  const fetchForYouSuggestions = useCallback(async () => {
+    setIsLoadingForYou(true)
+    try {
+      const response = await fetch("/api/home/suggestions")
+      if (response.ok) {
+        const data = await response.json()
+        setForYouSuggestions(data.suggestions || [])
+      }
+    } catch (err) {
+      console.error("Failed to fetch For You suggestions:", err)
+    } finally {
+      setIsLoadingForYou(false)
     }
   }, [])
 
@@ -171,8 +191,8 @@ export default function HomePage() {
           setContexts(contextsResult.contexts)
         }
 
-        // Fetch home stats and TF insights
-        await Promise.all([fetchHomeStats(), fetchTFInsights()])
+        // Fetch home stats, TF insights, and For You suggestions
+        await Promise.all([fetchHomeStats(), fetchTFInsights(), fetchForYouSuggestions()])
       } catch (err) {
         showError(err, "Failed to load home data")
       } finally {
@@ -181,7 +201,7 @@ export default function HomePage() {
     }
 
     loadData()
-  }, [router, supabase, showError, fetchHomeStats, fetchTFInsights])
+  }, [router, supabase, showError, fetchHomeStats, fetchTFInsights, fetchForYouSuggestions])
 
   const handleThoughtSaved = useCallback((_thought?: Thought) => {
     setIsThoughtFormOpen(false)
@@ -216,6 +236,18 @@ export default function HomePage() {
   const handleSurpriseMe = useCallback(() => {
     router.push("/discover?surprise=true")
   }, [router])
+
+  const handleCaptureClick = useCallback(
+    (capture: RecentCapture) => {
+      if (capture.type === "thought") {
+        router.push(`/thoughts/${capture.id}`)
+      } else {
+        // For notes, navigate to library with the note selected
+        router.push(`/library?note=${capture.id}`)
+      }
+    },
+    [router]
+  )
 
   const handleShuffleDailyThought = useCallback(async () => {
     try {
@@ -316,11 +348,14 @@ export default function HomePage() {
             }}
             onOpenNoteEditor={() => setIsNoteEditorOpen(true)}
             onOpenThoughtForm={() => setIsThoughtFormOpen(true)}
+            onCaptureClick={handleCaptureClick}
           />
 
           {/* Grow Quadrant */}
           <GrowQuadrant
             contexts={contexts}
+            forYouSuggestions={forYouSuggestions}
+            isLoadingForYou={isLoadingForYou}
             onDiscoverTopic={handleDiscoverTopic}
             onDiscoverContext={handleDiscoverContext}
             onSurpriseMe={handleSurpriseMe}

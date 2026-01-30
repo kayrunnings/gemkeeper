@@ -11,7 +11,7 @@ import { Thought } from "@/lib/types/thought"
 import { Note as NoteType } from "@/lib/types"
 import { formatDistanceToNow } from "date-fns"
 
-interface RecentCapture {
+export interface RecentCapture {
   id: string
   type: "thought" | "note"
   content: string
@@ -25,6 +25,7 @@ interface CaptureQuadrantProps {
   onOpenAICapture?: (content: string) => void
   onOpenNoteEditor?: () => void
   onOpenThoughtForm?: () => void
+  onCaptureClick?: (capture: RecentCapture) => void
   className?: string
 }
 
@@ -34,6 +35,7 @@ export function CaptureQuadrant({
   onOpenAICapture,
   onOpenNoteEditor,
   onOpenThoughtForm,
+  onCaptureClick,
   className,
 }: CaptureQuadrantProps) {
   const router = useRouter()
@@ -107,9 +109,15 @@ export function CaptureQuadrant({
           </div>
           <div className="space-y-0">
             {recentCaptures.slice(0, 3).map((capture) => (
-              <div
+              <button
                 key={capture.id}
-                className="flex items-center gap-2 py-2 border-b border-[var(--glass-card-border)] last:border-b-0"
+                onClick={() => onCaptureClick?.(capture)}
+                className={cn(
+                  "flex items-center gap-2 py-2 w-full text-left",
+                  "border-b border-[var(--glass-card-border)] last:border-b-0",
+                  "hover:bg-[var(--glass-hover-bg)] rounded-sm transition-colors cursor-pointer",
+                  "-mx-1 px-1"
+                )}
               >
                 <span
                   className={cn(
@@ -136,7 +144,7 @@ export function CaptureQuadrant({
                     {formatDistanceToNow(new Date(capture.createdAt), { addSuffix: true })}
                   </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </>
