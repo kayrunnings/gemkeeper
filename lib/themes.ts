@@ -1,49 +1,48 @@
 // Theme definitions for ThoughtFolio multi-theme system
 
 export const THEMES = [
-  // Dark themes - Original
-  "midnight",
-  "obsidian",
-  "amethyst",
-  "ocean",
-  "ruby",
-  "forest",
-  "rose",
-  "nord",
-  "cyber",
-  "copper",
-  "slate",
-  "aurora",
-  "ember",
-  "onyx",
-  // Dark themes - Premium
-  "graphite",
-  "mercury",
-  "titanium",
-  "carbon",
-  "void",
-  "nebula",
-  "steel",
-  "manuscript",
-  // Light themes
-  "sunrise",
-  "daylight",
-  "paper",
-  "ivory",
+  // Dark themes - Sorted by expected market popularity
+  "midnight",     // 1. Classic dark with warm orange - universal appeal, default
+  "obsidian",     // 2. True dark OLED - developer favorite, clean minimal
+  "onyx",         // 3. Pure OLED black - battery saving, premium
+  "void",         // 4. Maximum contrast OLED - accessibility
+  "nord",         // 5. Nordic palette - cult following
+  "slate",        // 6. Modern indigo - professional developers
+  "manuscript",   // 7. Notion-inspired - productivity users
+  "graphite",     // 8. Carbon-neutral - understated elegance
+  "carbon",       // 9. Luxury gold/charcoal - premium feel
+  "steel",        // 10. Industrial silver - engineering aesthetic
+  "titanium",     // 11. Aerospace cyan - tech-forward
+  "aurora",       // 12. Northern lights - visually striking
+  "nebula",       // 13. Cosmic AI gradients - creative users
+  "mercury",      // 14. Violet luminescence - sophisticated
+  "amethyst",     // 15. Purple creative theme
+  "ocean",        // 16. Calming blue tones
+  "cyber",        // 17. Neon cyberpunk - gaming/tech niche
+  "ember",        // 18. Fire tones - passionate
+  "rose",         // 19. Soft pink - specific appeal
+  "ruby",         // 20. Bold red - energetic
+  "forest",       // 21. Nature theme
+  "copper",       // 22. Metallic luxury - niche
+  // Light themes - Sorted by expected market popularity
+  "daylight",     // 1. Clean blue - professional default light
+  "paper",        // 2. Pure white - focused writing
+  "sunrise",      // 3. Warm amber - daytime reading
+  "ivory",        // 4. Cream/amber - eye-strain reduction
 ] as const
 
 export type Theme = (typeof THEMES)[number]
 
-// Theme categories for UI grouping
+// Theme categories for UI grouping - Sorted by expected market popularity
 export const DARK_THEMES: Theme[] = [
-  "midnight", "obsidian", "amethyst", "ocean", "ruby",
-  "forest", "rose", "nord", "cyber", "copper",
-  "slate", "aurora", "ember", "onyx",
-  "graphite", "mercury", "titanium", "carbon", "void",
-  "nebula", "steel", "manuscript"
+  "midnight", "obsidian", "onyx", "void", "nord",
+  "slate", "manuscript", "graphite", "carbon", "steel",
+  "titanium", "aurora", "nebula", "mercury", "amethyst",
+  "ocean", "cyber", "ember", "rose", "ruby",
+  "forest", "copper"
 ]
 
-export const LIGHT_THEMES: Theme[] = ["sunrise", "daylight", "paper", "ivory"]
+export const LIGHT_THEMES: Theme[] = ["daylight", "paper", "sunrise", "ivory"]
 
 export const THEME_INFO: Record<Theme, { name: string; description: string; preview: string }> = {
   midnight: {
