@@ -21,6 +21,7 @@ import type { ContextWithCount } from "@/lib/types/context"
 interface AICaptureModalProps {
   isOpen: boolean
   onClose: () => void
+  onSuccess?: () => void  // Called after successful save to refresh data
   contexts?: ContextWithCount[]
   initialContent?: string
 }
@@ -42,6 +43,7 @@ const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/we
 export function AICaptureModal({
   isOpen,
   onClose,
+  onSuccess,
   contexts = [],
   initialContent,
 }: AICaptureModalProps) {
@@ -280,6 +282,9 @@ export function AICaptureModal({
 
       setSavedCount(data?.created as { thoughts: number; notes: number; sources: number })
       setState('success')
+
+      // Call onSuccess to refresh data in parent component
+      onSuccess?.()
 
       // Auto-close after success
       setTimeout(() => {

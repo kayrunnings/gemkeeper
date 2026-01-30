@@ -389,6 +389,7 @@ export default function HomePage() {
             setIsAICaptureOpen(false)
             setCaptureInitialContent(undefined)
           }}
+          onSuccess={() => router.refresh()}
           contexts={contexts}
           initialContent={captureInitialContent}
         />

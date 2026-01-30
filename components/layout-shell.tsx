@@ -515,6 +515,7 @@ export function LayoutShell({
       <AICaptureModal
         isOpen={isCaptureOpen}
         onClose={() => setIsCaptureOpen(false)}
+        onSuccess={() => router.refresh()}
         contexts={contexts}
       />
 
