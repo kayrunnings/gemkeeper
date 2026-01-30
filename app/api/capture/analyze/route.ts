@@ -25,6 +25,32 @@ const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024 // 4MB
 const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
 export async function POST(request: NextRequest) {
+  // DEBUG: Return immediately to test if route loads at all
+  try {
+    const body = await request.json()
+    const content = body?.content || ''
+
+    return NextResponse.json({
+      success: true,
+      contentType: 'url',
+      suggestions: [{
+        id: 'debug-123',
+        type: 'source',
+        content: `Debug mode: received ${content.length} characters`,
+        source: 'Debug',
+        sourceUrl: content.slice(0, 100),
+        selected: true,
+      }],
+    })
+  } catch (e) {
+    return NextResponse.json(
+      { error: `Debug error: ${e instanceof Error ? e.message : String(e)}` },
+      { status: 500 }
+    )
+  }
+
+  // DISABLED - Original handler below
+  /*
   // Wrap entire handler to ensure we always return a response
   try {
     return await handleAnalyzeRequest(request)
@@ -35,6 +61,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
+  */
 }
 
 async function handleAnalyzeRequest(request: NextRequest) {
