@@ -41,7 +41,7 @@ Before starting work, read these files in `Claude Context/`:
 - **Graduation System** - Trophy case for mastered thoughts
 
 ### Active Work
-Check `/tasks/` for any active task files. Each file represents a scoped body of work.
+Check `/Tasks/` for any active task files. Each file represents a scoped body of work.
 
 **For current issues and priorities:** Check Linear (Kay's Personal Playground workspace) for active issues and sprint context.
 
@@ -80,7 +80,7 @@ Single daily touchpoint at `/checkin`. Surfaces one thought from the Active List
 On-demand thought matching for upcoming situations. Moments search ALL thoughts with `status IN ('active', 'passive')` across ALL contexts, returning the most relevant with explanations. Rate limited to 20 matches/hour. Keyboard shortcut: Cmd+M / Ctrl+M.
 
 ### Notes
-Standalone long-form content separate from atomic thoughts. Notes have titles, markdown content (no character limit), tags, and can be organized into folders. Users can **extract thoughts from notes**, creating a bridge between detailed note-taking and atomic insights. Notes are NOT the same as "thought reflections" (which are attached to individual thoughts).
+Standalone long-form content separate from atomic thoughts. Notes have titles and can be organized into folders. Users can **extract thoughts from notes**, creating a bridge between detailed note-taking and atomic insights. 
 
 ### Discover
 AI-powered content discovery from the web. Dashboard card with three paths: free-text search, context chips, or "Surprise Me". Returns 8 discoveries per session with refresh capability. Daily limits: 8 curated + 8 directed = 16 max. User edits thought before saving (preserves "user's words" principle).
