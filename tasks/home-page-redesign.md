@@ -39,6 +39,9 @@ AI-powered discovery for expanding knowledge.
 - AI-suggested content (articles, podcasts) based on user's interests
 - "Surprise me" button for serendipitous discovery
 
+**Implementation reference:**
+- Uses same pattern as Discover and explore feature powered by AI
+
 ### 3. Apply Quadrant
 Help users actively apply their knowledge.
 
@@ -46,6 +49,9 @@ Help users actively apply their knowledge.
 - **Today's Thought:** Featured thought for the day with graduation progress bar
 - Action buttons: "Check In" (apply the thought) and "Shuffle" (get a different one)
 - Upcoming moments: Calendar integration showing meetings with relevant gems attached
+
+**Implementation reference:**
+- Uses same foundation as moments and calendar integrations that exist today
 
 ### 4. Track Quadrant
 Visualize progress and motivate continued engagement.
@@ -140,7 +146,7 @@ The mockup uses CSS variables from `globals.css` to ensure theme compatibility:
 - Glassmorphism: `--glass-card-bg`, `--glass-card-border`, `--glass-card-blur`, `--glass-card-shadow`
 - AI gradient: `--ai-gradient-start`, `--ai-gradient-end`, `--ai-glow`
 
-**Supported themes:** Midnight, Obsidian, Amethyst, Cyber, Aurora
+**Supported themes:** All themes available in settings page and globally.
 
 ---
 
@@ -148,10 +154,6 @@ The mockup uses CSS variables from `globals.css` to ensure theme compatibility:
 
 1. **TF Thinks carousel:** Yes - show multiple insights with dots for browsing
 2. **Suggestion card (bulb icon):** Removed - keep TF thinks card clean and focused on the insight only
-
-## Open Questions
-
-1. **Calendar integration:** How deep should the Apply quadrant integrate with external calendars?
 
 ---
 
