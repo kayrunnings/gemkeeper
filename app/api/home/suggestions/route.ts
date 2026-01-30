@@ -70,20 +70,6 @@ export async function GET() {
       recentActivity = `Recent thoughts the user captured:\n${samples.join("\n")}`
     }
 
-    // Use Gemini 1.5 Flash with Google Search grounding for real article suggestions
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      generationConfig: {
-        responseMimeType: "application/json",
-        maxOutputTokens: 1024,
-      },
-      tools: [
-        {
-          googleSearchRetrieval: {},
-        },
-      ],
-    })
-
     // Build the prompt - format contexts inline (simpler type handling)
     const contextsList = contexts
       .map((c) => `- ${c.slug}: ${c.name}`)
@@ -92,25 +78,90 @@ export async function GET() {
       .replace("{contexts_list}", contextsList)
       .replace("{recent_activity}", recentActivity)
 
-    const result = await model.generateContent([
-      { text: systemPrompt },
-      { text: "Find 3 trending, high-quality articles that would interest this user based on their contexts and recent activity." },
-    ])
+    let parsed: { suggestions?: unknown[] } = { suggestions: [] }
 
-    const response = result.response
-    const text = response.text()
-
-    let parsed: { suggestions?: unknown[] }
+    // Try with Google Search grounding first
     try {
-      parsed = JSON.parse(text)
-    } catch {
-      // Try to extract JSON from response
-      const jsonMatch = text.match(/\{[\s\S]*\}/)
-      if (jsonMatch) {
-        parsed = JSON.parse(jsonMatch[0])
-      } else {
-        console.error("Failed to parse suggestions response:", text)
-        return NextResponse.json({ suggestions: [] })
+      console.log("Attempting For You suggestions with Google Search grounding...")
+      const groundedModel = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+        generationConfig: {
+          responseMimeType: "application/json",
+          maxOutputTokens: 1024,
+        },
+        tools: [
+          {
+            googleSearchRetrieval: {},
+          },
+        ],
+      })
+
+      const result = await groundedModel.generateContent([
+        { text: systemPrompt },
+        { text: "Find 3 trending, high-quality articles that would interest this user based on their contexts and recent activity." },
+      ])
+
+      const response = result.response
+      const text = response.text()
+      console.log("Grounded response received:", text.slice(0, 200))
+
+      try {
+        parsed = JSON.parse(text)
+      } catch {
+        const jsonMatch = text.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          parsed = JSON.parse(jsonMatch[0])
+        }
+      }
+    } catch (groundingError) {
+      console.warn("Google Search grounding failed, trying fallback:", groundingError)
+    }
+
+    // Fallback: use standard model without grounding if no results
+    if (!parsed.suggestions || parsed.suggestions.length === 0) {
+      try {
+        console.log("Using fallback model for suggestions...")
+        const fallbackModel = genAI.getGenerativeModel({
+          model: "gemini-2.0-flash-001",
+          generationConfig: {
+            responseMimeType: "application/json",
+            maxOutputTokens: 1024,
+          },
+        })
+
+        const fallbackPrompt = `Based on the user's interests, suggest 3 well-known books, articles, or resources they might find valuable.
+
+User's interests:
+${contextsList}
+
+${recentActivity}
+
+For each suggestion, provide:
+- title: A real, well-known book or article title
+- source: The author or publication
+- url: Use format "https://www.google.com/search?q=" followed by the URL-encoded title
+- context_slug: Which context this matches
+- teaser: Why they should check this out (max 80 chars)
+
+Return valid JSON: { "suggestions": [...] }`
+
+        const result = await fallbackModel.generateContent([
+          { text: fallbackPrompt },
+        ])
+
+        const text = result.response.text()
+        console.log("Fallback response received:", text.slice(0, 200))
+
+        try {
+          parsed = JSON.parse(text)
+        } catch {
+          const jsonMatch = text.match(/\{[\s\S]*\}/)
+          if (jsonMatch) {
+            parsed = JSON.parse(jsonMatch[0])
+          }
+        }
+      } catch (fallbackError) {
+        console.error("Fallback also failed:", fallbackError)
       }
     }
 
