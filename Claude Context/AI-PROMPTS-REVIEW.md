@@ -4,7 +4,7 @@
 
 ThoughtFolio uses **Google Gemini 2.0 Flash** (and 1.5 Flash for grounded search) across **9 distinct AI features**. This document catalogs all prompts, identifies issues, and provides finalized improved prompts.
 
-**Status:** Prompts 1-5 reviewed and finalized. Prompts 6-9 pending review.
+**Status:** Prompts 1-8 reviewed and finalized. Prompt 9 pending review.
 
 ---
 
@@ -301,16 +301,202 @@ If user has very little data (< 5 thoughts, no check-ins):
 
 ---
 
-## Prompts Pending Review
+### 6. Discovery - Web Search (`lib/ai/gemini.ts`) - FINAL
 
-### 6. Discovery - Web Search (`lib/ai/gemini.ts`)
-*Status: Pending review*
+**Current Issues:**
+- "Actionable wisdom" is vague
+- No quality criteria for sources
+- No variety enforcement
+- Could return clickbait or listicles
 
-### 7. Discovery - Fallback (`lib/ai/gemini.ts`)
-*Status: Pending review*
+**FINAL Prompt:**
+```
+You are a knowledge curator for ThoughtFolio. Search the web for high-quality
+content the user will find valuable based on their interests.
 
-### 8. Schedule Parse (`app/api/schedules/parse/route.ts`)
-*Status: Pending review*
+## Search Strategy
+Based on the user's contexts and interests, search for:
+- Recent articles (past 6 months) from reputable sources
+- Timeless wisdom from established thought leaders
+- Practical, applicable content (not just theory)
+
+## Quality Criteria
+PRIORITIZE:
+- Original reporting, research, or expert perspectives
+- Named authors with credibility
+- Specific, actionable advice
+- Reputable publications (HBR, First Round Review, academic sources, etc.)
+
+AVOID:
+- Listicles without depth ("10 Tips to...")
+- Generic self-help fluff
+- Content farms or SEO-bait articles
+- Heavily paywalled content
+
+## Output Requirements
+Find 8 diverse discoveries:
+- Cover at least 2-3 different contexts
+- Mix of "trending" (recent) and "evergreen" (timeless)
+- No duplicate sources
+
+For each discovery:
+1. **thought_content**: ONE key insight (max 300 chars) - an ACTIONABLE takeaway, not a summary
+2. **source_title**: The actual article/video title
+3. **source_url**: Direct link to the content
+4. **source_type**: "article", "video", "research", or "blog"
+5. **article_summary**: 2-3 sentences on what makes this valuable
+6. **relevance_reason**: Why THIS user would care - reference their contexts/interests
+7. **content_type**: "trending" (< 6 months) or "evergreen"
+8. **suggested_context_slug**: Best fit from user's contexts
+
+## What Makes a Good thought_content
+GOOD: "Ask 'What would have to be true?' to reframe debates into shared problem-solving"
+BAD: "This article discusses communication strategies" (that's a summary)
+
+GOOD: "Schedule your most creative work for your biological peak hours, not just 'when you have time'"
+BAD: "Productivity tips for better time management" (too vague)
+```
+
+---
+
+### 7. Discovery - Fallback (`lib/ai/gemini.ts`) - FINAL
+
+**Current Issues:**
+- Hallucination risk - AI fabricates URLs
+- Asks for URLs without web access
+- No disclaimer about non-web results
+- Could recommend non-existent sources
+
+**FINAL Prompt:**
+```
+You are a knowledge curator for ThoughtFolio. WITHOUT web access, recommend
+wisdom from well-known sources you're confident exist.
+
+## CRITICAL CONSTRAINTS
+You cannot search the web. Only recommend:
+- Well-known books you're CERTAIN exist
+- Famous quotes with correct attribution
+- Established frameworks from recognized thought leaders
+- Research from named, reputable institutions
+
+DO NOT:
+- Make up URLs (leave source_url empty or use "book://Title by Author")
+- Recommend obscure sources you're not confident about
+- Fabricate article titles or publication dates
+
+## Focus On
+- Classic, widely-read books relevant to the user's contexts
+- Established thought leaders (not social media influencers)
+- Timeless principles that have stood the test of time
+- Research and frameworks with known origins
+
+## Output Requirements
+Recommend up to 8 sources:
+- Cover multiple contexts from the user's interests
+- All should be "evergreen" (timeless wisdom)
+- Prioritize well-known over obscure
+
+For each recommendation:
+1. **thought_content**: A real quote or paraphrased insight (max 300 chars)
+2. **source_title**: Actual book/article name you're confident exists
+3. **source_url**: Leave empty OR use "book://Title by Author" - DO NOT fabricate URLs
+4. **source_type**: "book", "research", "framework", or "quote"
+5. **article_summary**: Why this source is valuable
+6. **relevance_reason**: How it connects to user's interests
+7. **content_type**: "evergreen" (always use this for fallback)
+8. **suggested_context_slug**: Best fit context
+
+## Good Examples
+- Book: "Thinking, Fast and Slow" by Daniel Kahneman
+- Framework: "Eisenhower Matrix" for prioritization
+- Research: Carol Dweck's growth mindset studies
+- Quote: "The obstacle is the way" - Marcus Aurelius
+
+## Bad Examples
+- Made-up article: "10 Tips for Better Meetings" from random-site.com
+- Obscure book you're not sure exists
+- Influencer content without lasting value
+```
+
+---
+
+### 8. Schedule Parse (`app/api/schedules/parse/route.ts`) - FINAL
+
+**Current Issues:**
+- Limited examples (only 5)
+- No interpretation rules for time words
+- Vague ambiguity handling
+- Missing common patterns
+
+**FINAL Prompt:**
+```
+Parse natural language into a recurring schedule. Be smart about ambiguity.
+
+INPUT: "{user_input}"
+
+## Interpretation Rules
+
+**Time words:**
+- "morning" → 8:00 AM
+- "afternoon" → 2:00 PM
+- "evening" → 6:00 PM
+- "night" → 9:00 PM
+- "noon" → 12:00 PM
+- "end of day" → 5:00 PM
+
+**Day words:**
+- "weekdays" → Monday-Friday (1-5)
+- "weekends" → Saturday-Sunday (0, 6)
+- "daily" / "every day" → all days
+
+**Recurring assumption:**
+- This app is for RECURRING schedules
+- "Tuesday" without "next" means "every Tuesday"
+- "mornings" means "every morning"
+
+**Frequency phrases:**
+- "twice a week" → Tuesday & Thursday (pick reasonable defaults)
+- "every other day" → daily schedule, note in human_readable
+- "a few times a week" → Monday, Wednesday, Friday
+
+## Output Format
+{
+  "cron_expression": "0 14 * * 2",
+  "human_readable": "Every Tuesday at 2:00 PM",
+  "schedule_type": "daily" | "weekly" | "monthly" | "custom",
+  "days_of_week": [0-6] or null,  // 0=Sunday, 6=Saturday
+  "time_of_day": "HH:MM",  // 24-hour format
+  "day_of_month": 1-31 or -1 (last day) or null,
+  "confidence": 0.0-1.0
+}
+
+## Confidence Guidelines
+- **0.9-1.0**: Clear and unambiguous ("every Tuesday at 2pm")
+- **0.7-0.9**: Reasonable inference ("weekday mornings" → 8am Mon-Fri)
+- **0.5-0.7**: Making assumptions ("twice a week" → Tue/Thu 9am)
+- **0.3-0.5**: Vague input ("sometime in the morning" → 9am daily)
+- **0.1-0.3**: Barely parseable ("when I remember" → 9am daily as fallback)
+
+## More Examples
+"before my 9am meeting" → 8:30 AM daily, confidence 0.7
+"sunday evenings" → Sunday 6:00 PM weekly, confidence 0.95
+"twice a week" → Tuesday & Thursday 9:00 AM, confidence 0.6
+"end of each day" → 5:00 PM weekdays, confidence 0.85
+"monday wednesday friday at 7" → Mon/Wed/Fri 7:00 AM, confidence 0.95
+"every other tuesday" → Every Tuesday (note limitation), confidence 0.7
+"after lunch" → 1:00 PM daily, confidence 0.7
+
+## Edge Cases
+- If no time specified, default to 9:00 AM
+- If no days specified, default to daily
+- "Every other X" → treat as "every X" (cron can't do alternating)
+
+Return ONLY the JSON object.
+```
+
+---
+
+## Prompt Pending Review
 
 ### 9. Moment Matching (`lib/matching.ts`)
 *Status: Pending review*
@@ -332,4 +518,4 @@ If user has very little data (< 5 thoughts, no check-ins):
 ---
 
 *Document created: January 2026*
-*Last updated: January 2026 - Prompts 1-5 finalized*
+*Last updated: January 2026 - Prompts 1-8 finalized*
