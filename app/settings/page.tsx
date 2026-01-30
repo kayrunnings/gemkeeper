@@ -152,22 +152,34 @@ function AppearanceSettings() {
 // Helper to get theme accent color for preview
 function getThemeColor(theme: Theme): string {
   const colors: Record<Theme, string> = {
+    // Dark themes
     midnight: "#f97316",
     obsidian: "#10b981",
+    onyx: "#a1a1aa",
+    void: "#ffffff",
+    nord: "#88c0d0",
+    slate: "#6366f1",
+    manuscript: "#9a6dd7",
+    graphite: "#6366f1",
+    carbon: "#f59e0b",
+    steel: "#94a3b8",
+    titanium: "#0ea5e9",
+    aurora: "#22d3ee",
+    nebula: "#a855f7",
+    mercury: "#8b5cf6",
     amethyst: "#a78bfa",
     ocean: "#3b82f6",
+    cyber: "#00f0ff",
+    ember: "#f97316",
+    rose: "#f472b6",
     ruby: "#f43f5e",
     forest: "#eab308",
-    rose: "#f472b6",
-    nord: "#88c0d0",
-    cyber: "#00ffff",
-    copper: "#b87333",
-    slate: "#64748b",
-    aurora: "#22d3ee",
-    ember: "#ea580c",
-    onyx: "#a1a1aa",
+    copper: "#d97706",
+    // Light themes
+    daylight: "#2563eb",
+    paper: "#2563eb",
     sunrise: "#f59e0b",
-    daylight: "#0ea5e9",
+    ivory: "#b45309",
   }
   return colors[theme]
 }
