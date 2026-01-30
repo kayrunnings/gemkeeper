@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { detectContentType, isUrl, extractBulletPoints, isQuoteLike } from "@/lib/ai/content-detector"
+import { extractTitleFromUrl, extractDomainFromUrl } from "@/lib/url-extractor"
 import { extractSourceAttribution } from "@/lib/ai/content-splitter"
 import type { CaptureItem, ContentType, CaptureAnalyzeResponse } from "@/lib/types/capture"
 import { randomUUID } from "crypto"
@@ -157,11 +158,15 @@ export async function POST(request: NextRequest) {
         console.warn("URL extraction failed:", err)
       }
 
-      // Fallback for URL - just return the URL as a source to save
+      // Fallback for URL - extract title from URL slug and return as a source
+      const extractedTitle = extractTitleFromUrl(trimmedContent)
+      const siteName = extractDomainFromUrl(trimmedContent)
+
       const fallbackSuggestion: CaptureItem = {
         id: randomUUID(),
         type: 'source',
-        content: trimmedContent,
+        content: extractedTitle !== 'Untitled' ? extractedTitle : trimmedContent,
+        source: siteName,
         sourceUrl: trimmedContent,
         selected: true,
       }
@@ -170,7 +175,8 @@ export async function POST(request: NextRequest) {
         success: true,
         contentType,
         suggestions: [fallbackSuggestion],
-      } satisfies CaptureAnalyzeResponse)
+        extractionFailed: true, // Signal to UI that we couldn't fetch content
+      } satisfies CaptureAnalyzeResponse & { extractionFailed?: boolean })
     }
 
     // Handle bullet list
