@@ -14,8 +14,8 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get pending events within lead time
-    const { events: pendingEvents, error: fetchError } = await getPendingEventsForMoments()
+    // Get pending events within lead time (pass server supabase client)
+    const { events: pendingEvents, error: fetchError } = await getPendingEventsForMoments(supabase)
 
     if (fetchError) {
       return NextResponse.json({ error: fetchError }, { status: 500 })

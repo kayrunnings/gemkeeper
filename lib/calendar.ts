@@ -412,12 +412,15 @@ export async function syncCalendarEvents(
 
 /**
  * Get pending events that need moments created
+ * @param externalSupabase - Optional Supabase client (use server client when calling from API routes)
  */
-export async function getPendingEventsForMoments(): Promise<{
+export async function getPendingEventsForMoments(
+  externalSupabase?: AnySupabaseClient
+): Promise<{
   events: CalendarEvent[]
   error: string | null
 }> {
-  const supabase = createClient()
+  const supabase = externalSupabase || createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
