@@ -128,6 +128,7 @@ gemkeeper/
 │   └── ...                       # Other components
 ├── lib/                          # Utilities and services
 │   ├── ai/                       # AI/Gemini integration
+│   │   ├── prompts.ts            # Centralized AI prompt templates (v2.0.0)
 │   │   ├── gemini.ts             # Gemini API logic
 │   │   ├── rate-limit.ts         # Rate limiting & caching
 │   │   ├── content-detector.ts   # Content type detection (ThoughtFolio 2.0)
@@ -1311,14 +1312,48 @@ Uses PostgreSQL full-text search with `tsvector` columns and falls back to ILIKE
 
 **Caching:** Results are cached in-memory with 30-second TTL. Cache key is generated from query + filters. Cache is limited to 100 entries to prevent memory issues. Call `clearSearchCache()` when new content is created to ensure fresh results.
 
+### AI Prompts (`lib/ai/prompts.ts`)
+Centralized prompt templates for all AI features. Version 2.0.0.
+
+**Exported Prompts:**
+| Constant | Purpose |
+|----------|---------|
+| `THOUGHT_EXTRACTION_PROMPT` | Extract insights from text content |
+| `MULTIMEDIA_EXTRACTION_PROMPT` | Extract from images/audio/video |
+| `CAPTURE_ANALYSIS_PROMPT` | Categorize pasted content for AI Capture |
+| `IMAGE_ANALYSIS_PROMPT` | Process pasted images |
+| `TF_THINKS_PROMPT` | Generate user insights for dashboard |
+| `DISCOVERY_WEB_SEARCH_PROMPT` | Find web content with grounding |
+| `DISCOVERY_FALLBACK_PROMPT` | Recommend without web access |
+| `SCHEDULE_PARSE_PROMPT` | Parse natural language schedules |
+| `MOMENT_MATCHING_PROMPT` | Match thoughts to moments |
+
+**Helper Functions:**
+```typescript
+formatContextsForPrompt(contexts: Context[]): string  // Format contexts for prompt injection
+buildWriteAssistPrompt(userPrompt: string, text: string): string  // Build write assist prompt
+```
+
+**Constants:**
+- `PROMPT_VERSION = "2.0.0"`
+- `DEFAULT_CONTEXTS` — Fallback context list string
+
+**Key Conventions:**
+- 300 character limit for extracted thoughts
+- Dynamic `{contexts_list}` placeholder for user's contexts
+- Quality over quantity — no hard-coded extraction limits
+- Good/bad examples in prompts to guide AI behavior
+
 ### AI Service (`lib/ai/gemini.ts`)
 ```typescript
-extractThoughtsFromContent(content: string, source?: string): Promise<ExtractionResult>
-extractThoughtsFromMultimedia(text: string, media: MediaInput[]): Promise<ExtractionResult>
+extractThoughtsFromContent(content: string, source?: string, contexts?: Context[]): Promise<ExtractionResult>
+extractThoughtsFromMultimedia(text: string, media: MediaInput[], contexts?: Context[]): Promise<ExtractionResult>
 parseScheduleNLP(text: string): Promise<NLPScheduleResult>
 matchThoughtsToMoment(description: string, thoughts: Thought[]): Promise<MatchingResponse>
 generateDiscoveries(mode: 'curated' | 'directed', contexts: Context[], existingThoughts: Thought[], query?: string): Promise<Discovery[]>
 ```
+
+**Note:** Functions import prompts from `lib/ai/prompts.ts` and inject user contexts dynamically.
 
 ### Content Detector (`lib/ai/content-detector.ts`) (ThoughtFolio 2.0)
 ```typescript
