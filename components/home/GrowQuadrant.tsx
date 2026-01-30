@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { Sparkle, MagnifyingGlass, Shuffle, BookOpen, Headphones, TrendUp, Lightbulb, Brain, ChatCircleDots, Star } from "@phosphor-icons/react"
+import { Sparkle, MagnifyingGlass, Shuffle, BookOpen, Headphones, TrendUp, Lightbulb, Brain, ChatCircleDots, Star, ArrowSquareOut, Newspaper, Spinner } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 import { HomeQuadrant } from "./HomeQuadrant"
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,17 @@ interface Suggestion {
   type: "article" | "podcast" | "video" | "research"
 }
 
+// AI-powered personalized suggestions from the API
+export interface ForYouSuggestion {
+  id: string
+  title: string
+  source: string
+  url: string
+  contextSlug: string
+  contextName?: string
+  teaser: string
+}
+
 // Fallback trending topics when user has no contexts
 const FALLBACK_TOPICS = [
   { id: "productivity", label: "Productivity", query: "productivity tips", icon: Lightbulb },
@@ -26,6 +37,8 @@ const FALLBACK_TOPICS = [
 interface GrowQuadrantProps {
   contexts: ContextWithCount[]
   suggestions?: Suggestion[]
+  forYouSuggestions?: ForYouSuggestion[]
+  isLoadingForYou?: boolean
   onDiscoverTopic?: (topic: string) => void
   onDiscoverContext?: (contextId: string) => void
   onSurpriseMe?: () => void
@@ -35,6 +48,8 @@ interface GrowQuadrantProps {
 export function GrowQuadrant({
   contexts,
   suggestions = [],
+  forYouSuggestions = [],
+  isLoadingForYou = false,
   onDiscoverTopic,
   onDiscoverContext,
   onSurpriseMe,
@@ -153,48 +168,89 @@ export function GrowQuadrant({
         ))}
       </div>
 
-      {/* AI Suggestions or Trending Topics */}
-      {suggestions.length > 0 ? (
-        <div className="space-y-2 mb-2">
-          {suggestions.slice(0, 2).map((suggestion) => (
-            <div
-              key={suggestion.id}
-              className={cn(
-                "flex items-start gap-2.5 p-2.5",
-                "bg-[var(--glass-input-bg)] rounded-[calc(var(--radius)-2px)]",
-                "border border-transparent cursor-pointer transition-all",
-                "hover:border-[var(--glass-card-border)] hover:bg-[var(--glass-hover-bg)]"
-              )}
-            >
-              <span className="w-7 h-7 flex items-center justify-center bg-[var(--glass-card-bg)] rounded-md flex-shrink-0 text-muted-foreground">
-                {getTypeIcon(suggestion.type)}
-              </span>
-              <div>
-                <div className="text-sm text-foreground font-medium">
-                  {suggestion.title}
+      {/* For You Section - AI-powered suggestions with article links */}
+      <div className="mb-3">
+        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-wider mb-2">
+          {contexts.length > 0 ? (
+            <>
+              <Star className="w-3 h-3" />
+              <span>For You</span>
+            </>
+          ) : (
+            <>
+              <TrendUp className="w-3 h-3" />
+              <span>Trending</span>
+            </>
+          )}
+          {isLoadingForYou && (
+            <Spinner className="w-3 h-3 animate-spin ml-1" />
+          )}
+        </div>
+
+        {/* AI-powered article suggestions */}
+        {forYouSuggestions.length > 0 ? (
+          <div className="space-y-1.5">
+            {forYouSuggestions.map((suggestion) => (
+              <a
+                key={suggestion.id}
+                href={suggestion.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  "flex items-start gap-2.5 w-full p-2",
+                  "bg-[var(--glass-input-bg)] rounded-[calc(var(--radius)-2px)]",
+                  "border border-transparent cursor-pointer transition-all",
+                  "hover:border-orange-500/30 hover:bg-[var(--glass-hover-bg)]",
+                  "text-left group"
+                )}
+              >
+                <span className="w-6 h-6 flex items-center justify-center bg-gradient-to-br from-orange-500/20 to-blue-500/10 rounded text-orange-500 flex-shrink-0 mt-0.5">
+                  <Newspaper weight="fill" className="w-3.5 h-3.5" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-foreground font-medium truncate group-hover:text-primary transition-colors">
+                      {suggestion.title}
+                    </span>
+                    <ArrowSquareOut className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                  </div>
+                  <div className="text-[10px] text-muted-foreground truncate">
+                    {suggestion.source}
+                    {suggestion.contextName && ` · ${suggestion.contextName}`}
+                  </div>
                 </div>
-                <div className="text-[11px] text-muted-foreground mt-0.5">
-                  {suggestion.source}
+              </a>
+            ))}
+          </div>
+        ) : suggestions.length > 0 ? (
+          // Legacy suggestions fallback
+          <div className="space-y-2">
+            {suggestions.slice(0, 2).map((suggestion) => (
+              <div
+                key={suggestion.id}
+                className={cn(
+                  "flex items-start gap-2.5 p-2.5",
+                  "bg-[var(--glass-input-bg)] rounded-[calc(var(--radius)-2px)]",
+                  "border border-transparent cursor-pointer transition-all",
+                  "hover:border-[var(--glass-card-border)] hover:bg-[var(--glass-hover-bg)]"
+                )}
+              >
+                <span className="w-7 h-7 flex items-center justify-center bg-[var(--glass-card-bg)] rounded-md flex-shrink-0 text-muted-foreground">
+                  {getTypeIcon(suggestion.type)}
+                </span>
+                <div>
+                  <div className="text-sm text-foreground font-medium">
+                    {suggestion.title}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">
+                    {suggestion.source}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="mb-3">
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-wider mb-2">
-            {contexts.length > 0 ? (
-              <>
-                <Star className="w-3 h-3" />
-                <span>For You</span>
-              </>
-            ) : (
-              <>
-                <TrendUp className="w-3 h-3" />
-                <span>Trending</span>
-              </>
-            )}
+            ))}
           </div>
+        ) : (
+          // Context-based topic suggestions (fallback)
           <div className="space-y-1.5">
             {trendingTopics.map((topic) => (
               <button
@@ -215,8 +271,8 @@ export function GrowQuadrant({
               </button>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Surprise me button */}
       <button
