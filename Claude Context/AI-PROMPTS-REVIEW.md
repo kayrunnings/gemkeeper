@@ -4,7 +4,7 @@
 
 ThoughtFolio uses **Google Gemini 2.0 Flash** (and 1.5 Flash for grounded search) across **9 distinct AI features**. This document catalogs all prompts, identifies issues, and provides finalized improved prompts.
 
-**Status:** Prompts 1-8 reviewed and finalized. Prompt 9 pending review.
+**Status:** All 9 prompts reviewed and finalized.
 
 ---
 
@@ -496,10 +496,75 @@ Return ONLY the JSON object.
 
 ---
 
-## Prompt Pending Review
+### 9. Moment Matching (`lib/matching.ts`) - FINAL
 
-### 9. Moment Matching (`lib/matching.ts`)
-*Status: Pending review*
+**Current Issues:**
+- "Underlying principles" criteria too broad - matches anything
+- Context tag overweighted as matching signal
+- No negative examples of what NOT to match
+- Relevance reasons are generic ("this is about meetings")
+- Generic wisdom matches everything
+
+**FINAL Prompt:**
+```
+You are a precision matching assistant. Match ONLY highly relevant insights
+to the user's upcoming moment. Quality over quantity - it's better to return
+fewer strong matches than many weak ones.
+
+MOMENT: {moment_description}
+
+USER'S SAVED THOUGHTS:
+{gems_list}
+
+## Matching Criteria
+
+For a score above 0.7, ALL must be true:
+1. **Direct applicability**: Reading this thought RIGHT BEFORE the moment would actually help
+2. **Specificity match**: The thought addresses something specific about this type of moment
+3. **Actionable in context**: The user could actually apply this insight in this situation
+
+## Scoring Guide
+- **0.9-1.0**: Perfect match - this thought is EXACTLY for this situation
+- **0.7-0.9**: Strong match - clearly applicable and helpful
+- **0.5-0.7**: Moderate - related but not essential
+- **Below 0.5**: Don't return - not worth surfacing
+
+## What NOT to Match
+
+DON'T match based on:
+- Context tag alone (a "meetings" thought about agendas doesn't help a 1:1 about career growth)
+- Vague wisdom that applies to everything ("be present", "listen actively")
+- Tangential topic overlap (both mention "communication" but different aspects)
+- "Underlying principles" that require a stretch to connect
+
+## Relevance Reason Format
+
+Write 1 sentence explaining HOW to apply this thought to THIS specific moment.
+
+BAD reasons (too generic):
+- "This is about meetings and you have a meeting"
+- "This thought is relevant to professional situations"
+- "The context tags match"
+
+GOOD reasons (specific and actionable):
+- "Before your 1:1, try opening with 'what's on your mind?' as this thought suggests"
+- "Since this is a feedback session, remember to 'state your intention before the critique'"
+- "For tomorrow's sprint planning, use the 'what does success look like?' framing"
+
+## Output
+
+Return JSON array (max 5 matches, minimum score 0.5):
+[
+  {
+    "gem_id": "uuid",
+    "relevance_score": 0.85,
+    "relevance_reason": "Specific guidance on how to apply this thought..."
+  }
+]
+
+Return empty array [] if nothing truly fits.
+JSON only, no other text.
+```
 
 ---
 
@@ -518,4 +583,4 @@ Return ONLY the JSON object.
 ---
 
 *Document created: January 2026*
-*Last updated: January 2026 - Prompts 1-8 finalized*
+*Last updated: January 2026 - All 9 prompts finalized*
