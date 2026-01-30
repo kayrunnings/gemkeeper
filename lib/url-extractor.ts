@@ -188,21 +188,47 @@ function isPaywalled(html: string): boolean {
 
 /**
  * Extract a reasonable title from URL if no title found
+ * Looks for the most descriptive segment in the URL path
  */
-function extractTitleFromUrl(url: string): string {
+export function extractTitleFromUrl(url: string): string {
   try {
     const parsed = new URL(url)
     const path = parsed.pathname
     const segments = path.split("/").filter(Boolean)
-    if (segments.length > 0) {
-      const lastSegment = segments[segments.length - 1]
-      // Remove file extension and convert hyphens/underscores to spaces
-      return lastSegment
-        .replace(/\.[^.]+$/, "")
-        .replace(/[-_]/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase())
+
+    if (segments.length === 0) {
+      return parsed.hostname
     }
-    return parsed.hostname
+
+    // Find the best segment - prefer longer segments with hyphens (article slugs)
+    // Skip short segments that look like IDs (ar-ABC123, p-123, etc.)
+    let bestSegment = segments[segments.length - 1]
+    let bestScore = 0
+
+    for (const segment of segments) {
+      // Skip very short segments or segments that look like IDs
+      const cleaned = segment.replace(/\.[^.]+$/, "") // Remove extension
+
+      // Skip segments that look like IDs (short alphanumeric, or patterns like ar-XXX)
+      if (cleaned.length < 10 && /^[a-z]{1,3}[-_]?[A-Za-z0-9]+$/i.test(cleaned)) {
+        continue
+      }
+
+      // Score based on length and presence of word separators
+      const hyphenCount = (cleaned.match(/-/g) || []).length
+      const score = cleaned.length + (hyphenCount * 5) // Bonus for hyphens (indicates words)
+
+      if (score > bestScore) {
+        bestScore = score
+        bestSegment = cleaned
+      }
+    }
+
+    // Convert hyphens/underscores to spaces and title case
+    return bestSegment
+      .replace(/\.[^.]+$/, "")
+      .replace(/[-_]/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase())
   } catch {
     return "Untitled"
   }
@@ -211,7 +237,7 @@ function extractTitleFromUrl(url: string): string {
 /**
  * Extract domain from URL for site name
  */
-function extractDomainFromUrl(url: string): string {
+export function extractDomainFromUrl(url: string): string {
   try {
     const parsed = new URL(url)
     return parsed.hostname.replace(/^www\./, "")
