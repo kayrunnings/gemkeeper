@@ -2,11 +2,56 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { detectContentType, isUrl, extractBulletPoints, isQuoteLike } from "@/lib/ai/content-detector"
-import { extractTitleFromUrl, extractDomainFromUrl } from "@/lib/url-extractor"
+// NOTE: Do NOT import from url-extractor here - it loads JSDOM which crashes Vercel serverless
 import { extractSourceAttribution } from "@/lib/ai/content-splitter"
 import type { CaptureItem, ContentType, CaptureAnalyzeResponse } from "@/lib/types/capture"
 import { randomUUID } from "crypto"
 import { CAPTURE_ANALYSIS_PROMPT, IMAGE_ANALYSIS_PROMPT, DEFAULT_CONTEXTS } from "@/lib/ai/prompts"
+
+// Inline URL utility functions to avoid loading JSDOM
+function extractTitleFromUrl(url: string): string {
+  try {
+    const parsed = new URL(url)
+    const path = parsed.pathname
+    const segments = path.split("/").filter(Boolean)
+
+    if (segments.length === 0) {
+      return parsed.hostname
+    }
+
+    let bestSegment = segments[segments.length - 1]
+    let bestScore = 0
+
+    for (const segment of segments) {
+      const cleaned = segment.replace(/\.[^.]+$/, "")
+      if (cleaned.length < 10 && /^[a-z]{1,3}[-_]?[A-Za-z0-9]+$/i.test(cleaned)) {
+        continue
+      }
+      const hyphenCount = (cleaned.match(/-/g) || []).length
+      const score = cleaned.length + (hyphenCount * 5)
+      if (score > bestScore) {
+        bestScore = score
+        bestSegment = cleaned
+      }
+    }
+
+    return bestSegment
+      .replace(/\.[^.]+$/, "")
+      .replace(/[-_]/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+  } catch {
+    return "Untitled"
+  }
+}
+
+function extractDomainFromUrl(url: string): string {
+  try {
+    const parsed = new URL(url)
+    return parsed.hostname.replace(/^www\./, "")
+  } catch {
+    return ""
+  }
+}
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
 
@@ -25,33 +70,6 @@ const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024 // 4MB
 const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
 export async function POST(request: NextRequest) {
-  // DEBUG: Return immediately to test if route loads at all
-  try {
-    const body = await request.json()
-    const content = body?.content || ''
-
-    return NextResponse.json({
-      success: true,
-      contentType: 'url',
-      suggestions: [{
-        id: 'debug-123',
-        type: 'source',
-        content: `Debug mode: received ${content.length} characters`,
-        source: 'Debug',
-        sourceUrl: content.slice(0, 100),
-        selected: true,
-      }],
-    })
-  } catch (e) {
-    return NextResponse.json(
-      { error: `Debug error: ${e instanceof Error ? e.message : String(e)}` },
-      { status: 500 }
-    )
-  }
-
-  // DISABLED - Original handler below
-  /*
-  // Wrap entire handler to ensure we always return a response
   try {
     return await handleAnalyzeRequest(request)
   } catch (outerError) {
@@ -61,7 +79,6 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-  */
 }
 
 async function handleAnalyzeRequest(request: NextRequest) {
@@ -117,130 +134,14 @@ async function handleAnalyzeRequest(request: NextRequest) {
     const trimmedContent = content!.trim()
     const contentType = detectContentType(trimmedContent)
 
-    // Handle URL content
+    // Handle URL content - simplified version without JSDOM (which doesn't work on Vercel serverless)
     if (contentType === 'url' && isUrl(trimmedContent)) {
-      // TEMPORARY: Skip extraction and go straight to fallback to debug empty response issue
-      const skipExtraction = true
-
-      // Try to extract URL content and analyze it with AI
-      // Type matches the return type of extractFromUrl from url-extractor
-      let extractedContent: {
-        title: string
-        content: string
-        byline?: string
-        siteName?: string
-        excerpt?: string
-        url: string
-        type: "article" | "youtube" | "unknown"
-      } | null = null
-      let extractionError: string | null = null
-
-      if (!skipExtraction) {
-        try {
-          // Dynamically import extractFromUrl to avoid JSDOM loading issues at module level
-          const { extractFromUrl } = await import("@/lib/url-extractor")
-
-          // Call the extraction function directly instead of making an HTTP request
-          // This avoids authentication issues and relative URL problems
-          // Use a shorter timeout (8s) to leave room for AI analysis before server timeout
-          const extractionPromise = extractFromUrl(trimmedContent, 8000)
-          const timeoutPromise = new Promise<{ content: null; error: string }>((resolve) =>
-            setTimeout(() => resolve({ content: null, error: 'Extraction timed out' }), 8500)
-          )
-          const result = await Promise.race([
-            extractionPromise,
-            timeoutPromise,
-          ])
-          extractedContent = result.content
-          extractionError = result.error
-        } catch (extractErr) {
-          console.error("URL extraction threw:", extractErr)
-          extractionError = extractErr instanceof Error ? extractErr.message : 'Extraction failed'
-        }
-      }
-
-      try {
-
-        if (!skipExtraction && !extractionError && extractedContent) {
-          // Extract the article content from the response
-          const articleTitle = extractedContent.title || ''
-          const articleText = extractedContent.content || ''
-          const articleByline = extractedContent.byline || ''
-          const siteName = extractedContent.siteName || ''
-
-          if (articleText && articleText.length > 50) {
-            // We have article content - run it through AI analysis
-            const model = genAI.getGenerativeModel({
-              model: "gemini-2.0-flash-001",
-              generationConfig: {
-                responseMimeType: "application/json",
-                maxOutputTokens: 2048,
-              },
-            })
-
-            // Build context for the AI
-            const sourceInfo = [articleTitle, articleByline, siteName].filter(Boolean).join(' - ')
-            const contentToAnalyze = `Source: ${sourceInfo}\n\n${articleText}`
-
-            const result = await model.generateContent([
-              { text: buildCapturePrompt() },
-              { text: `Content to analyze:\n\n${contentToAnalyze}` },
-            ])
-
-            const response = result.response
-            const text = response.text()
-
-            // Handle empty AI response
-            if (!text || text.trim() === '') {
-              throw new Error('AI returned empty response')
-            }
-
-            const parsed = JSON.parse(text)
-
-            const suggestions: CaptureItem[] = []
-
-            // Add the source first
-            if (articleTitle) {
-              suggestions.push({
-                id: randomUUID(),
-                type: 'source',
-                content: articleTitle,
-                source: articleByline || siteName,
-                sourceUrl: trimmedContent,
-                selected: true,
-              })
-            }
-
-            // Add AI-extracted items
-            for (const item of (parsed.items || [])) {
-              suggestions.push({
-                id: randomUUID(),
-                type: item.type === 'note' ? 'note' : item.type === 'source' ? 'source' : 'thought',
-                content: String(item.content || '').slice(0, item.type === 'note' ? 5000 : 300),
-                source: articleTitle || item.source,
-                sourceUrl: trimmedContent,
-                selected: true,
-              })
-            }
-
-            if (suggestions.length > 0) {
-              return NextResponse.json({
-                success: true,
-                contentType,
-                suggestions,
-              } satisfies CaptureAnalyzeResponse)
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("URL extraction failed:", err)
-      }
-
-      // Fallback for URL - extract title from URL slug and return as a source
+      // For URLs, create a simple source entry using URL metadata only
+      // NOTE: Full content extraction is disabled because JSDOM doesn't work in Vercel serverless
       const extractedTitle = extractTitleFromUrl(trimmedContent)
       const siteName = extractDomainFromUrl(trimmedContent)
 
-      const fallbackSuggestion: CaptureItem = {
+      const suggestion: CaptureItem = {
         id: randomUUID(),
         type: 'source',
         content: extractedTitle !== 'Untitled' ? extractedTitle : trimmedContent,
@@ -252,9 +153,8 @@ async function handleAnalyzeRequest(request: NextRequest) {
       return NextResponse.json({
         success: true,
         contentType,
-        suggestions: [fallbackSuggestion],
-        extractionFailed: true, // Signal to UI that we couldn't fetch content
-      } satisfies CaptureAnalyzeResponse & { extractionFailed?: boolean })
+        suggestions: [suggestion],
+      } satisfies CaptureAnalyzeResponse)
     }
 
     // Handle bullet list
