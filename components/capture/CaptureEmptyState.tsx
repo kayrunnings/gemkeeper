@@ -13,28 +13,28 @@ const examples = [
     title: "Paste an article URL",
     description: "Extract key thoughts from any article",
     example: "https://example.com/article",
-    color: "text-blue-500 bg-blue-500/10",
+    color: "text-info bg-info/10",
   },
   {
     icon: Quote,
     title: "Paste a quote",
     description: "Save as thought with source attribution",
     example: '"The only way to do great work is to love what you do." — Steve Jobs',
-    color: "text-purple-500 bg-purple-500/10",
+    color: "text-highlight bg-highlight/10",
   },
   {
     icon: StickyNote,
     title: "Paste meeting notes",
     description: "Save as note, extract thoughts",
     example: "Meeting with team:\n- Discussed Q1 goals\n- Key insight: focus on user retention",
-    color: "text-green-500 bg-green-500/10",
+    color: "text-success bg-success/10",
   },
   {
     icon: Lightbulb,
     title: "Type a quick idea",
     description: "Capture it as a thought",
     example: "Remember to always clarify expectations before starting a project",
-    color: "text-amber-500 bg-amber-500/10",
+    color: "text-warning bg-warning/10",
   },
 ]
 

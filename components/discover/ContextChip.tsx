@@ -11,6 +11,9 @@ interface ContextChipProps {
   className?: string
 }
 
+// Default color using muted-foreground for theme consistency
+const DEFAULT_CONTEXT_COLOR = "var(--muted-foreground)"
+
 export function ContextChip({
   context,
   onClick,
@@ -18,6 +21,8 @@ export function ContextChip({
   selected = false,
   className,
 }: ContextChipProps) {
+  const contextColor = context.color || DEFAULT_CONTEXT_COLOR
+
   return (
     <button
       onClick={onClick}
@@ -30,18 +35,17 @@ export function ContextChip({
         className
       )}
       style={{
-        borderColor: context.color || "#6B7280",
-        color: disabled ? "#9CA3AF" : context.color || "#6B7280",
-        backgroundColor: selected ? `${context.color}15` : "transparent",
+        borderColor: contextColor,
+        color: disabled ? "var(--muted-foreground)" : contextColor,
+        backgroundColor: selected && context.color ? `${context.color}15` : "transparent",
       }}
     >
       <span>{context.name}</span>
       {context.thought_count > 0 && (
         <span
-          className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs"
+          className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs text-white"
           style={{
-            backgroundColor: context.color || "#6B7280",
-            color: "white",
+            backgroundColor: contextColor,
           }}
         >
           {context.thought_count}

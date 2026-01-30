@@ -22,20 +22,20 @@ const typeConfig = {
   thought: {
     label: "THOUGHT",
     icon: Gem,
-    color: "text-amber-500 bg-amber-500/10",
-    borderColor: "border-amber-500/30",
+    color: "text-warning bg-warning/10",
+    borderColor: "border-warning/30",
   },
   note: {
     label: "NOTE",
     icon: StickyNote,
-    color: "text-green-500 bg-green-500/10",
-    borderColor: "border-green-500/30",
+    color: "text-success bg-success/10",
+    borderColor: "border-success/30",
   },
   source: {
     label: "SOURCE",
     icon: BookOpen,
-    color: "text-blue-500 bg-blue-500/10",
-    borderColor: "border-blue-500/30",
+    color: "text-info bg-info/10",
+    borderColor: "border-info/30",
   },
 }
 
