@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { detectContentType, isUrl, extractBulletPoints, isQuoteLike } from "@/lib/ai/content-detector"
-import { extractTitleFromUrl, extractDomainFromUrl } from "@/lib/url-extractor"
+import { extractTitleFromUrl, extractDomainFromUrl, extractFromUrl } from "@/lib/url-extractor"
 import { extractSourceAttribution } from "@/lib/ai/content-splitter"
 import type { CaptureItem, ContentType, CaptureAnalyzeResponse } from "@/lib/types/capture"
 import { randomUUID } from "crypto"
@@ -81,20 +81,16 @@ export async function POST(request: NextRequest) {
     if (contentType === 'url' && isUrl(trimmedContent)) {
       // Try to extract URL content and analyze it with AI
       try {
-        const urlResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/extract/url`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: trimmedContent }),
-        })
+        // Call the extraction function directly instead of making an HTTP request
+        // This avoids authentication issues and relative URL problems
+        const { content: extractedContent, error: extractionError } = await extractFromUrl(trimmedContent, 10000)
 
-        if (urlResponse.ok) {
-          const urlData = await urlResponse.json()
-
+        if (!extractionError && extractedContent) {
           // Extract the article content from the response
-          const articleTitle = urlData.content?.title || ''
-          const articleText = urlData.content?.text || ''
-          const articleByline = urlData.content?.byline || ''
-          const siteName = urlData.content?.siteName || ''
+          const articleTitle = extractedContent.title || ''
+          const articleText = extractedContent.content || ''
+          const articleByline = extractedContent.byline || ''
+          const siteName = extractedContent.siteName || ''
 
           if (articleText && articleText.length > 50) {
             // We have article content - run it through AI analysis
@@ -117,6 +113,12 @@ export async function POST(request: NextRequest) {
 
             const response = result.response
             const text = response.text()
+
+            // Handle empty AI response
+            if (!text || text.trim() === '') {
+              throw new Error('AI returned empty response')
+            }
+
             const parsed = JSON.parse(text)
 
             const suggestions: CaptureItem[] = []
@@ -230,6 +232,15 @@ export async function POST(request: NextRequest) {
 
     const response = result.response
     const text = response.text()
+
+    // Handle empty AI response
+    if (!text || text.trim() === '') {
+      return NextResponse.json(
+        { error: "AI returned an empty response. Please try again." },
+        { status: 500 }
+      )
+    }
+
     const parsed = JSON.parse(text)
 
     const suggestions: CaptureItem[] = (parsed.items || []).map((item: {
@@ -294,6 +305,15 @@ async function handleImageAnalysis(textContent: string, images: ImageInput[]) {
     const result = await model.generateContent(parts)
     const response = result.response
     const text = response.text()
+
+    // Handle empty AI response
+    if (!text || text.trim() === '') {
+      return NextResponse.json(
+        { error: "AI returned an empty response. Please try again." },
+        { status: 500 }
+      )
+    }
+
     const parsed = JSON.parse(text)
 
     const suggestions: CaptureItem[] = (parsed.items || []).map((item: {
