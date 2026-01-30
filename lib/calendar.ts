@@ -322,17 +322,19 @@ export async function syncCalendarEvents(
 
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client })
 
-    // Fetch events for next 24 hours
+    // Fetch events based on lead_time_minutes setting
+    // This ensures we have events cached before they're needed for moments
     const now = new Date()
-    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+    const leadTimeMs = (connection.lead_time_minutes || 1440) * 60 * 1000 // Default to 1 day
+    const syncWindowEnd = new Date(now.getTime() + leadTimeMs)
 
     const eventsResponse = await calendar.events.list({
       calendarId: 'primary',
       timeMin: now.toISOString(),
-      timeMax: tomorrow.toISOString(),
+      timeMax: syncWindowEnd.toISOString(),
       singleEvents: true,
       orderBy: 'startTime',
-      maxResults: 50,
+      maxResults: 100, // Increased to handle longer time windows
     })
 
     const events = eventsResponse.data.items || []
