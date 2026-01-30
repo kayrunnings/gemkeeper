@@ -53,6 +53,72 @@ function extractDomainFromUrl(url: string): string {
   }
 }
 
+// Fetch webpage metadata without JSDOM - uses Open Graph tags and simple regex
+async function fetchUrlMetadata(url: string): Promise<{
+  title: string
+  description: string
+  siteName: string
+  error?: string
+}> {
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8000)
+
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        'Accept': 'text/html',
+      },
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      return { title: '', description: '', siteName: '', error: `HTTP ${response.status}` }
+    }
+
+    const html = await response.text()
+
+    // Extract Open Graph metadata using regex (no DOM parser needed)
+    const ogTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i)?.[1]
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i)?.[1]
+
+    const ogDescription = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i)?.[1]
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:description["']/i)?.[1]
+      || html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)?.[1]
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i)?.[1]
+
+    const ogSiteName = html.match(/<meta[^>]*property=["']og:site_name["'][^>]*content=["']([^"']+)["']/i)?.[1]
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:site_name["']/i)?.[1]
+
+    // Fallback to <title> tag
+    const titleTag = html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]
+
+    // Decode HTML entities
+    const decode = (str: string) => str
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ')
+
+    return {
+      title: decode(ogTitle || titleTag || '').trim(),
+      description: decode(ogDescription || '').trim(),
+      siteName: decode(ogSiteName || extractDomainFromUrl(url)).trim(),
+    }
+  } catch (err) {
+    return {
+      title: '',
+      description: '',
+      siteName: extractDomainFromUrl(url),
+      error: err instanceof Error ? err.message : 'Failed to fetch'
+    }
+  }
+}
+
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
 
 // Build capture analysis prompt with default contexts
@@ -134,18 +200,78 @@ async function handleAnalyzeRequest(request: NextRequest) {
     const trimmedContent = content!.trim()
     const contentType = detectContentType(trimmedContent)
 
-    // Handle URL content - simplified version without JSDOM (which doesn't work on Vercel serverless)
+    // Handle URL content - fetch metadata and analyze with AI
     if (contentType === 'url' && isUrl(trimmedContent)) {
-      // For URLs, create a simple source entry using URL metadata only
-      // NOTE: Full content extraction is disabled because JSDOM doesn't work in Vercel serverless
-      const extractedTitle = extractTitleFromUrl(trimmedContent)
-      const siteName = extractDomainFromUrl(trimmedContent)
+      // Fetch metadata from the URL (uses Open Graph tags, no JSDOM needed)
+      const metadata = await fetchUrlMetadata(trimmedContent)
 
+      // If we have meaningful content, analyze it with AI
+      if (metadata.title && metadata.description && metadata.description.length > 30) {
+        try {
+          const model = genAI.getGenerativeModel({
+            model: "gemini-2.0-flash-001",
+            generationConfig: {
+              responseMimeType: "application/json",
+              maxOutputTokens: 2048,
+            },
+          })
+
+          const contentToAnalyze = `Article: ${metadata.title}\nSource: ${metadata.siteName}\n\nSummary: ${metadata.description}`
+
+          const result = await model.generateContent([
+            { text: buildCapturePrompt() },
+            { text: `Content to analyze:\n\n${contentToAnalyze}` },
+          ])
+
+          const response = result.response
+          const text = response.text()
+
+          if (text && text.trim()) {
+            const parsed = JSON.parse(text)
+            const suggestions: CaptureItem[] = []
+
+            // Add the source first
+            suggestions.push({
+              id: randomUUID(),
+              type: 'source',
+              content: metadata.title,
+              source: metadata.siteName,
+              sourceUrl: trimmedContent,
+              selected: true,
+            })
+
+            // Add AI-extracted thoughts/notes
+            for (const item of (parsed.items || [])) {
+              suggestions.push({
+                id: randomUUID(),
+                type: item.type === 'note' ? 'note' : item.type === 'source' ? 'source' : 'thought',
+                content: String(item.content || '').slice(0, item.type === 'note' ? 5000 : 300),
+                source: metadata.title,
+                sourceUrl: trimmedContent,
+                selected: true,
+              })
+            }
+
+            if (suggestions.length > 0) {
+              return NextResponse.json({
+                success: true,
+                contentType,
+                suggestions,
+              } satisfies CaptureAnalyzeResponse)
+            }
+          }
+        } catch (aiError) {
+          console.warn("AI analysis of URL failed:", aiError)
+          // Fall through to simple metadata response
+        }
+      }
+
+      // Fallback: just return the source with metadata
       const suggestion: CaptureItem = {
         id: randomUUID(),
         type: 'source',
-        content: extractedTitle !== 'Untitled' ? extractedTitle : trimmedContent,
-        source: siteName,
+        content: metadata.title || extractTitleFromUrl(trimmedContent),
+        source: metadata.siteName || extractDomainFromUrl(trimmedContent),
         sourceUrl: trimmedContent,
         selected: true,
       }
