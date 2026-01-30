@@ -35,17 +35,41 @@ export function MomentsHistoryClient({ initialMoments }: MomentsHistoryClientPro
     getUser()
   }, [supabase])
 
-  const filteredMoments = filter === 'all'
+  const filteredMoments = (filter === 'all'
     ? initialMoments
-    : initialMoments.filter(m => m.source === filter)
+    : initialMoments.filter(m => m.source === filter))
+    // Sort by event start time (for calendar) or created_at, newest/soonest first
+    .sort((a, b) => {
+      const aTime = new Date(a.calendar_event_start || a.created_at).getTime()
+      const bTime = new Date(b.calendar_event_start || b.created_at).getTime()
+      return bTime - aTime
+    })
 
-  const formatDate = (dateString: string): string => {
+  const formatDateTime = (moment: Moment): string => {
+    // Use calendar_event_start for calendar events, otherwise created_at
+    const dateString = moment.calendar_event_start || moment.created_at
     const date = new Date(dateString)
+    const now = new Date()
+    const isToday = date.toDateString() === now.toDateString()
+    const isTomorrow = date.toDateString() === new Date(now.getTime() + 86400000).toDateString()
+
+    const timeStr = date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    })
+
+    if (isToday) {
+      return `Today, ${timeStr}`
+    } else if (isTomorrow) {
+      return `Tomorrow, ${timeStr}`
+    }
+
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
-    })
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+    }) + `, ${timeStr}`
   }
 
   const handleMomentClick = (momentId: string) => {
@@ -60,7 +84,7 @@ export function MomentsHistoryClient({ initialMoments }: MomentsHistoryClientPro
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Moments</h1>
             <p className="text-muted-foreground mt-1">
-              Prepare for situations with your gems
+              Prepare for situations with your thoughts
             </p>
           </div>
         </div>
@@ -129,11 +153,11 @@ export function MomentsHistoryClient({ initialMoments }: MomentsHistoryClientPro
                     {moment.source}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
-                    {formatDate(moment.created_at)}
+                    {formatDateTime(moment)}
                   </span>
                   {moment.gems_matched_count > 0 && (
                     <span className="text-xs text-muted-foreground">
-                      {moment.gems_matched_count} gem{moment.gems_matched_count !== 1 ? 's' : ''}
+                      {moment.gems_matched_count} thought{moment.gems_matched_count !== 1 ? 's' : ''}
                     </span>
                   )}
                 </div>

@@ -61,15 +61,25 @@ export function UpcomingMomentsCard({ moments, calendarConnected = false, classN
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
+        // Get user's calendar connection to determine lead time
+        const { data: connection } = await supabase
+          .from("calendar_connections")
+          .select("lead_time_minutes")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .single()
+
         const now = new Date()
-        const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+        // Use lead_time_minutes from settings, default to 1 day (1440 minutes)
+        const leadTimeMs = (connection?.lead_time_minutes || 1440) * 60 * 1000
+        const windowEnd = new Date(now.getTime() + leadTimeMs)
 
         const { data: events } = await supabase
           .from("calendar_events_cache")
           .select("id, title, start_time, end_time, moment_created, moment_id")
           .eq("user_id", user.id)
           .gte("start_time", now.toISOString())
-          .lte("start_time", tomorrow.toISOString())
+          .lte("start_time", windowEnd.toISOString())
           .order("start_time", { ascending: true })
           .limit(5)
 
@@ -230,7 +240,7 @@ export function UpcomingMomentsCard({ moments, calendarConnected = false, classN
             <p className="text-muted-foreground mb-1">No upcoming moments</p>
             <p className="text-sm text-muted-foreground mb-4">
               {calendarConnected
-                ? "No events in the next 24 hours. Moments will appear as events approach."
+                ? "No events found. Try syncing your calendar in Settings."
                 : "Connect your calendar or create moments manually"
               }
             </p>

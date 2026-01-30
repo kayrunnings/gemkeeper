@@ -920,6 +920,32 @@ This caused calendar moments to appear in the dashboard but show "No thoughts ma
 
 ---
 
+### 2026-01-30: Fix Calendar Sync Window Not Respecting Lead Time Setting
+
+**Issue:** Users could set "Prepare how far in advance?" to values like 3 days or 1 week in calendar settings, but the calendar sync was hardcoded to only fetch events within the next 24 hours. This meant:
+1. Calendar sync only fetched 24 hours of events regardless of user's lead_time_minutes setting
+2. UpcomingMomentsCard only displayed events within 24 hours
+3. Users with events 2-3 days out saw "No upcoming moments" even with calendar connected and synced
+
+**Root Cause:**
+- `lib/calendar.ts:syncCalendarEvents()` hardcoded `tomorrow = now + 24h` as the sync window
+- `components/home/UpcomingMomentsCard.tsx` also hardcoded 24-hour window for display
+- User's `lead_time_minutes` setting (which can be up to 10080 minutes = 1 week) was ignored
+
+**Solution:**
+1. Modified `syncCalendarEvents()` to use the connection's `lead_time_minutes` setting to determine sync window
+2. Modified `UpcomingMomentsCard` to fetch user's calendar connection settings and use `lead_time_minutes` for display window
+3. Increased `maxResults` from 50 to 100 to handle longer time windows with more events
+
+**Files Changed:**
+- `lib/calendar.ts` — Sync window now respects `lead_time_minutes` setting
+- `components/home/UpcomingMomentsCard.tsx` — Display window respects user settings
+
+**Lesson Learned:**
+When adding user-configurable settings, ensure all related code paths respect that configuration. The sync window and display window should both honor the "Prepare how far in advance?" setting.
+
+---
+
 ## Deferred Decisions
 
 Items we've discussed but intentionally not decided yet:

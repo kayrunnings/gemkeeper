@@ -190,14 +190,14 @@ export function ApplyQuadrant({
                   onClick={() => router.push(`/moments/${moment.id}/prepare`)}
                   className="flex items-center justify-between py-2 border-b border-[var(--glass-card-border)] last:border-b-0 cursor-pointer hover:bg-[var(--glass-hover-bg)] -mx-1 px-1 rounded transition-colors"
                 >
-                  <span className="text-xs text-amber-500 font-semibold w-14 flex-shrink-0">
-                    {eventTime ? format(new Date(eventTime), "h:mm a") : "--:--"}
+                  <span className="text-xs text-amber-500 font-semibold w-20 flex-shrink-0">
+                    {eventTime ? format(new Date(eventTime), "MMM d, h:mm a") : "--:--"}
                   </span>
                   <span className="text-sm text-foreground flex-1 truncate mx-2">
                     {moment.calendar_event_title || moment.description}
                   </span>
                   <span className="text-[10px] text-muted-foreground bg-[var(--glass-card-bg)] px-2 py-0.5 rounded-full border border-[var(--glass-card-border)]">
-                    {moment.gems_matched_count || 0} gems
+                    {moment.gems_matched_count || 0} thought{(moment.gems_matched_count || 0) !== 1 ? 's' : ''}
                   </span>
                 </div>
               )
