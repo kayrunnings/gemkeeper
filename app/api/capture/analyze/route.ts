@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { detectContentType, isUrl, extractBulletPoints, isQuoteLike } from "@/lib/ai/content-detector"
-import { extractTitleFromUrl, extractDomainFromUrl, extractFromUrl } from "@/lib/url-extractor"
+import { extractTitleFromUrl, extractDomainFromUrl } from "@/lib/url-extractor"
 import { extractSourceAttribution } from "@/lib/ai/content-splitter"
 import type { CaptureItem, ContentType, CaptureAnalyzeResponse } from "@/lib/types/capture"
 import { randomUUID } from "crypto"
@@ -93,10 +93,22 @@ async function handleAnalyzeRequest(request: NextRequest) {
     // Handle URL content
     if (contentType === 'url' && isUrl(trimmedContent)) {
       // Try to extract URL content and analyze it with AI
-      let extractedContent: Awaited<ReturnType<typeof extractFromUrl>>['content'] = null
+      // Type matches the return type of extractFromUrl from url-extractor
+      let extractedContent: {
+        title: string
+        content: string
+        byline?: string
+        siteName?: string
+        excerpt?: string
+        url: string
+        type: "article" | "youtube" | "unknown"
+      } | null = null
       let extractionError: string | null = null
 
       try {
+        // Dynamically import extractFromUrl to avoid JSDOM loading issues at module level
+        const { extractFromUrl } = await import("@/lib/url-extractor")
+
         // Call the extraction function directly instead of making an HTTP request
         // This avoids authentication issues and relative URL problems
         // Use a shorter timeout (8s) to leave room for AI analysis before server timeout
