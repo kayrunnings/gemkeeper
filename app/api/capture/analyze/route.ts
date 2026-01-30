@@ -83,7 +83,15 @@ export async function POST(request: NextRequest) {
       try {
         // Call the extraction function directly instead of making an HTTP request
         // This avoids authentication issues and relative URL problems
-        const { content: extractedContent, error: extractionError } = await extractFromUrl(trimmedContent, 10000)
+        // Use a shorter timeout (8s) to leave room for AI analysis before server timeout
+        const extractionPromise = extractFromUrl(trimmedContent, 8000)
+        const timeoutPromise = new Promise<{ content: null; error: string }>((resolve) =>
+          setTimeout(() => resolve({ content: null, error: 'Extraction timed out' }), 8500)
+        )
+        const { content: extractedContent, error: extractionError } = await Promise.race([
+          extractionPromise,
+          timeoutPromise,
+        ])
 
         if (!extractionError && extractedContent) {
           // Extract the article content from the response
@@ -265,12 +273,16 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("Capture analyze error:", error)
+    const errorMessage = error instanceof Error ? error.message : "Failed to analyze content"
     return NextResponse.json(
-      { error: "Failed to analyze content" },
+      { error: errorMessage },
       { status: 500 }
     )
   }
 }
+
+// Export config to set a reasonable timeout
+export const maxDuration = 30 // 30 seconds max
 
 async function handleImageAnalysis(textContent: string, images: ImageInput[]) {
   try {
