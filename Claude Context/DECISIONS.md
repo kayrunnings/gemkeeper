@@ -873,6 +873,53 @@ This caused calendar moments to appear in the dashboard but show "No thoughts ma
 
 ---
 
+### 2026-01-30: Homepage Redesign - Four Quadrants Dashboard
+
+**Decision:** Redesign the home page around four core knowledge management pillars: Capture, Grow, Apply, and Track, with a TF Thinks AI insight feature.
+
+**Rationale:**
+- Users need a focused dashboard that encourages all aspects of the knowledge loop
+- Four quadrants provide clear mental model for different user activities
+- TF Thinks creates a "coach in your pocket" experience with personalized AI insights
+- Consolidated layout reduces cognitive load vs. many separate cards
+
+**Implementation:**
+
+1. **Capture Quadrant** - Smart AI-powered capture input, quick action buttons, recent captures list
+2. **Grow Quadrant** - AI discovery with topic search, context chips, and "Surprise me" button
+3. **Apply Quadrant** - Today's thought with graduation progress, check-in CTA, upcoming moments
+4. **Track Quadrant** - Streak banner, weekly stats, near-graduation callout, compact stats footer
+
+**TF Thinks Feature:**
+- AI-generated insights about user patterns and behaviors
+- Auto-rotates through 3-5 insights every 8 seconds
+- Carousel dots for manual navigation
+- Refresh and dismiss buttons
+- Uses Gemini 2.0 Flash for analysis
+
+**New Components:**
+- `HomeQuadrant.tsx` - Reusable quadrant container with variant styling
+- `TFInsight.tsx` - AI insight card with carousel
+- `SmartCaptureInput.tsx` - AI-powered paste/capture input
+- `StreakBanner.tsx` - Streak display with weekly activity dots
+- `GraduationCallout.tsx` - Thoughts close to graduation
+- `CaptureQuadrant.tsx`, `GrowQuadrant.tsx`, `ApplyQuadrant.tsx`, `TrackQuadrant.tsx`
+
+**New API Endpoints:**
+- `GET /api/tf/insights` - Generate TF Thinks AI insights
+- `GET /api/home/stats` - Aggregated stats for Track quadrant (streak, weekly stats, near-graduation)
+
+**Alternatives Considered:**
+- Keep existing card-based layout → Rejected: doesn't encourage balanced engagement
+- Single-column layout → Rejected: wastes space on desktop, less scannable
+- No AI insights → Rejected: misses opportunity for personalized coaching
+
+**Consequences:**
+- Previous home page components (DailyThoughtCard, QuickActionsRow, etc.) no longer used directly but preserved for reference
+- Users get immediate visibility into all four knowledge management activities
+
+---
+
 ## Deferred Decisions
 
 Items we've discussed but intentionally not decided yet:
