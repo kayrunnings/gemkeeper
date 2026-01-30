@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Sparkle, ArrowsClockwise, X } from "@phosphor-icons/react"
+import { Sparkle, ArrowsClockwise, X, CaretLeft, CaretRight } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -109,6 +109,14 @@ export function TFInsight({
     onDismiss?.()
   }, [onDismiss])
 
+  const handlePrev = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + insights.length) % insights.length)
+  }, [insights.length])
+
+  const handleNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % insights.length)
+  }, [insights.length])
+
   if (!isVisible || insights.length === 0) {
     return null
   }
@@ -169,21 +177,35 @@ export function TFInsight({
         </div>
       </div>
 
-      {/* Carousel dots */}
+      {/* Carousel navigation */}
       {insights.length > 1 && (
-        <div className="flex justify-center gap-1">
-          {insights.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={cn(
-                "h-1.5 rounded-full transition-all duration-200",
-                index === currentIndex
-                  ? "w-4 bg-primary"
-                  : "w-1.5 bg-[var(--glass-card-border)] hover:bg-muted-foreground"
-              )}
-            />
-          ))}
+        <div className="flex justify-center items-center gap-2">
+          <button
+            onClick={handlePrev}
+            className="w-6 h-6 flex items-center justify-center rounded-full bg-[var(--glass-card-bg)] border border-[var(--glass-card-border)] text-muted-foreground hover:text-foreground hover:bg-[var(--glass-hover-bg)] transition-colors"
+          >
+            <CaretLeft weight="bold" className="w-3 h-3" />
+          </button>
+          <div className="flex gap-1">
+            {insights.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentIndex(index)}
+                className={cn(
+                  "h-1.5 rounded-full transition-all duration-200",
+                  index === currentIndex
+                    ? "w-4 bg-primary"
+                    : "w-1.5 bg-[var(--glass-card-border)] hover:bg-muted-foreground"
+                )}
+              />
+            ))}
+          </div>
+          <button
+            onClick={handleNext}
+            className="w-6 h-6 flex items-center justify-center rounded-full bg-[var(--glass-card-bg)] border border-[var(--glass-card-border)] text-muted-foreground hover:text-foreground hover:bg-[var(--glass-hover-bg)] transition-colors"
+          >
+            <CaretRight weight="bold" className="w-3 h-3" />
+          </button>
         </div>
       )}
     </div>

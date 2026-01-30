@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { Sparkle, MagnifyingGlass, Shuffle, BookOpen, Headphones } from "@phosphor-icons/react"
+import { Sparkle, MagnifyingGlass, Shuffle, BookOpen, Headphones, TrendUp, Lightbulb, Brain, ChatCircleDots, Star } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 import { HomeQuadrant } from "./HomeQuadrant"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,13 @@ interface Suggestion {
   source: string
   type: "article" | "podcast" | "video" | "research"
 }
+
+// Fallback trending topics when user has no contexts
+const FALLBACK_TOPICS = [
+  { id: "productivity", label: "Productivity", query: "productivity tips", icon: Lightbulb },
+  { id: "mindfulness", label: "Mindfulness", query: "mindfulness practices", icon: Brain },
+  { id: "communication", label: "Communication", query: "effective communication", icon: ChatCircleDots },
+]
 
 interface GrowQuadrantProps {
   contexts: ContextWithCount[]
@@ -35,6 +42,27 @@ export function GrowQuadrant({
 }: GrowQuadrantProps) {
   const router = useRouter()
   const [searchTopic, setSearchTopic] = useState("")
+
+  // Generate personalized trending topics based on user's contexts
+  // Uses contexts with the most content (highest count) for relevance
+  const trendingTopics = useMemo(() => {
+    if (contexts.length === 0) {
+      return FALLBACK_TOPICS
+    }
+
+    // Sort contexts by thought_count (most active first) and take top 3
+    const topContexts = [...contexts]
+      .sort((a, b) => (b.thought_count || 0) - (a.thought_count || 0))
+      .slice(0, 3)
+
+    return topContexts.map((context) => ({
+      id: context.id,
+      label: context.name,
+      query: `latest insights and tips about ${context.name.toLowerCase()}`,
+      icon: Star, // Use Star icon for personalized topics
+      isPersonalized: true,
+    }))
+  }, [contexts])
 
   const handleSearch = useCallback(() => {
     if (searchTopic.trim()) {
@@ -125,8 +153,8 @@ export function GrowQuadrant({
         ))}
       </div>
 
-      {/* AI Suggestions */}
-      {suggestions.length > 0 && (
+      {/* AI Suggestions or Trending Topics */}
+      {suggestions.length > 0 ? (
         <div className="space-y-2 mb-2">
           {suggestions.slice(0, 2).map((suggestion) => (
             <div
@@ -151,6 +179,42 @@ export function GrowQuadrant({
               </div>
             </div>
           ))}
+        </div>
+      ) : (
+        <div className="mb-3">
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-wider mb-2">
+            {contexts.length > 0 ? (
+              <>
+                <Star className="w-3 h-3" />
+                <span>For You</span>
+              </>
+            ) : (
+              <>
+                <TrendUp className="w-3 h-3" />
+                <span>Trending</span>
+              </>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            {trendingTopics.map((topic) => (
+              <button
+                key={topic.id}
+                onClick={() => onDiscoverTopic?.(topic.query)}
+                className={cn(
+                  "flex items-center gap-2.5 w-full p-2",
+                  "bg-[var(--glass-input-bg)] rounded-[calc(var(--radius)-2px)]",
+                  "border border-transparent cursor-pointer transition-all",
+                  "hover:border-[var(--glass-card-border)] hover:bg-[var(--glass-hover-bg)]",
+                  "text-left"
+                )}
+              >
+                <span className="w-6 h-6 flex items-center justify-center bg-gradient-to-br from-orange-500/20 to-blue-500/10 rounded text-orange-500">
+                  <topic.icon weight="fill" className="w-3.5 h-3.5" />
+                </span>
+                <span className="text-xs text-foreground">{topic.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

@@ -159,17 +159,20 @@ The mockup uses CSS variables from `globals.css` to ensure theme compatibility:
 
 ## Implementation Notes
 
-### Components to Create
-- `HomeQuadrant.tsx` - Reusable quadrant container with glassmorphism
-- `TFInsight.tsx` - The TF thinks card component
-- `SmartCaptureInput.tsx` - The AI-powered paste/capture input
-- `StreakBanner.tsx` - Streak display with weekly dots
-- `GraduationCallout.tsx` - Thoughts close to graduation
+### Components Created
+- `HomeQuadrant.tsx` - Reusable quadrant container with glassmorphism and padding
+- `TFInsight.tsx` - The TF thinks card component with carousel navigation (arrows + dots)
+- `SmartCaptureInput.tsx` - The AI-powered paste/capture input with auto-analyze
+- `CaptureQuadrant.tsx` - Capture quadrant with AI capture, notes, and recent captures
+- `GrowQuadrant.tsx` - Grow quadrant with personalized topics and discovery search
+- `ApplyQuadrant.tsx` - Apply quadrant with daily thought, shuffle, and upcoming moments
+- `TrackQuadrant.tsx` - Track quadrant with streak, stats, and graduation progress
 
-### API Endpoints Needed
+### API Endpoints
 - `GET /api/tf/insights` - Generate TF thinks insights
 - `GET /api/home/stats` - Aggregated stats for Track quadrant
-- `GET /api/calendar/upcoming` - Calendar events for Apply quadrant
+- `POST /api/thoughts/shuffle` - Get random thought from Active List for shuffle feature
+- Calendar integration via existing calendar APIs
 
 ### Data Requirements
 - User's recent captures (last 30 days)
@@ -177,3 +180,36 @@ The mockup uses CSS variables from `globals.css` to ensure theme compatibility:
 - Streak data
 - Calendar integration (if available)
 - Graduation progress for active thoughts
+
+---
+
+## Implementation Updates (January 2026)
+
+### UX Improvements
+
+1. **Card Spacing & Layout**
+   - Added `p-4` padding to all quadrant cards
+   - Reduced grid gaps for better screen fit without scrolling
+   - Compact margins on greeting and TF Insight sections
+
+2. **Grow Quadrant - Personalized Topics**
+   - "For You" section shows topics based on user's most active contexts
+   - Falls back to general "Trending" topics if user has no contexts
+   - Context-based search queries: "latest insights and tips about {context}"
+   - Auto-search when navigating from homepage (URL params: `?q=`, `?context=`, `?surprise=`)
+
+3. **Capture Quadrant - Auto-Analyze**
+   - Typing in capture input opens AI modal with content pre-filled
+   - Auto-triggers analysis without requiring re-entry
+   - Seamless flow from homepage to AI capture
+
+4. **TF Thinks Carousel**
+   - Added left/right navigation arrows for manual scrolling
+   - Dots remain clickable for direct navigation
+   - Auto-rotates every 8 seconds
+
+5. **Apply Quadrant Enhancements**
+   - Shuffle button now works: fetches random thought from Active List
+   - Upcoming moments filtered to show only future events
+   - Uses `calendar_event_start` for proper event time display
+   - Added "View recent moments" footer link

@@ -53,6 +53,14 @@ export function ApplyQuadrant({
       icon={<Target weight="bold" />}
       title="Apply"
       stat={`${todayMomentsCount} moments today`}
+      footer={
+        <button
+          onClick={() => router.push("/moments")}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+        >
+          View recent moments <span>→</span>
+        </button>
+      }
       className={className}
     >
       {/* Today's Thought */}
@@ -174,23 +182,26 @@ export function ApplyQuadrant({
             Upcoming moments
           </div>
           <div className="space-y-0">
-            {upcomingMoments.slice(0, 2).map((moment) => (
-              <div
-                key={moment.id}
-                onClick={() => router.push(`/moments/${moment.id}/prepare`)}
-                className="flex items-center justify-between py-2 border-b border-[var(--glass-card-border)] last:border-b-0 cursor-pointer hover:bg-[var(--glass-hover-bg)] -mx-1 px-1 rounded transition-colors"
-              >
-                <span className="text-xs text-amber-500 font-semibold w-14 flex-shrink-0">
-                  {moment.created_at ? format(new Date(moment.created_at), "h:mm a") : "--:--"}
-                </span>
-                <span className="text-sm text-foreground flex-1 truncate mx-2">
-                  {moment.calendar_event_title || moment.description}
-                </span>
-                <span className="text-[10px] text-muted-foreground bg-[var(--glass-card-bg)] px-2 py-0.5 rounded-full border border-[var(--glass-card-border)]">
-                  {moment.gems_matched_count || 0} gems
-                </span>
-              </div>
-            ))}
+            {upcomingMoments.slice(0, 2).map((moment) => {
+              const eventTime = moment.calendar_event_start || moment.created_at
+              return (
+                <div
+                  key={moment.id}
+                  onClick={() => router.push(`/moments/${moment.id}/prepare`)}
+                  className="flex items-center justify-between py-2 border-b border-[var(--glass-card-border)] last:border-b-0 cursor-pointer hover:bg-[var(--glass-hover-bg)] -mx-1 px-1 rounded transition-colors"
+                >
+                  <span className="text-xs text-amber-500 font-semibold w-14 flex-shrink-0">
+                    {eventTime ? format(new Date(eventTime), "h:mm a") : "--:--"}
+                  </span>
+                  <span className="text-sm text-foreground flex-1 truncate mx-2">
+                    {moment.calendar_event_title || moment.description}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground bg-[var(--glass-card-bg)] px-2 py-0.5 rounded-full border border-[var(--glass-card-border)]">
+                    {moment.gems_matched_count || 0} gems
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
