@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="midnight" data-ui-theme="glass">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Page Redesign - Four Quadrants v2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* === THEME VARIABLES (from globals.css) === */
+    :root,
+    [data-theme="midnight"] {
+      --background: #0a1628;
+      --foreground: #f8fafc;
+      --card: #111d35;
+      --card-foreground: #f8fafc;
+      --primary: #f97316;
+      --primary-foreground: #0a0a0a;
+      --secondary: #1a2844;
+      --secondary-foreground: #cbd5e1;
+      --muted: #1e3a5f;
+      --muted-foreground: #94a3b8;
+      --accent: #f97316;
+      --border: #1e3a5f;
+      --ring: #f97316;
+      --radius: 0.75rem;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+      --highlight: #a78bfa;
+      --ai-gradient-start: #f97316;
+      --ai-gradient-end: #3b82f6;
+      --ai-glow: rgba(249, 115, 22, 0.3);
+    }
+
+    /* Glass UI variables */
+    :root[data-ui-theme="glass"] {
+      --glass-card-bg: rgba(255, 255, 255, 0.06);
+      --glass-card-border: rgba(255, 255, 255, 0.12);
+      --glass-card-border-top: rgba(255, 255, 255, 0.18);
+      --glass-card-blur: 20px;
+      --glass-card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 20px -5px rgba(0, 0, 0, 0.2), 0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      --glass-hover-bg: rgba(255, 255, 255, 0.1);
+      --glass-hover-border: rgba(255, 255, 255, 0.18);
+      --glass-input-bg: rgba(255, 255, 255, 0.04);
+      --glass-input-border: rgba(255, 255, 255, 0.1);
+      --glass-body-gradient-start: #0f0a1a;
+      --glass-body-gradient-end: #1a1025;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(to bottom, var(--glass-body-gradient-start), var(--glass-body-gradient-end));
+      min-height: 100vh;
+      color: var(--foreground);
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      margin-bottom: 24px;
+    }
+
+    .greeting {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--foreground);
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    /* TF Insight Card */
+    .tf-insight {
+      background: var(--glass-card-bg);
+      backdrop-filter: blur(var(--glass-card-blur));
+      border: 1px solid var(--glass-card-border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tf-insight::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--ai-gradient-start), var(--ai-gradient-end));
+    }
+
+    .tf-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, var(--ai-gradient-start), var(--ai-gradient-end));
+      color: white;
+      box-shadow: 0 0 20px var(--ai-glow);
+    }
+
+    .tf-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .tf-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: linear-gradient(90deg, var(--ai-gradient-start), var(--ai-gradient-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 4px;
+    }
+
+    .tf-message {
+      font-size: 14px;
+      color: var(--foreground);
+      line-height: 1.5;
+    }
+
+    .tf-message strong {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .tf-message .highlight {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .tf-message .context {
+      color: var(--highlight);
+      font-weight: 500;
+    }
+
+    .tf-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .tf-action-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--glass-input-bg);
+      border: 1px solid var(--glass-card-border);
+      color: var(--muted-foreground);
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.15s ease;
+    }
+
+    .tf-action-btn:hover {
+      background: var(--glass-hover-bg);
+      color: var(--foreground);
+    }
+
+    .tf-dots {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .tf-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--glass-card-border);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tf-dot.active {
+      background: var(--primary);
+      width: 16px;
+      border-radius: 3px;
+    }
+
+    /* Four Quadrants Grid */
+    .quadrants {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .quadrants {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Glass Card Base */
+    .quadrant {
+      background: var(--glass-card-bg);
+      backdrop-filter: blur(var(--glass-card-blur)) saturate(180%);
+      -webkit-backdrop-filter: blur(var(--glass-card-blur)) saturate(180%);
+      border: 1px solid var(--glass-card-border);
+      border-top-color: var(--glass-card-border-top);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--glass-card-shadow);
+      transition: all 0.2s ease;
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .quadrant:hover {
+      background: var(--glass-hover-bg);
+      border-color: var(--glass-hover-border);
+      transform: translateY(-2px);
+    }
+
+    /* Quadrant-specific hover glows */
+    .capture:hover {
+      box-shadow: var(--glass-card-shadow), 0 0 30px rgba(16, 185, 129, 0.15);
+    }
+    .grow:hover {
+      box-shadow: var(--glass-card-shadow), 0 0 30px var(--ai-glow);
+    }
+    .apply:hover {
+      box-shadow: var(--glass-card-shadow), 0 0 30px rgba(245, 158, 11, 0.15);
+    }
+    .progress-quad:hover {
+      box-shadow: var(--glass-card-shadow), 0 0 30px rgba(167, 139, 250, 0.15);
+    }
+
+    .quadrant-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .quadrant-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .quadrant-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .quadrant-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--foreground);
+      letter-spacing: -0.01em;
+    }
+
+    .quadrant-stat {
+      font-size: 11px;
+      color: var(--muted-foreground);
+      background: var(--glass-card-bg);
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--glass-card-border);
+    }
+
+    .quadrant-content {
+      flex: 1;
+    }
+
+    /* === CAPTURE QUADRANT === */
+    .capture .quadrant-icon {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+      color: var(--success);
+    }
+
+    .smart-capture-input {
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .smart-capture-input textarea {
+      width: 100%;
+      background: var(--glass-input-bg);
+      border: 1px solid var(--glass-input-border);
+      border-radius: calc(var(--radius) - 2px);
+      padding: 12px 14px;
+      padding-right: 70px;
+      color: var(--foreground);
+      font-size: 13px;
+      font-family: inherit;
+      resize: none;
+      min-height: 70px;
+      transition: all 0.15s ease;
+    }
+
+    .smart-capture-input textarea::placeholder {
+      color: var(--muted-foreground);
+    }
+
+    .smart-capture-input textarea:focus {
+      outline: none;
+      border-color: var(--ring);
+      box-shadow: 0 0 0 3px var(--ai-glow);
+    }
+
+    .smart-capture-badge {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, var(--ai-gradient-start), var(--ai-gradient-end));
+      color: white;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .smart-capture-badge:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 12px var(--ai-glow);
+    }
+
+    /* Subtle pulse animation for AI elements */
+    @keyframes subtle-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { box-shadow: 0 0 8px var(--ai-glow); }
+      50% { box-shadow: 0 0 16px var(--ai-glow), 0 0 24px var(--ai-glow); }
+    }
+
+    .smart-capture-badge {
+      animation: glow-pulse 2s ease-in-out infinite;
+    }
+
+    .smart-capture-input textarea::placeholder {
+      color: var(--muted-foreground);
+      font-size: 12px;
+    }
+
+    .capture-quick-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .capture-quick-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 12px;
+      background: var(--glass-input-bg);
+      border: 1px solid var(--glass-input-border);
+      border-radius: calc(var(--radius) - 2px);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted-foreground);
+    }
+
+    .capture-quick-btn:hover {
+      background: var(--glass-hover-bg);
+      border-color: var(--glass-hover-border);
+      color: var(--foreground);
+      transform: translateY(-1px);
+    }
+
+    .capture-quick-btn .icon {
+      font-size: 14px;
+    }
+
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, var(--ai-gradient-start), var(--ai-gradient-end));
+      color: white;
+      margin-top: 4px;
+    }
+
+    .recent-label {
+      font-size: 11px;
+      color: var(--muted-foreground);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .recent-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--glass-card-border);
+      font-size: 13px;
+      color: var(--secondary-foreground);
+    }
+
+    .recent-item:last-child {
+      border-bottom: none;
+    }
+
+    .recent-item-type {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .recent-item-type.thought {
+      background: rgba(167, 139, 250, 0.2);
+      color: var(--highlight);
+    }
+
+    .recent-item-type.note {
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+    }
+
+    .recent-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .recent-item-text {
+      font-size: 12px;
+      color: var(--foreground);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .recent-item-meta {
+      font-size: 10px;
+      color: var(--muted-foreground);
+      margin-top: 1px;
+    }
+
+    .context-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .context-badge.blue {
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+    }
+
+    .context-badge.orange {
+      background: rgba(249, 115, 22, 0.2);
+      color: #fdba74;
+    }
+
+    /* === GROW QUADRANT === */
+    .grow .quadrant-icon {
+      background: linear-gradient(135deg, var(--ai-gradient-start), var(--ai-gradient-end));
+      color: white;
+    }
+
+    .grow-search {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .grow-search input {
+      flex: 1;
+      background: var(--glass-input-bg);
+      border: 1px solid var(--glass-input-border);
+      border-radius: calc(var(--radius) - 2px);
+      padding: 10px 14px;
+      color: var(--foreground);
+      font-size: 13px;
+      transition: all 0.15s ease;
+    }
+
+    .grow-search input::placeholder {
+      color: var(--muted-foreground);
+    }
+
+    .grow-search input:focus {
+      outline: none;
+      border-color: var(--ring);
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+    }
+
+    .grow-search button {
+      background: linear-gradient(135deg, var(--ai-gradient-start), var(--ai-gradient-end));
+      border: none;
+      color: white;
+      padding: 10px 14px;
+      border-radius: calc(var(--radius) - 2px);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .grow-search button:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .context-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .context-chip {
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 16px;
+      background: var(--glass-card-bg);
+      border: 1px solid var(--glass-card-border);
+      color: var(--muted-foreground);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .context-chip:hover {
+      background: rgba(249, 115, 22, 0.1);
+      border-color: rgba(249, 115, 22, 0.3);
+      color: var(--primary);
+    }
+
+    .suggestion-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px;
+      background: var(--glass-input-bg);
+      border-radius: calc(var(--radius) - 2px);
+      margin-bottom: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .suggestion-item:hover {
+      border-color: var(--glass-card-border);
+      background: var(--glass-hover-bg);
+    }
+
+    .suggestion-icon {
+      font-size: 18px;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--glass-card-bg);
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    .suggestion-text {
+      font-size: 13px;
+      color: var(--foreground);
+      font-weight: 500;
+    }
+
+    .suggestion-source {
+      font-size: 11px;
+      color: var(--muted-foreground);
+      margin-top: 2px;
+    }
+
+    /* === APPLY QUADRANT === */
+    .apply .quadrant-icon {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(234, 88, 12, 0.1));
+      color: var(--warning);
+    }
+
+    .todays-thought {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 88, 12, 0.05));
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: calc(var(--radius) - 2px);
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .thought-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--warning);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .thought-text {
+      font-size: 14px;
+      color: var(--foreground);
+      line-height: 1.5;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    .thought-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .thought-context {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(236, 72, 153, 0.2);
+      color: #f9a8d4;
+      font-weight: 500;
+    }
+
+    .thought-source {
+      font-size: 11px;
+      color: var(--muted-foreground);
+    }
+
+    .thought-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      padding: 8px 14px;
+      border-radius: calc(var(--radius) - 2px);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .btn-ghost {
+      background: var(--glass-card-bg);
+      color: var(--muted-foreground);
+      border: 1px solid var(--glass-card-border);
+    }
+
+    .btn-ghost:hover {
+      background: var(--glass-hover-bg);
+      color: var(--foreground);
+    }
+
+    .moments-section {
+      margin-top: auto;
+    }
+
+    .moments-header {
+      font-size: 11px;
+      color: var(--muted-foreground);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .moment-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--glass-card-border);
+    }
+
+    .moment-item:last-child {
+      border-bottom: none;
+    }
+
+    .moment-time {
+      font-size: 12px;
+      color: var(--warning);
+      font-weight: 600;
+      width: 55px;
+      flex-shrink: 0;
+    }
+
+    .moment-title {
+      flex: 1;
+      font-size: 13px;
+      color: var(--foreground);
+    }
+
+    .moment-thoughts {
+      font-size: 10px;
+      color: var(--muted-foreground);
+      background: var(--glass-card-bg);
+      padding: 3px 8px;
+      border-radius: 10px;
+      border: 1px solid var(--glass-card-border);
+    }
+
+    /* === TRACK QUADRANT === */
+    .progress-quad .quadrant-icon {
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.2), rgba(139, 92, 246, 0.1));
+      color: var(--highlight);
+    }
+
+    /* Streak banner */
+    .streak-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(239, 68, 68, 0.1));
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      border-radius: calc(var(--radius) - 2px);
+      margin-bottom: 14px;
+    }
+
+    .streak-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .streak-fire {
+      font-size: 20px;
+    }
+
+    .streak-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .streak-days {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+
+    .streak-best {
+      font-size: 11px;
+      color: var(--muted-foreground);
+    }
+
+    .streak-weekly {
+      display: flex;
+      gap: 3px;
+    }
+
+    .streak-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      background: var(--glass-input-bg);
+      border: 1px solid var(--glass-card-border);
+    }
+
+    .streak-dot.active {
+      background: rgba(249, 115, 22, 0.6);
+      border-color: rgba(249, 115, 22, 0.8);
+    }
+
+    .streak-dot.today {
+      background: var(--primary);
+      border-color: var(--primary);
+      box-shadow: 0 0 6px var(--ai-glow);
+    }
+
+    /* This week stats */
+    .week-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .week-stat {
+      padding: 10px 12px;
+      background: var(--glass-input-bg);
+      border: 1px solid var(--glass-card-border);
+      border-radius: calc(var(--radius) - 2px);
+    }
+
+    .week-stat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .week-stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--foreground);
+    }
+
+    .week-stat-trend {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .week-stat-trend.up {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--success);
+    }
+
+    .week-stat-trend.down {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    .week-stat-label {
+      font-size: 11px;
+      color: var(--muted-foreground);
+    }
+
+    /* Close to graduation */
+    .graduation-callout {
+      padding: 12px;
+      background: linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(245, 158, 11, 0.05));
+      border: 1px solid rgba(234, 179, 8, 0.2);
+      border-radius: calc(var(--radius) - 2px);
+      margin-bottom: 14px;
+    }
+
+    .graduation-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .graduation-icon {
+      font-size: 14px;
+    }
+
+    .graduation-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--warning);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .graduation-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+    }
+
+    .graduation-item:not(:last-child) {
+      border-bottom: 1px solid rgba(234, 179, 8, 0.1);
+    }
+
+    .graduation-thought {
+      font-size: 12px;
+      color: var(--foreground);
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-right: 8px;
+    }
+
+    .graduation-remaining {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--warning);
+      white-space: nowrap;
+    }
+
+    .graduation-remaining.soon {
+      background: linear-gradient(135deg, rgba(234, 179, 8, 0.3), rgba(245, 158, 11, 0.2));
+      padding: 2px 8px;
+      border-radius: 4px;
+      animation: subtle-pulse 2s ease-in-out infinite;
+    }
+
+    /* Surprise me button */
+    .surprise-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(59, 130, 246, 0.1));
+      border: 1px dashed rgba(249, 115, 22, 0.3);
+      border-radius: calc(var(--radius) - 2px);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-top: 8px;
+    }
+
+    .surprise-btn:hover {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(59, 130, 246, 0.15));
+      border-color: rgba(249, 115, 22, 0.5);
+      transform: translateY(-1px);
+    }
+
+    /* Application progress on thought */
+    .thought-progress {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(245, 158, 11, 0.1);
+    }
+
+    .thought-progress-bar {
+      flex: 1;
+      height: 4px;
+      background: rgba(245, 158, 11, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .thought-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--warning), var(--primary));
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .thought-progress-text {
+      font-size: 10px;
+      color: var(--warning);
+      white-space: nowrap;
+    }
+
+    /* Compact stats footer */
+    .stats-footer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--glass-card-border);
+    }
+
+    .stat-compact {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+
+    .stat-compact-value {
+      font-weight: 600;
+      color: var(--foreground);
+    }
+
+    .stat-compact-label {
+      color: var(--muted-foreground);
+    }
+
+    .stat-compact-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--muted-foreground);
+      opacity: 0.5;
+    }
+
+    .progress-bar-bg {
+      height: 6px;
+      background: var(--glass-input-bg);
+      border-radius: 3px;
+      overflow: hidden;
+      border: 1px solid var(--glass-card-border);
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--highlight), #c084fc);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    /* View all links */
+    .view-all {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--muted-foreground);
+      margin-top: auto;
+      padding-top: 12px;
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+
+    .view-all:hover {
+      color: var(--foreground);
+    }
+
+    /* Theme switcher for demo */
+    .theme-switcher {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 8px;
+      background: var(--glass-card-bg);
+      backdrop-filter: blur(20px);
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--glass-card-border);
+      z-index: 100;
+    }
+
+    .theme-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--glass-card-border);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .theme-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .theme-btn.active {
+      border-color: var(--foreground);
+      box-shadow: 0 0 8px var(--ai-glow);
+    }
+
+    .theme-btn.midnight { background: #0a1628; }
+    .theme-btn.obsidian { background: #09090b; }
+    .theme-btn.amethyst { background: #13111c; }
+    .theme-btn.cyber { background: linear-gradient(135deg, #00f0ff, #ff00aa); }
+    .theme-btn.aurora { background: linear-gradient(135deg, #22d3ee, #c084fc); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+
+      .greeting {
+        font-size: 22px;
+      }
+
+      .quadrant {
+        min-height: auto;
+        padding: 16px;
+      }
+
+      .capture-options {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-row {
+        gap: 8px;
+      }
+
+      .stat-number {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1 class="greeting">Good afternoon, Sarah</h1>
+
+      <!-- TF Insight Card -->
+      <div class="tf-insight">
+        <div class="tf-icon">✨</div>
+        <div class="tf-content">
+          <div class="tf-label">TF thinks</div>
+          <div class="tf-message">
+            Tomorrow looks busy — <strong>4 meetings</strong> on your calendar. You tend to apply <span class="context">"Meetings"</span> thoughts <span class="highlight">2x more</span> on days like this.
+          </div>
+        </div>
+        <div class="tf-actions">
+          <button class="tf-action-btn" title="Refresh">↻</button>
+          <button class="tf-action-btn" title="Dismiss">✕</button>
+        </div>
+      </div>
+      <div class="tf-dots">
+        <div class="tf-dot"></div>
+        <div class="tf-dot active"></div>
+        <div class="tf-dot"></div>
+      </div>
+    </div>
+
+    <!-- Four Quadrants -->
+    <div class="quadrants">
+      <!-- CAPTURE -->
+      <div class="quadrant capture">
+        <div class="quadrant-header">
+          <div class="quadrant-title-row">
+            <div class="quadrant-icon">+</div>
+            <div class="quadrant-title">Capture</div>
+          </div>
+          <div class="quadrant-stat">+3 this week</div>
+        </div>
+
+        <div class="quadrant-content">
+          <!-- Smart AI Capture Input -->
+          <div class="smart-capture-input">
+            <textarea placeholder="Paste a quote, URL, screenshot, meeting notes..."></textarea>
+            <span class="smart-capture-badge">✨ AI</span>
+          </div>
+
+          <!-- Quick action buttons -->
+          <div class="capture-quick-actions">
+            <div class="capture-quick-btn">
+              <span class="icon">📝</span>
+              <span>New Note</span>
+            </div>
+            <div class="capture-quick-btn">
+              <span class="icon">💭</span>
+              <span>Quick Thought</span>
+            </div>
+          </div>
+
+          <div class="recent-label">Recent</div>
+          <div class="recent-item">
+            <span class="recent-item-type thought">💎</span>
+            <div class="recent-item-content">
+              <div class="recent-item-text">"Start with why before how"</div>
+              <div class="recent-item-meta">Thought · Meetings · 2h ago</div>
+            </div>
+          </div>
+          <div class="recent-item">
+            <span class="recent-item-type note">📝</span>
+            <div class="recent-item-content">
+              <div class="recent-item-text">Q1 Planning Meeting Notes</div>
+              <div class="recent-item-meta">Note · Yesterday</div>
+            </div>
+          </div>
+          <div class="recent-item">
+            <span class="recent-item-type thought">💎</span>
+            <div class="recent-item-content">
+              <div class="recent-item-text">"Deep work needs 90-min blocks"</div>
+              <div class="recent-item-meta">Thought · Focus · 2 days ago</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="view-all">View library →</div>
+      </div>
+
+      <!-- GROW -->
+      <div class="quadrant grow">
+        <div class="quadrant-header">
+          <div class="quadrant-title-row">
+            <div class="quadrant-icon">✦</div>
+            <div class="quadrant-title">Grow</div>
+          </div>
+          <span class="ai-badge" style="margin-left: auto;">AI Discovery</span>
+        </div>
+
+        <div class="quadrant-content">
+          <div class="grow-search">
+            <input type="text" placeholder="Explore a topic...">
+            <button>Discover</button>
+          </div>
+
+          <div class="context-chips">
+            <span class="context-chip">Leadership</span>
+            <span class="context-chip">Focus</span>
+            <span class="context-chip">Meetings</span>
+            <span class="context-chip">Relationships</span>
+          </div>
+
+          <div class="suggestion-item">
+            <span class="suggestion-icon">📖</span>
+            <div>
+              <div class="suggestion-text">The Power of Active Listening</div>
+              <div class="suggestion-source">Harvard Business Review</div>
+            </div>
+          </div>
+
+          <div class="suggestion-item">
+            <span class="suggestion-icon">🎧</span>
+            <div>
+              <div class="suggestion-text">Building Trust Through Questions</div>
+              <div class="suggestion-source">Knowledge Project Podcast</div>
+            </div>
+          </div>
+
+          <div class="surprise-btn">
+            <span>🎲</span>
+            <span>Surprise me with something new</span>
+          </div>
+        </div>
+
+        <div class="view-all">Explore more →</div>
+      </div>
+
+      <!-- APPLY -->
+      <div class="quadrant apply">
+        <div class="quadrant-header">
+          <div class="quadrant-title-row">
+            <div class="quadrant-icon">◎</div>
+            <div class="quadrant-title">Apply</div>
+          </div>
+          <div class="quadrant-stat">2 moments today</div>
+        </div>
+
+        <div class="quadrant-content">
+          <div class="todays-thought">
+            <div class="thought-label">Today's Thought</div>
+            <div class="thought-text">"Deep listening builds trust faster than any amount of talking"</div>
+            <div class="thought-meta">
+              <span class="thought-context">Relationships</span>
+              <span class="thought-source">from Radical Candor</span>
+            </div>
+            <div class="thought-progress">
+              <div class="thought-progress-bar">
+                <div class="thought-progress-fill" style="width: 60%"></div>
+              </div>
+              <span class="thought-progress-text">3/5 to graduate</span>
+            </div>
+            <div class="thought-actions">
+              <button class="btn btn-primary">Check In</button>
+              <button class="btn btn-ghost">Shuffle</button>
+            </div>
+          </div>
+
+          <div class="moments-section">
+            <div class="moments-header">Upcoming moments</div>
+            <div class="moment-item">
+              <span class="moment-time">2:00 PM</span>
+              <span class="moment-title">1:1 with Alex</span>
+              <span class="moment-thoughts">4 gems</span>
+            </div>
+            <div class="moment-item">
+              <span class="moment-time">4:30 PM</span>
+              <span class="moment-title">Team Retro</span>
+              <span class="moment-thoughts">2 gems</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRACK -->
+      <div class="quadrant progress-quad">
+        <div class="quadrant-header">
+          <div class="quadrant-title-row">
+            <div class="quadrant-icon">★</div>
+            <div class="quadrant-title">Track</div>
+          </div>
+        </div>
+
+        <div class="quadrant-content">
+          <!-- Streak Banner -->
+          <div class="streak-banner">
+            <div class="streak-main">
+              <span class="streak-fire">🔥</span>
+              <div class="streak-info">
+                <span class="streak-days">5 day streak</span>
+                <span class="streak-best">Best: 12 days</span>
+              </div>
+            </div>
+            <div class="streak-weekly">
+              <div class="streak-dot active"></div>
+              <div class="streak-dot active"></div>
+              <div class="streak-dot active"></div>
+              <div class="streak-dot active"></div>
+              <div class="streak-dot today"></div>
+              <div class="streak-dot"></div>
+              <div class="streak-dot"></div>
+            </div>
+          </div>
+
+          <!-- This Week Stats -->
+          <div class="week-stats">
+            <div class="week-stat">
+              <div class="week-stat-header">
+                <span class="week-stat-value">8</span>
+                <span class="week-stat-trend up">↑ 60%</span>
+              </div>
+              <div class="week-stat-label">Applications</div>
+            </div>
+            <div class="week-stat">
+              <div class="week-stat-header">
+                <span class="week-stat-value">3</span>
+                <span class="week-stat-trend up">↑ 2</span>
+              </div>
+              <div class="week-stat-label">New captures</div>
+            </div>
+          </div>
+
+          <!-- Close to Graduation -->
+          <div class="graduation-callout">
+            <div class="graduation-header">
+              <span class="graduation-icon">🏆</span>
+              <span class="graduation-title">Almost there!</span>
+            </div>
+            <div class="graduation-item">
+              <span class="graduation-thought">"Deep listening builds trust..."</span>
+              <span class="graduation-remaining soon">1 more!</span>
+            </div>
+            <div class="graduation-item">
+              <span class="graduation-thought">"Start with why before how"</span>
+              <span class="graduation-remaining">2 more</span>
+            </div>
+          </div>
+
+          <!-- Compact Stats Footer -->
+          <div class="stats-footer">
+            <div class="stat-compact">
+              <span class="stat-compact-value">12</span>
+              <span class="stat-compact-label">active</span>
+            </div>
+            <div class="stat-compact-dot"></div>
+            <div class="stat-compact">
+              <span class="stat-compact-value">8</span>
+              <span class="stat-compact-label">graduated</span>
+            </div>
+            <div class="stat-compact-dot"></div>
+            <div class="stat-compact">
+              <span class="stat-compact-value">47</span>
+              <span class="stat-compact-label">applied</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="view-all">View Trophy Case →</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Theme Switcher Demo -->
+  <div class="theme-switcher">
+    <div class="theme-btn midnight active" onclick="setTheme('midnight')" title="Midnight"></div>
+    <div class="theme-btn obsidian" onclick="setTheme('obsidian')" title="Obsidian"></div>
+    <div class="theme-btn amethyst" onclick="setTheme('amethyst')" title="Amethyst"></div>
+    <div class="theme-btn cyber" onclick="setTheme('cyber')" title="Cyber"></div>
+    <div class="theme-btn aurora" onclick="setTheme('aurora')" title="Aurora"></div>
+  </div>
+
+  <script>
+    // Theme definitions matching globals.css
+    const themes = {
+      midnight: {
+        '--background': '#0a1628',
+        '--foreground': '#f8fafc',
+        '--card': '#111d35',
+        '--primary': '#f97316',
+        '--secondary': '#1a2844',
+        '--muted': '#1e3a5f',
+        '--muted-foreground': '#94a3b8',
+        '--border': '#1e3a5f',
+        '--ring': '#f97316',
+        '--success': '#10b981',
+        '--warning': '#f59e0b',
+        '--highlight': '#a78bfa',
+        '--ai-gradient-start': '#f97316',
+        '--ai-gradient-end': '#3b82f6',
+        '--ai-glow': 'rgba(249, 115, 22, 0.3)',
+        '--glass-body-gradient-start': '#0f0a1a',
+        '--glass-body-gradient-end': '#1a1025'
+      },
+      obsidian: {
+        '--background': '#09090b',
+        '--foreground': '#fafafa',
+        '--card': '#18181b',
+        '--primary': '#10b981',
+        '--secondary': '#27272a',
+        '--muted': '#3f3f46',
+        '--muted-foreground': '#a1a1aa',
+        '--border': '#3f3f46',
+        '--ring': '#10b981',
+        '--success': '#10b981',
+        '--warning': '#f59e0b',
+        '--highlight': '#a78bfa',
+        '--ai-gradient-start': '#10b981',
+        '--ai-gradient-end': '#3b82f6',
+        '--ai-glow': 'rgba(16, 185, 129, 0.3)',
+        '--glass-body-gradient-start': '#09090b',
+        '--glass-body-gradient-end': '#18181b'
+      },
+      amethyst: {
+        '--background': '#13111c',
+        '--foreground': '#f5f3ff',
+        '--card': '#1c1826',
+        '--primary': '#a78bfa',
+        '--secondary': '#2a2438',
+        '--muted': '#3b3450',
+        '--muted-foreground': '#a1a1aa',
+        '--border': '#3b3450',
+        '--ring': '#a78bfa',
+        '--success': '#10b981',
+        '--warning': '#f59e0b',
+        '--highlight': '#c084fc',
+        '--ai-gradient-start': '#a78bfa',
+        '--ai-gradient-end': '#ec4899',
+        '--ai-glow': 'rgba(167, 139, 250, 0.3)',
+        '--glass-body-gradient-start': '#13111c',
+        '--glass-body-gradient-end': '#1c1826'
+      },
+      cyber: {
+        '--background': '#0a0a0f',
+        '--foreground': '#f0f0ff',
+        '--card': '#12121a',
+        '--primary': '#00f0ff',
+        '--secondary': '#1a1a25',
+        '--muted': '#2a2a38',
+        '--muted-foreground': '#9090a0',
+        '--border': '#2a2a38',
+        '--ring': '#00f0ff',
+        '--success': '#00ff88',
+        '--warning': '#ffaa00',
+        '--highlight': '#aa00ff',
+        '--ai-gradient-start': '#00f0ff',
+        '--ai-gradient-end': '#ff00aa',
+        '--ai-glow': 'rgba(0, 240, 255, 0.4)',
+        '--glass-body-gradient-start': '#0a0a0f',
+        '--glass-body-gradient-end': '#12121a'
+      },
+      aurora: {
+        '--background': '#0a0f14',
+        '--foreground': '#f0fdf4',
+        '--card': '#111a20',
+        '--primary': '#22d3ee',
+        '--secondary': '#1a252d',
+        '--muted': '#2a3a44',
+        '--muted-foreground': '#8aa4b0',
+        '--border': '#2a3a44',
+        '--ring': '#22d3ee',
+        '--success': '#34d399',
+        '--warning': '#fbbf24',
+        '--highlight': '#a78bfa',
+        '--ai-gradient-start': '#22d3ee',
+        '--ai-gradient-end': '#c084fc',
+        '--ai-glow': 'rgba(34, 211, 238, 0.35)',
+        '--glass-body-gradient-start': '#0a0f14',
+        '--glass-body-gradient-end': '#111a20'
+      }
+    };
+
+    function setTheme(themeName) {
+      const theme = themes[themeName];
+      const root = document.documentElement;
+
+      Object.entries(theme).forEach(([property, value]) => {
+        root.style.setProperty(property, value);
+      });
+
+      // Update active button
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`.theme-btn.${themeName}`).classList.add('active');
+
+      root.setAttribute('data-theme', themeName);
+    }
+  </script>
+</body>
+</html>
