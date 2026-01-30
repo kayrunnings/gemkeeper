@@ -50,9 +50,9 @@ export function GrowQuadrant({
       return FALLBACK_TOPICS
     }
 
-    // Sort contexts by count (most active first) and take top 3
+    // Sort contexts by thought_count (most active first) and take top 3
     const topContexts = [...contexts]
-      .sort((a, b) => (b.count || 0) - (a.count || 0))
+      .sort((a, b) => (b.thought_count || 0) - (a.thought_count || 0))
       .slice(0, 3)
 
     return topContexts.map((context) => ({
