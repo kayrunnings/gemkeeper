@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { GoogleGenerativeAI } from "@google/generative-ai"
+import { buildWriteAssistPrompt } from "@/lib/ai/prompts"
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "")
 
@@ -48,21 +49,7 @@ export async function POST(request: NextRequest) {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
 
-    const systemPrompt = `You are a helpful writing assistant for a personal knowledge management app called ThoughtFolio.
-Your task is to help users improve their notes and writing.
-
-Guidelines:
-- Maintain the user's voice and style as much as possible
-- Keep the same general structure unless asked to change it
-- Be concise and clear
-- Return only the improved/modified text, without any explanations or preamble
-- Match the tone of the original text (formal, casual, etc.)
-- Preserve any markdown formatting if present
-
-User's request: ${prompt}
-
-Text to process:
-${text}`
+    const systemPrompt = buildWriteAssistPrompt(prompt, text)
 
     const result = await model.generateContent(systemPrompt)
     const response = await result.response

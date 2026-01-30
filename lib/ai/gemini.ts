@@ -2,6 +2,14 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 import { ContextTag } from "@/lib/types/thought"
 import type { GeneratedDiscovery, DiscoverySourceType, DiscoveryContentType } from "@/lib/types/discovery"
 import type { Context } from "@/lib/types/context"
+import {
+  THOUGHT_EXTRACTION_PROMPT,
+  MULTIMEDIA_EXTRACTION_PROMPT,
+  DISCOVERY_WEB_SEARCH_PROMPT,
+  DISCOVERY_FALLBACK_PROMPT,
+  DEFAULT_CONTEXTS,
+  formatContextsForPrompt,
+} from "./prompts"
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
 
@@ -16,71 +24,26 @@ export interface ExtractionResult {
   tokens_used: number
 }
 
-const EXTRACTION_SYSTEM_PROMPT = `You are a wisdom extractor for ThoughtFolio, an app that helps users capture and apply insights in specific contexts.
+// Build extraction prompt with user's contexts
+function buildExtractionPrompt(contexts?: Context[]): string {
+  const contextsList = contexts && contexts.length > 0
+    ? formatContextsForPrompt(contexts)
+    : DEFAULT_CONTEXTS
+  return THOUGHT_EXTRACTION_PROMPT.replace('{contexts_list}', contextsList)
+}
 
-Given text content, identify 3-7 key insights that would be valuable to remember and apply in daily life.
-
-For each insight:
-1. Extract a concise, memorable phrase (under 200 characters)
-2. Focus on actionable wisdom, not facts or summaries
-3. Prefer direct quotes when they're powerful, otherwise paraphrase
-4. Suggest the most appropriate context where this insight would be useful
-
-Available contexts (pick the best fit for when to apply this insight):
-- meetings: Insights for professional meetings, 1:1s, standups, team discussions
-- feedback: Giving or receiving feedback, performance conversations, reviews
-- conflict: Handling disagreements, difficult conversations, negotiations
-- focus: Productivity, deep work, concentration, time management
-- health: Physical/mental wellness, self-care, exercise, mindfulness
-- relationships: Personal relationships, communication, social interactions
-- parenting: Child-rearing, family dynamics, teaching kids
-- other: General wisdom that doesn't fit above categories
-
-Return valid JSON only, no markdown code blocks:
-{
-  "thoughts": [
-    {
-      "content": "The extracted insight text",
-      "context_tag": "feedback",
-      "source_quote": "Original text this came from (if applicable)"
-    }
-  ]
-}`
-
-const MULTIMEDIA_EXTRACTION_PROMPT = `You are a wisdom extractor for ThoughtFolio, an app that helps users capture and apply insights in specific contexts.
-
-Analyze the provided content (which may include images, audio transcripts, or video content) and identify 3-7 key insights that would be valuable to remember and apply in daily life.
-
-For each insight:
-1. Extract a concise, memorable phrase (under 200 characters)
-2. Focus on actionable wisdom, not facts or summaries
-3. Describe visual or audio insights when relevant
-4. Suggest the most appropriate context where this insight would be useful
-
-Available contexts (pick the best fit for when to apply this insight):
-- meetings: Insights for professional meetings, 1:1s, standups, team discussions
-- feedback: Giving or receiving feedback, performance conversations, reviews
-- conflict: Handling disagreements, difficult conversations, negotiations
-- focus: Productivity, deep work, concentration, time management
-- health: Physical/mental wellness, self-care, exercise, mindfulness
-- relationships: Personal relationships, communication, social interactions
-- parenting: Child-rearing, family dynamics, teaching kids
-- other: General wisdom that doesn't fit above categories
-
-Return valid JSON only, no markdown code blocks:
-{
-  "thoughts": [
-    {
-      "content": "The extracted insight text",
-      "context_tag": "feedback",
-      "source_quote": "Description of where this insight came from"
-    }
-  ]
-}`
+// Build multimedia extraction prompt with user's contexts
+function buildMultimediaPrompt(contexts?: Context[]): string {
+  const contextsList = contexts && contexts.length > 0
+    ? formatContextsForPrompt(contexts)
+    : DEFAULT_CONTEXTS
+  return MULTIMEDIA_EXTRACTION_PROMPT.replace('{contexts_list}', contextsList)
+}
 
 export async function extractThoughtsFromContent(
   content: string,
-  source?: string
+  source?: string,
+  contexts?: Context[]
 ): Promise<ExtractionResult> {
   const model = genAI.getGenerativeModel({
     model: "gemini-2.0-flash-001",
@@ -95,7 +58,7 @@ export async function extractThoughtsFromContent(
     : content
 
   const result = await model.generateContent([
-    { text: EXTRACTION_SYSTEM_PROMPT },
+    { text: buildExtractionPrompt(contexts) },
     { text: userPrompt },
   ])
 
@@ -106,9 +69,9 @@ export async function extractThoughtsFromContent(
   const usage = response.usageMetadata
   const tokensUsed = (usage?.promptTokenCount || 0) + (usage?.candidatesTokenCount || 0)
 
-  // Validate and sanitize the extracted thoughts
+  // Validate and sanitize the extracted thoughts (300 char limit)
   const validatedThoughts: ExtractedThought[] = (parsed.thoughts || []).map((thought: Record<string, unknown>) => ({
-    content: String(thought.content || "").slice(0, 200),
+    content: String(thought.content || "").slice(0, 300),
     context_tag: isValidContextTag(thought.context_tag) ? thought.context_tag : "other",
     source_quote: thought.source_quote ? String(thought.source_quote) : undefined,
   }))
@@ -122,7 +85,8 @@ export async function extractThoughtsFromContent(
 export async function extractThoughtsFromMultimedia(
   textContent: string,
   mediaData: Array<{ mimeType: string; data: string }>,
-  source?: string
+  source?: string,
+  contexts?: Context[]
 ): Promise<ExtractionResult> {
   const model = genAI.getGenerativeModel({
     model: "gemini-2.0-flash-001",
@@ -133,7 +97,7 @@ export async function extractThoughtsFromMultimedia(
   })
 
   const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
-    { text: MULTIMEDIA_EXTRACTION_PROMPT },
+    { text: buildMultimediaPrompt(contexts) },
   ]
 
   // Add media files
@@ -162,9 +126,9 @@ export async function extractThoughtsFromMultimedia(
   const usage = response.usageMetadata
   const tokensUsed = (usage?.promptTokenCount || 0) + (usage?.candidatesTokenCount || 0)
 
-  // Validate and sanitize the extracted thoughts
+  // Validate and sanitize the extracted thoughts (300 char limit)
   const validatedThoughts: ExtractedThought[] = (parsed.thoughts || []).map((thought: Record<string, unknown>) => ({
-    content: String(thought.content || "").slice(0, 200),
+    content: String(thought.content || "").slice(0, 300),
     context_tag: isValidContextTag(thought.context_tag) ? thought.context_tag : "other",
     source_quote: thought.source_quote ? String(thought.source_quote) : undefined,
   }))
@@ -195,70 +159,6 @@ export interface DiscoveryGenerationResult {
   discoveries: GeneratedDiscovery[]
   tokens_used: number
 }
-
-// Prompt for web search grounding mode
-const DISCOVERY_WEB_SEARCH_PROMPT = `You are a knowledge curator helping users discover new insights from the web.
-
-Search the web and find 8 high-quality articles, blog posts, or resources that contain actionable wisdom.
-
-For each piece of content you find:
-1. Extract ONE key insight (max 200 characters) - a concise, memorable phrase
-2. Provide the source title and URL from your search results
-3. Write a 2-3 sentence summary of the content
-4. Explain why this is relevant to the user's interests
-5. Classify as "trending" (recent/current) or "evergreen" (timeless)
-6. Suggest which context it fits best
-
-Return valid JSON only:
-{
-  "discoveries": [
-    {
-      "thought_content": "The key insight (max 200 chars)",
-      "source_title": "Article title",
-      "source_url": "https://example.com/article",
-      "source_type": "article|video|research|blog",
-      "article_summary": "2-3 sentence summary",
-      "relevance_reason": "Why relevant to user",
-      "content_type": "trending|evergreen",
-      "suggested_context_slug": "context-slug"
-    }
-  ]
-}`
-
-// Fallback prompt when web search is not available
-const DISCOVERY_FALLBACK_PROMPT = `You are a knowledge curator for ThoughtFolio, helping users discover valuable insights and wisdom.
-
-Your task is to recommend 8 pieces of wisdom, insights, or knowledge that would be valuable based on the user's interests.
-
-For each recommendation:
-1. Create ONE key insight (max 200 characters) - a concise, memorable, actionable phrase
-2. Attribute it to a real source (book, thought leader, research, article)
-3. Write a 2-3 sentence explanation of why this insight is valuable
-4. Explain how it relates to the user's interests
-5. Classify as "trending" (contemporary/modern) or "evergreen" (timeless wisdom)
-6. Suggest which context it fits best (from the available contexts)
-
-Focus on:
-- Actionable wisdom that can be applied in daily life
-- Insights from reputable sources (books, research, experts)
-- Practical advice relevant to the user's contexts
-- A mix of classic wisdom and modern insights
-
-Return valid JSON only, no markdown code blocks:
-{
-  "discoveries": [
-    {
-      "thought_content": "The key insight (max 200 chars)",
-      "source_title": "Book title, article, or source name",
-      "source_url": "https://example.com/source",
-      "source_type": "article|video|research|blog",
-      "article_summary": "2-3 sentence explanation of the insight",
-      "relevance_reason": "Why this is relevant to the user",
-      "content_type": "trending|evergreen",
-      "suggested_context_slug": "the-context-slug"
-    }
-  ]
-}`
 
 /**
  * Generate discoveries using Gemini with Google Search grounding (with fallback)
@@ -366,13 +266,13 @@ Find 8 high-quality discoveries and return them as JSON.`
     const usage = response.usageMetadata
     const tokensUsed = (usage?.promptTokenCount || 0) + (usage?.candidatesTokenCount || 0)
 
-    // Validate and sanitize discoveries
+    // Validate and sanitize discoveries (300 char limit)
     const validatedDiscoveries: GeneratedDiscovery[] = (parsed.discoveries || [])
       .slice(0, 8)
       .map((d: unknown) => {
         const discovery = d as Record<string, unknown>
         return {
-          thought_content: String(discovery.thought_content || "").slice(0, 200),
+          thought_content: String(discovery.thought_content || "").slice(0, 300),
           source_title: String(discovery.source_title || "Unknown Source"),
           source_url: String(discovery.source_url || ""),
           source_type: isValidSourceType(discovery.source_type) ? discovery.source_type : "article",

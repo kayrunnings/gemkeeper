@@ -1,42 +1,48 @@
-# AI Prompts Review & Improvement Recommendations
+/**
+ * Centralized AI Prompts for ThoughtFolio
+ *
+ * All AI prompts are defined here for consistency and easy maintenance.
+ * Version: 2.0 (January 2026 - Full review and optimization)
+ *
+ * @see /Claude Context/AI-PROMPTS-REVIEW.md for detailed prompt documentation
+ */
 
-## Overview
+import type { Context } from "@/lib/types/context"
 
-ThoughtFolio uses **Google Gemini 2.0 Flash** (and 1.5 Flash for grounded search) across **9 distinct AI features**. This document catalogs all prompts, identifies issues, and provides finalized improved prompts.
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
 
-**Status:** All 9 prompts reviewed and finalized.
+/**
+ * Format contexts list for prompt injection
+ */
+export function formatContextsForPrompt(contexts: Context[]): string {
+  if (contexts.length === 0) {
+    return `- other: General knowledge that doesn't fit a specific context`
+  }
 
----
+  return contexts
+    .map((c) => `- ${c.slug}: ${c.name}`)
+    .join('\n')
+}
 
-## Summary of AI Features
+/**
+ * Default contexts when user has none defined
+ */
+export const DEFAULT_CONTEXTS = `- meetings: Professional meetings, 1:1s, standups, team discussions
+- feedback: Giving or receiving feedback, performance reviews
+- conflict: Difficult conversations, disagreements, negotiations
+- focus: Productivity, deep work, managing attention
+- health: Physical/mental wellness, self-care decisions
+- relationships: Personal relationships, communication moments
+- parenting: Teaching children, family decisions
+- other: General knowledge that doesn't fit above categories`
 
-| Feature | File Location | Model | Purpose |
-|---------|--------------|-------|---------|
-| Thought Extraction | `lib/ai/gemini.ts` | gemini-2.0-flash-001 | Extract insights from text content |
-| Multimedia Extraction | `lib/ai/gemini.ts` | gemini-2.0-flash-001 | Extract insights from images/media/voice |
-| Capture Analysis | `app/api/capture/analyze/route.ts` | gemini-2.0-flash-001 | Categorize and parse captured content |
-| Write Assist | `app/api/ai/write-assist/route.ts` | gemini-2.0-flash | Help improve notes/writing |
-| TF Thinks (Insights) | `app/api/tf/insights/route.ts` | gemini-2.0-flash-001 | Generate personalized behavioral insights |
-| Discovery (Web) | `lib/ai/gemini.ts` | gemini-1.5-flash | Find relevant web content |
-| Discovery (Fallback) | `lib/ai/gemini.ts` | gemini-2.0-flash-001 | Recommend wisdom without web search |
-| Schedule Parse | `app/api/schedules/parse/route.ts` | gemini-2.0-flash-001 | Parse natural language schedules |
-| Moment Matching | `lib/matching.ts` | gemini-2.0-flash-001 | Match thoughts to upcoming situations |
+// =============================================================================
+// 1. THOUGHT EXTRACTION (Text Content)
+// =============================================================================
 
----
-
-## Finalized Prompts
-
-### 1. Thought Extraction (`lib/ai/gemini.ts`) - FINAL
-
-**Current Issues:**
-- "Actionable wisdom" is vague
-- No user voice preservation
-- No deduplication guidance
-- Hard-coded 3-7 limit
-
-**FINAL Prompt:**
-```
-You are a knowledge extractor for ThoughtFolio, helping users capture
+export const THOUGHT_EXTRACTION_PROMPT = `You are a knowledge extractor for ThoughtFolio, helping users capture
 insights and useful facts they'll remember and apply when the moment calls for it.
 
 Given text content, extract the KEY insights. Quality over quantity -
@@ -62,20 +68,23 @@ Review the user's contexts below and pick the best fit.
 Use "other" for general knowledge that doesn't fit a specific context.
 
 {contexts_list}
-```
 
----
+Return valid JSON only, no markdown code blocks:
+{
+  "thoughts": [
+    {
+      "content": "The extracted insight text",
+      "context_tag": "context-slug",
+      "source_quote": "Original text this came from (if applicable)"
+    }
+  ]
+}`
 
-### 2. Multimedia Extraction (`lib/ai/gemini.ts`) - FINAL
+// =============================================================================
+// 2. MULTIMEDIA EXTRACTION (Images, Audio)
+// =============================================================================
 
-**Current Issues:**
-- No OCR guidance for text in images
-- Doesn't differentiate image types
-- Mentions unsupported audio/video
-
-**FINAL Prompt (with future voice support):**
-```
-You are a knowledge extractor for ThoughtFolio, helping users capture
+export const MULTIMEDIA_EXTRACTION_PROMPT = `You are a knowledge extractor for ThoughtFolio, helping users capture
 insights from images and audio they'll remember and apply when the moment calls for it.
 
 Analyze the provided content and extract the KEY insights. Quality over quantity.
@@ -117,21 +126,23 @@ Review the user's contexts below and pick the best fit.
 Use "other" for general knowledge that doesn't fit a specific context.
 
 {contexts_list}
-```
 
----
+Return valid JSON only, no markdown code blocks:
+{
+  "thoughts": [
+    {
+      "content": "The extracted insight text",
+      "context_tag": "context-slug",
+      "source_quote": "Description of where this insight came from"
+    }
+  ]
+}`
 
-### 3. Capture Analysis (`app/api/capture/analyze/route.ts`) - FINAL
+// =============================================================================
+// 3. CAPTURE ANALYSIS (Smart Intake)
+// =============================================================================
 
-**Current Issues:**
-- Thought vs Note distinction is purely length-based
-- Hard-coded context list
-- Weak source detection
-- Doesn't separate quotes from commentary
-
-**FINAL Prompt:**
-```
-You are a smart intake assistant for ThoughtFolio, helping users quickly
+export const CAPTURE_ANALYSIS_PROMPT = `You are a smart intake assistant for ThoughtFolio, helping users quickly
 categorize and organize what they've captured.
 
 Analyze the content and SEPARATE it into distinct items:
@@ -170,21 +181,67 @@ Review the user's contexts below and pick the best fit.
 Use "other" for general knowledge that doesn't fit a specific context.
 
 {contexts_list}
-```
 
----
+Return valid JSON only:
+{
+  "items": [
+    {
+      "type": "thought|note|source",
+      "content": "The extracted content",
+      "source": "Author or source name if mentioned",
+      "sourceUrl": "URL if available"
+    }
+  ]
+}`
 
-### 4. Write Assist (`app/api/ai/write-assist/route.ts`) - FINAL
+// =============================================================================
+// 4. IMAGE ANALYSIS (for Capture)
+// =============================================================================
 
-**Current Issues:**
-- "Improve" is undefined
-- Voice preservation is weak
-- No examples of different request types
-- May over-edit into AI-speak
+export const IMAGE_ANALYSIS_PROMPT = `You are a knowledge extractor for ThoughtFolio. Analyze the provided image(s)
+and any accompanying text to extract valuable insights.
 
-**FINAL Prompt:**
-```
-You are a writing assistant for ThoughtFolio notes. Help the user with their specific request.
+HOW TO HANDLE DIFFERENT IMAGE TYPES:
+
+**Photos of text (books, articles, screenshots, Kindle highlights):**
+- Extract the EXACT text/quotes shown
+- Preserve the original wording precisely
+- Note the visible source/author if shown
+
+**Diagrams, charts, or infographics:**
+- Translate the visual concept into a memorable insight
+- Focus on the key takeaway, not describing the visual
+
+**Handwritten notes or whiteboards:**
+- Transcribe the content accurately
+- Organize messy notes into clear, distinct insights
+
+**Social media posts or messages:**
+- Extract the notable quote or insight
+- Include the author/handle if visible
+
+For each item:
+- type: "thought" (max 300 chars), "note" (longer), or "source" (reference)
+- content: The extracted content
+- source: Author or source name if visible
+
+Return valid JSON only:
+{
+  "items": [
+    {
+      "type": "thought|note|source",
+      "content": "The extracted content",
+      "source": "Author or source name if visible"
+    }
+  ]
+}`
+
+// =============================================================================
+// 5. WRITE ASSIST
+// =============================================================================
+
+export function buildWriteAssistPrompt(userPrompt: string, text: string): string {
+  return `You are a writing assistant for ThoughtFolio notes. Help the user with their specific request.
 
 CRITICAL RULES:
 1. Return ONLY the modified text - no preamble like "Here's the improved version:"
@@ -224,25 +281,17 @@ WHAT TO AVOID:
 - Making casual notes sound like business documents
 - Adding bullet points or structure the user didn't ask for
 
-User's request: ${prompt}
+User's request: ${userPrompt}
 
 Text to process:
-${text}
-```
+${text}`
+}
 
----
+// =============================================================================
+// 6. TF THINKS (AI Insights)
+// =============================================================================
 
-### 5. TF Thinks / Insights (`app/api/tf/insights/route.ts`) - FINAL
-
-**Current Issues:**
-- Identity says "ThoughtFlow" (wrong name)
-- Insights can feel generic
-- No guidance on variety
-- No sparse data handling
-
-**FINAL Prompt:**
-```
-You are TF, the AI companion inside ThoughtFolio. Generate personalized insights
+export const TF_THINKS_PROMPT = `You are TF, the AI companion inside ThoughtFolio. Generate personalized insights
 about the user's patterns and activity.
 
 ## Your Personality
@@ -262,7 +311,7 @@ about the user's patterns and activity.
 Generate 3-5 DIVERSE insights. Each must:
 1. Reference SPECIFIC data (actual numbers, context names, timeframes)
 2. Be 1-2 sentences maximum
-3. Use formatting: **bold** for numbers, `backticks` for context names, _italics_ for emphasis
+3. Use formatting: **bold** for numbers, \`backticks\` for context names, _italics_ for emphasis
 
 ## Insight Categories (aim for variety across these):
 
@@ -271,15 +320,15 @@ Generate 3-5 DIVERSE insights. Each must:
 - "You've added **7 thoughts** in the last 3 days — on a learning streak!"
 
 **Context insights:**
-- "Your `Focus` thoughts get applied _3x more_ than other contexts."
-- "`Health` hasn't seen new thoughts in _2 weeks_ — intentional break?"
+- "Your \`Focus\` thoughts get applied _3x more_ than other contexts."
+- "\`Health\` hasn't seen new thoughts in _2 weeks_ — intentional break?"
 
 **Calendar connections (if available):**
-- "Tomorrow has **4 meetings**. Your `Meetings` thoughts might come in handy."
-- "Light calendar this week — good time for those `Focus` thoughts?"
+- "Tomorrow has **4 meetings**. Your \`Meetings\` thoughts might come in handy."
+- "Light calendar this week — good time for those \`Focus\` thoughts?"
 
 **Progress & milestones:**
-- "**3 thoughts** graduated this month! Your `Feedback` insights are really sticking."
+- "**3 thoughts** graduated this month! Your \`Feedback\` insights are really sticking."
 - "You've applied thoughts **12 times** this month — that's _double_ last month."
 
 **Engagement patterns:**
@@ -297,21 +346,22 @@ If user has very little data (< 5 thoughts, no check-ins):
 - Focus on encouraging first steps
 - Reference what little data exists specifically
 - Keep it to 2 insights max
-```
 
----
+Return valid JSON only, no markdown code blocks:
+{
+  "insights": [
+    {
+      "id": "unique-id",
+      "message": "The insight text with **bold**, \`context\`, and _highlight_ formatting"
+    }
+  ]
+}`
 
-### 6. Discovery - Web Search (`lib/ai/gemini.ts`) - FINAL
+// =============================================================================
+// 7. DISCOVERY - WEB SEARCH
+// =============================================================================
 
-**Current Issues:**
-- "Actionable wisdom" is vague
-- No quality criteria for sources
-- No variety enforcement
-- Could return clickbait or listicles
-
-**FINAL Prompt:**
-```
-You are a knowledge curator for ThoughtFolio. Search the web for high-quality
+export const DISCOVERY_WEB_SEARCH_PROMPT = `You are a knowledge curator for ThoughtFolio. Search the web for high-quality
 content the user will find valuable based on their interests.
 
 ## Search Strategy
@@ -355,21 +405,28 @@ BAD: "This article discusses communication strategies" (that's a summary)
 
 GOOD: "Schedule your most creative work for your biological peak hours, not just 'when you have time'"
 BAD: "Productivity tips for better time management" (too vague)
-```
 
----
+Return valid JSON only:
+{
+  "discoveries": [
+    {
+      "thought_content": "The key insight (max 300 chars)",
+      "source_title": "Article title",
+      "source_url": "https://example.com/article",
+      "source_type": "article|video|research|blog",
+      "article_summary": "2-3 sentence summary",
+      "relevance_reason": "Why relevant to user",
+      "content_type": "trending|evergreen",
+      "suggested_context_slug": "context-slug"
+    }
+  ]
+}`
 
-### 7. Discovery - Fallback (`lib/ai/gemini.ts`) - FINAL
+// =============================================================================
+// 8. DISCOVERY - FALLBACK (No Web Search)
+// =============================================================================
 
-**Current Issues:**
-- Hallucination risk - AI fabricates URLs
-- Asks for URLs without web access
-- No disclaimer about non-web results
-- Could recommend non-existent sources
-
-**FINAL Prompt:**
-```
-You are a knowledge curator for ThoughtFolio. WITHOUT web access, recommend
+export const DISCOVERY_FALLBACK_PROMPT = `You are a knowledge curator for ThoughtFolio. WITHOUT web access, recommend
 wisdom from well-known sources you're confident exist.
 
 ## CRITICAL CONSTRAINTS
@@ -416,21 +473,28 @@ For each recommendation:
 - Made-up article: "10 Tips for Better Meetings" from random-site.com
 - Obscure book you're not sure exists
 - Influencer content without lasting value
-```
 
----
+Return valid JSON only, no markdown code blocks:
+{
+  "discoveries": [
+    {
+      "thought_content": "The key insight (max 300 chars)",
+      "source_title": "Book title or source name",
+      "source_url": "",
+      "source_type": "book|research|framework|quote",
+      "article_summary": "Why this is valuable",
+      "relevance_reason": "How it connects to user",
+      "content_type": "evergreen",
+      "suggested_context_slug": "context-slug"
+    }
+  ]
+}`
 
-### 8. Schedule Parse (`app/api/schedules/parse/route.ts`) - FINAL
+// =============================================================================
+// 9. SCHEDULE PARSE
+// =============================================================================
 
-**Current Issues:**
-- Limited examples (only 5)
-- No interpretation rules for time words
-- Vague ambiguity handling
-- Missing common patterns
-
-**FINAL Prompt:**
-```
-Parse natural language into a recurring schedule. Be smart about ambiguity.
+export const SCHEDULE_PARSE_PROMPT = `Parse natural language into a recurring schedule. Be smart about ambiguity.
 
 INPUT: "{user_input}"
 
@@ -491,23 +555,13 @@ INPUT: "{user_input}"
 - If no days specified, default to daily
 - "Every other X" → treat as "every X" (cron can't do alternating)
 
-Return ONLY the JSON object.
-```
+Return ONLY the JSON object.`
 
----
+// =============================================================================
+// 10. MOMENT MATCHING
+// =============================================================================
 
-### 9. Moment Matching (`lib/matching.ts`) - FINAL
-
-**Current Issues:**
-- "Underlying principles" criteria too broad - matches anything
-- Context tag overweighted as matching signal
-- No negative examples of what NOT to match
-- Relevance reasons are generic ("this is about meetings")
-- Generic wisdom matches everything
-
-**FINAL Prompt:**
-```
-You are a precision matching assistant. Match ONLY highly relevant insights
+export const MOMENT_MATCHING_PROMPT = `You are a precision matching assistant. Match ONLY highly relevant insights
 to the user's upcoming moment. Quality over quantity - it's better to return
 fewer strong matches than many weak ones.
 
@@ -563,41 +617,11 @@ Return JSON array (max 5 matches, minimum score 0.5):
 ]
 
 Return empty array [] if nothing truly fits.
-JSON only, no other text.
-```
+JSON only, no other text.`
 
----
+// =============================================================================
+// PROMPT VERSION TRACKING
+// =============================================================================
 
-## Cross-Cutting Improvements
-
-### Consistency Changes Made
-- **Character limit**: Standardized to 300 characters (was 200)
-- **Context handling**: All prompts now use dynamic `{contexts_list}`
-- **Voice preservation**: Emphasized across extraction and write assist prompts
-- **Quality over quantity**: Removed hard-coded limits, let content dictate
-
-### Implementation Status
-
-**Completed:**
-- **Created `lib/ai/prompts.ts`**: All prompts centralized with version tracking (v2.0.0)
-- **Updated all API routes**: Using imported prompts from centralized file
-- **Character limit updated**: 300 characters across all extraction functions
-
-**Files updated:**
-- `lib/ai/prompts.ts` - New centralized prompts file
-- `lib/ai/gemini.ts` - Uses new extraction and discovery prompts
-- `lib/matching.ts` - Uses new moment matching prompt
-- `app/api/capture/analyze/route.ts` - Uses new capture analysis prompt
-- `app/api/ai/write-assist/route.ts` - Uses new write assist prompt
-- `app/api/tf/insights/route.ts` - Uses new TF thinks prompt
-- `app/api/schedules/parse/route.ts` - Uses new schedule parse prompt
-
-**Future enhancements:**
-- Add A/B testing for prompt variations
-- Track which prompt version generated each result
-- Add metrics to measure prompt effectiveness
-
----
-
-*Document created: January 2026*
-*Last updated: January 2026 - All 9 prompts finalized and implemented*
+export const PROMPT_VERSION = "2.0.0"
+export const PROMPT_UPDATED = "2026-01-30"

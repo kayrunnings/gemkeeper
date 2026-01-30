@@ -2,33 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { createClient } from "@/lib/supabase/server"
 import type { NLPScheduleResult, ScheduleType } from "@/types/schedules"
+import { SCHEDULE_PARSE_PROMPT } from "@/lib/ai/prompts"
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
-
-const SCHEDULE_PARSE_PROMPT = `Parse this natural language schedule into a structured format.
-
-INPUT: "{user_input}"
-
-Return JSON with:
-- cron_expression: standard cron format (minute hour day month weekday)
-- human_readable: friendly text like "Every Tuesday at 2:00 PM"
-- schedule_type: "daily" | "weekly" | "monthly" | "custom"
-- days_of_week: array of 0-6 (0=Sunday) or null
-- time_of_day: "HH:MM" 24-hour format
-- day_of_month: 1-31 or -1 for last day or null
-- confidence: 0.0-1.0
-
-Examples:
-"every tuesday at 2pm" → {"cron_expression":"0 14 * * 2","human_readable":"Every Tuesday at 2:00 PM","schedule_type":"weekly","days_of_week":[2],"time_of_day":"14:00","day_of_month":null,"confidence":0.95}
-"weekday mornings at 8" → {"cron_expression":"0 8 * * 1-5","human_readable":"Every weekday at 8:00 AM","schedule_type":"weekly","days_of_week":[1,2,3,4,5],"time_of_day":"08:00","day_of_month":null,"confidence":0.9}
-"every day at 9am" → {"cron_expression":"0 9 * * *","human_readable":"Every day at 9:00 AM","schedule_type":"daily","days_of_week":null,"time_of_day":"09:00","day_of_month":null,"confidence":0.95}
-"first of every month at noon" → {"cron_expression":"0 12 1 * *","human_readable":"1st of every month at 12:00 PM","schedule_type":"monthly","days_of_week":null,"time_of_day":"12:00","day_of_month":1,"confidence":0.9}
-"last day of the month at 5pm" → {"cron_expression":"0 17 L * *","human_readable":"Last day of every month at 5:00 PM","schedule_type":"monthly","days_of_week":null,"time_of_day":"17:00","day_of_month":-1,"confidence":0.9}
-
-For ambiguous inputs (like "sometime in the morning" or "occasionally"), return low confidence (0.3-0.5) with your best guess.
-If completely unparseable, return confidence 0.1 with a daily 9am schedule as default.
-
-Return ONLY the JSON object, no additional text.`
 
 function isValidScheduleType(type: unknown): type is ScheduleType {
   return typeof type === "string" && ["daily", "weekly", "monthly", "custom"].includes(type)
