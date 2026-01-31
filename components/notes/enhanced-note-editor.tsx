@@ -52,10 +52,14 @@ import {
   RefreshCw,
   Pencil,
   FileX,
+  BookOpen,
 } from "lucide-react"
 import { RichTextEditor } from "./rich-text-editor"
 import { cn } from "@/lib/utils"
 import { linkThoughtToNote, unlinkThoughtFromNote, getLinkedThoughts } from "@/lib/note-links"
+import { getNoteSourceIds, setNoteSources, getNoteSources } from "@/lib/note-sources"
+import { MultiSourceSelector } from "@/components/sources/SourceSelector"
+import type { Source } from "@/lib/types/source"
 
 interface Context {
   id: string
@@ -121,6 +125,8 @@ export function EnhancedNoteEditor({
   const [linkingThought, setLinkingThought] = useState(false)
   const [showThoughtPicker, setShowThoughtPicker] = useState(false)
   const [thoughtSearchQuery, setThoughtSearchQuery] = useState("")
+  const [linkedSourceIds, setLinkedSourceIds] = useState<string[]>([])
+  const [isLoadingSources, setIsLoadingSources] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [draftSaved, setDraftSaved] = useState(false)
   const [currentDraftId, setCurrentDraftId] = useState<string | undefined>(undefined)
@@ -134,6 +140,7 @@ export function EnhancedNoteEditor({
 
   // Collapsible sections state
   const [attachmentsOpen, setAttachmentsOpen] = useState(true)
+  const [sourcesOpen, setSourcesOpen] = useState(true)
   const [thoughtsOpen, setThoughtsOpen] = useState(true)
   const [extractedOpen, setExtractedOpen] = useState(true)
 
@@ -240,8 +247,9 @@ export function EnhancedNoteEditor({
         } else {
           setAttachments([])
         }
-        // Load linked thoughts
+        // Load linked thoughts and sources
         loadLinkedThoughts(note.id)
+        loadLinkedSources(note.id)
       } else {
         // New note - reset everything
         setTitle("")
@@ -249,6 +257,7 @@ export function EnhancedNoteEditor({
         setSelectedFolderId(null)
         setAttachments([])
         setLinkedThoughts([])
+        setLinkedSourceIds([])
         setCurrentDraftId(undefined)
       }
       setExtractedThoughts([])
@@ -266,6 +275,15 @@ export function EnhancedNoteEditor({
     }
   }
 
+  const loadLinkedSources = async (noteId: string) => {
+    setIsLoadingSources(true)
+    const { data, error } = await getNoteSourceIds(noteId)
+    if (!error && data) {
+      setLinkedSourceIds(data)
+    }
+    setIsLoadingSources(false)
+  }
+
   const handleSave = async () => {
     setIsSaving(true)
     try {
@@ -276,7 +294,15 @@ export function EnhancedNoteEditor({
       }
       // Pass note ID (or draft ID if editing a draft)
       const existingId = note?.id || currentDraftId
+
+      // Save the note first
       onSave(noteData, existingId)
+
+      // If we have an existing note ID, save the source links
+      if (existingId) {
+        await setNoteSources(existingId, linkedSourceIds)
+      }
+
       onClose()
     } finally {
       setIsSaving(false)
@@ -852,6 +878,43 @@ export function EnhancedNoteEditor({
                     No attachments
                   </p>
                 )}
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Sources Section */}
+            <Collapsible open={sourcesOpen} onOpenChange={setSourcesOpen}>
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-muted transition-colors">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  <span className="font-medium">Sources</span>
+                  {linkedSourceIds.length > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {linkedSourceIds.length}
+                    </Badge>
+                  )}
+                </div>
+                {sourcesOpen ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-2 space-y-2">
+                {isLoadingSources ? (
+                  <div className="flex items-center justify-center py-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                ) : (
+                  <MultiSourceSelector
+                    selectedSourceIds={linkedSourceIds}
+                    onSourcesChange={setLinkedSourceIds}
+                    placeholder="Link sources..."
+                    allowCreate={true}
+                  />
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Link this note to books, articles, or other sources
+                </p>
               </CollapsibleContent>
             </Collapsible>
 

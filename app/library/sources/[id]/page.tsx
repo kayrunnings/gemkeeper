@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { getSource, updateSource, deleteSource, updateSourceStatus } from "@/lib/sources"
+import { getSourceNotes } from "@/lib/note-sources"
+import { getSourceContexts } from "@/lib/source-contexts"
 import { Source, SOURCE_TYPE_LABELS, SOURCE_TYPE_ICONS, SourceType, SourceStatus, SOURCE_STATUS_LABELS, SOURCE_STATUS_ICONS } from "@/lib/types/source"
 import { Thought } from "@/lib/types/thought"
+import type { Context } from "@/lib/types/context"
 import { LayoutShell } from "@/components/layout-shell"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -37,6 +40,9 @@ import {
   CheckCircle,
   Zap,
   ChevronDown,
+  StickyNote,
+  BarChart3,
+  Tag,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -55,6 +61,8 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
   const router = useRouter()
   const [source, setSource] = useState<Source | null>(null)
   const [linkedThoughts, setLinkedThoughts] = useState<Thought[]>([])
+  const [linkedNotes, setLinkedNotes] = useState<Array<{ id: string; title: string | null; created_at: string }>>([])
+  const [linkedContexts, setLinkedContexts] = useState<Array<Context & { is_primary: boolean }>>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -62,6 +70,10 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const { showError, showSuccess } = useToast()
+
+  // Tab state
+  type Tab = "thoughts" | "notes" | "stats"
+  const [activeTab, setActiveTab] = useState<Tab>("thoughts")
 
   // Edit form state
   const [editName, setEditName] = useState("")
@@ -108,6 +120,15 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
         .order("created_at", { ascending: false })
 
       setLinkedThoughts(thoughts || [])
+
+      // Load linked notes
+      const { data: notes } = await getSourceNotes(id)
+      setLinkedNotes(notes || [])
+
+      // Load linked contexts
+      const { data: contexts } = await getSourceContexts(id)
+      setLinkedContexts(contexts || [])
+
       setIsLoading(false)
     }
 
@@ -384,7 +405,7 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
           </div>
 
           {/* Stats sidebar */}
-          <div>
+          <div className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Stats</CardTitle>
@@ -406,6 +427,13 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground flex items-center gap-2">
+                    <StickyNote className="h-4 w-4" />
+                    Notes
+                  </span>
+                  <span className="font-medium">{linkedNotes.length}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground flex items-center gap-2">
                     <CheckCircle className="h-4 w-4" />
                     Applications
                   </span>
@@ -416,94 +444,197 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Linked Contexts */}
+            {linkedContexts.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Tag className="h-4 w-4" />
+                    Contexts
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {linkedContexts.map((context) => (
+                      <Badge
+                        key={context.id}
+                        variant={context.is_primary ? "default" : "secondary"}
+                        className="flex items-center gap-1"
+                      >
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: context.color || "#6B7280" }}
+                        />
+                        {context.name}
+                        {context.is_primary && <span className="text-xs ml-1">(primary)</span>}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
 
-        {/* Linked thoughts */}
+        {/* Content Tabs */}
         <div className="mt-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Gem className="h-5 w-5" />
-              Thoughts from this source
-            </h2>
-            <Button asChild size="sm">
-              <Link href={`/thoughts/extract?source=${source.id}`}>
-                <Plus className="h-4 w-4 mr-1" />
-                Add thought
-              </Link>
-            </Button>
+          {/* Tab navigation */}
+          <div className="flex items-center gap-4 mb-6 border-b">
+            <button
+              onClick={() => setActiveTab("thoughts")}
+              className={`pb-3 px-1 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${
+                activeTab === "thoughts"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Gem className="h-4 w-4" />
+              Thoughts ({linkedThoughts.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("notes")}
+              className={`pb-3 px-1 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${
+                activeTab === "notes"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <StickyNote className="h-4 w-4" />
+              Notes ({linkedNotes.length})
+            </button>
           </div>
 
-          {/* Filter tabs */}
-          {linkedThoughts.length > 0 && (
-            <div className="flex items-center gap-2 mb-4">
-              <Button
-                variant={thoughtFilter === "all" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setThoughtFilter("all")}
-              >
-                All ({linkedThoughts.length})
-              </Button>
-              <Button
-                variant={thoughtFilter === "active" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setThoughtFilter("active")}
-              >
-                <Zap className="h-3 w-3 mr-1" />
-                Active ({activeCount})
-              </Button>
-              <Button
-                variant={thoughtFilter === "passive" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setThoughtFilter("passive")}
-              >
-                Passive ({passiveCount})
-              </Button>
-            </div>
+          {/* Thoughts Tab */}
+          {activeTab === "thoughts" && (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Thoughts from this source</h2>
+                <Button asChild size="sm">
+                  <Link href={`/thoughts/extract?source=${source.id}`}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add thought
+                  </Link>
+                </Button>
+              </div>
+
+              {/* Filter tabs */}
+              {linkedThoughts.length > 0 && (
+                <div className="flex items-center gap-2 mb-4">
+                  <Button
+                    variant={thoughtFilter === "all" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setThoughtFilter("all")}
+                  >
+                    All ({linkedThoughts.length})
+                  </Button>
+                  <Button
+                    variant={thoughtFilter === "active" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setThoughtFilter("active")}
+                  >
+                    <Zap className="h-3 w-3 mr-1" />
+                    Active ({activeCount})
+                  </Button>
+                  <Button
+                    variant={thoughtFilter === "passive" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setThoughtFilter("passive")}
+                  >
+                    Passive ({passiveCount})
+                  </Button>
+                </div>
+              )}
+
+              {linkedThoughts.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8 text-center text-muted-foreground">
+                    No thoughts from this source yet.
+                  </CardContent>
+                </Card>
+              ) : filteredThoughts.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8 text-center text-muted-foreground">
+                    No {thoughtFilter === "active" ? "active" : "passive"} thoughts from this source.
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {filteredThoughts.map((thought) => (
+                    <Link key={thought.id} href={`/thoughts/${thought.id}`}>
+                      <Card className="group hover:shadow-md transition-all cursor-pointer">
+                        <CardContent className="p-4 flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
+                            <Quote className="h-4 w-4 text-violet-500" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm line-clamp-2 group-hover:text-primary transition-colors">
+                              &ldquo;{thought.content}&rdquo;
+                            </p>
+                            <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                              <span>{thought.application_count} applications</span>
+                              {thought.is_on_active_list && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-amber-600 border-amber-600"
+                                >
+                                  Active
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </>
           )}
 
-          {linkedThoughts.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
-                No thoughts from this source yet.
-              </CardContent>
-            </Card>
-          ) : filteredThoughts.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
-                No {thoughtFilter === "active" ? "active" : "passive"} thoughts from this source.
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {filteredThoughts.map((thought) => (
-                <Link key={thought.id} href={`/thoughts/${thought.id}`}>
-                  <Card className="group hover:shadow-md transition-all cursor-pointer">
-                    <CardContent className="p-4 flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
-                        <Quote className="h-4 w-4 text-violet-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm line-clamp-2 group-hover:text-primary transition-colors">
-                          &ldquo;{thought.content}&rdquo;
-                        </p>
-                        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                          <span>{thought.application_count} applications</span>
-                          {thought.is_on_active_list && (
-                            <Badge
-                              variant="outline"
-                              className="text-amber-600 border-amber-600"
-                            >
-                              Active
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
+          {/* Notes Tab */}
+          {activeTab === "notes" && (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Notes about this source</h2>
+                <Button asChild size="sm">
+                  <Link href={`/library?tab=notes&sourceId=${source.id}`}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add note
+                  </Link>
+                </Button>
+              </div>
+
+              {linkedNotes.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8 text-center text-muted-foreground">
+                    No notes linked to this source yet.
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {linkedNotes.map((note) => (
+                    <Link key={note.id} href={`/library?tab=notes&noteId=${note.id}`}>
+                      <Card className="group hover:shadow-md transition-all cursor-pointer">
+                        <CardContent className="p-4 flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                            <StickyNote className="h-4 w-4 text-blue-500" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium group-hover:text-primary transition-colors">
+                              {note.title || "Untitled Note"}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Created {new Date(note.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

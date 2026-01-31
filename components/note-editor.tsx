@@ -13,18 +13,23 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Bold, Italic, List, ListOrdered } from "lucide-react"
+import { Bold, Italic, List, ListOrdered, BookOpen, Loader2 } from "lucide-react"
+import { MultiSourceSelector } from "@/components/sources/SourceSelector"
+import { getNoteSourceIds, setNoteSources } from "@/lib/note-sources"
 
 interface NoteEditorProps {
   note: Note | null // null for new note, existing note for edit
   isOpen: boolean
   onClose: () => void
-  onSave: (note: NoteInput, existingId?: string) => void
+  onSave: (note: NoteInput, existingId?: string, sourceIds?: string[]) => void
+  defaultSourceId?: string // Pre-select a source when creating from source detail page
 }
 
-export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
+export function NoteEditor({ note, isOpen, onClose, onSave, defaultSourceId }: NoteEditorProps) {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
+  const [sourceIds, setSourceIds] = useState<string[]>([])
+  const [isLoadingSources, setIsLoadingSources] = useState(false)
 
   // Track the last initialized note to avoid re-initializing on re-renders
   const lastInitializedNoteRef = useRef<string | null>(null)
@@ -41,16 +46,27 @@ export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
       if (note) {
         setTitle(note.title || "")
         setContent(note.content || "")
+        // Load existing sources for this note
+        loadNoteSources(note.id)
       } else {
         setTitle("")
         setContent("")
+        // If a default source is provided (e.g., from source detail page), use it
+        setSourceIds(defaultSourceId ? [defaultSourceId] : [])
       }
       lastInitializedNoteRef.current = noteId
     }
 
     wasOpenRef.current = isOpen
-  }, [note, isOpen])
+  }, [note, isOpen, defaultSourceId])
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  const loadNoteSources = async (noteId: string) => {
+    setIsLoadingSources(true)
+    const { data } = await getNoteSourceIds(noteId)
+    setSourceIds(data)
+    setIsLoadingSources(false)
+  }
 
   const handleSave = () => {
     onSave(
@@ -58,7 +74,8 @@ export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
         title: title.trim() || "Untitled",
         content,
       },
-      note?.id
+      note?.id,
+      sourceIds
     )
     onClose()
   }
@@ -165,6 +182,30 @@ export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
               onChange={(e) => setContent(e.target.value)}
               className="min-h-[200px] resize-y"
             />
+          </div>
+
+          {/* Sources */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5">
+              <BookOpen className="h-4 w-4" />
+              Sources (optional)
+            </Label>
+            {isLoadingSources ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading sources...
+              </div>
+            ) : (
+              <MultiSourceSelector
+                selectedSourceIds={sourceIds}
+                onSourcesChange={setSourceIds}
+                placeholder="Search and link sources..."
+                allowCreate={true}
+              />
+            )}
+            <p className="text-xs text-muted-foreground">
+              Link this note to books, articles, or other sources
+            </p>
           </div>
         </div>
 
