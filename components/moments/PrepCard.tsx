@@ -51,6 +51,7 @@ interface ThoughtCardProps {
 function MatchedThoughtCard({ momentThought, momentId, onReviewed, onFeedback, readOnly }: ThoughtCardProps) {
   const [isReviewed, setIsReviewed] = useState(momentThought.was_reviewed)
   const [feedback, setFeedback] = useState<boolean | null>(momentThought.was_helpful)
+  const [showConfirmation, setShowConfirmation] = useState(false)
 
   const thought = momentThought.thought
   if (!thought) return null
@@ -61,6 +62,7 @@ function MatchedThoughtCard({ momentThought, momentId, onReviewed, onFeedback, r
   const handleGotIt = async () => {
     if (readOnly || isReviewed) return
     setIsReviewed(true)
+    setShowConfirmation(true)
 
     // Mark as reviewed in moment_gems table
     await markThoughtReviewed(momentThought.id)
@@ -78,6 +80,9 @@ function MatchedThoughtCard({ momentThought, momentId, onReviewed, onFeedback, r
     } catch (err) {
       console.error('Failed to record learning:', err)
     }
+
+    // Hide confirmation after 2 seconds
+    setTimeout(() => setShowConfirmation(false), 2000)
 
     onReviewed()
   }
@@ -118,10 +123,19 @@ function MatchedThoughtCard({ momentThought, momentId, onReviewed, onFeedback, r
     <Card
       data-testid="thought-card"
       className={cn(
-        "transition-all",
+        "transition-all relative overflow-hidden",
         isReviewed && "opacity-60"
       )}
     >
+      {/* Visual confirmation overlay for "Got it" */}
+      {showConfirmation && (
+        <div className="absolute inset-0 bg-green-500/10 flex items-center justify-center z-10 animate-in fade-in duration-300">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300">
+            <Check className="h-5 w-5" />
+            <span className="font-medium">Noted! This will help future matches.</span>
+          </div>
+        </div>
+      )}
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 flex-wrap">
@@ -267,8 +281,12 @@ export function PrepCard({ moment, onComplete, readOnly = false }: PrepCardProps
     const analysis = analyzeEventTitle(title)
     setTitleAnalysis(analysis)
 
-    // Show enrichment if: title is generic, no user_context yet, and few/no matches
-    if (analysis.isGeneric && !moment.user_context && moment.matched_thoughts.length <= 1) {
+    // Show enrichment if: no user_context yet and no/few matches
+    // Always offer enrichment when no thoughts matched, regardless of title
+    if (!moment.user_context && moment.matched_thoughts.length === 0) {
+      setShowEnrichment(true)
+    } else if (analysis.isGeneric && !moment.user_context && moment.matched_thoughts.length <= 1) {
+      // Also show for generic titles with few matches
       setShowEnrichment(true)
     }
   }, [moment])
@@ -422,17 +440,30 @@ export function PrepCard({ moment, onComplete, readOnly = false }: PrepCardProps
             <div className="space-y-2">
               <p className="text-lg font-medium">No thoughts matched this moment</p>
               <p className="text-sm text-muted-foreground">
-                But you&apos;ve got this!
+                {userContext
+                  ? "Try adding a thought for next time!"
+                  : "Try adding context to find better matches."}
               </p>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => router.push('/thoughts')}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add a thought for next time
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              {!userContext && titleAnalysis && (
+                <Button
+                  onClick={() => setShowEnrichment(true)}
+                  className="gap-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Add Context & Try Again
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={() => router.push('/thoughts')}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add a thought for next time
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : !showEnrichment && !isEnriching ? (

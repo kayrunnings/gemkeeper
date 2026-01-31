@@ -63,10 +63,8 @@ export function MomentEntryModal({
       setDetectedEventType(analysis.detectedEventType)
       setDescription(calendarEvent.title)
 
-      // If generic, show enrichment; otherwise go straight to loading
-      if (analysis.isGeneric) {
-        setState('enrichment')
-      }
+      // Always show enrichment for calendar events - user can skip if not needed
+      setState('enrichment')
     }
   }, [calendarEvent, isOpen])
 

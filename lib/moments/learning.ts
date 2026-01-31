@@ -231,25 +231,6 @@ export async function getLearnedThoughts(
   }
 
   // Query learnings that match any pattern
-  // Using OR conditions for pattern matching
-  let query = supabase
-    .from('moment_learnings')
-    .select(`
-      id,
-      pattern_type,
-      pattern_key,
-      gem_id,
-      helpful_count,
-      not_helpful_count
-    `)
-    .eq('user_id', userId)
-    .gte('helpful_count', 3) // Only established patterns
-
-  // Build OR filter for patterns
-  const orFilters = patternConditions.map(
-    p => `and(pattern_type.eq.${p.type},pattern_key.eq.${p.key})`
-  ).join(',')
-
   const { data: learnings, error } = await supabase
     .from('moment_learnings')
     .select(`
@@ -261,7 +242,7 @@ export async function getLearnedThoughts(
       not_helpful_count
     `)
     .eq('user_id', userId)
-    .gte('helpful_count', 3)
+    .gte('helpful_count', LEARNING_HELPFUL_THRESHOLD) // Only established patterns
 
   if (error) {
     return { thoughts: [], error: error.message }

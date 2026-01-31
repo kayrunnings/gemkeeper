@@ -91,9 +91,9 @@ export interface MomentThoughtWithSource {
 
 /**
  * Minimum threshold for suggesting learned thoughts
- * Requires at least 3 helpful marks before suggesting
+ * Requires at least 1 helpful mark before suggesting (was 3, reduced for easier testing)
  */
-export const LEARNING_HELPFUL_THRESHOLD = 3
+export const LEARNING_HELPFUL_THRESHOLD = 1
 
 /**
  * Minimum confidence score for including learned thoughts

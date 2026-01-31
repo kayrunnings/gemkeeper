@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { Sparkles, ChevronRight, SkipForward } from "lucide-react"
+import { Sparkles, ChevronRight, SkipForward, Search, ChevronDown, ChevronUp } from "lucide-react"
 import type { EventType, TitleAnalysis } from "@/lib/moments/title-analysis"
-import { getChipsForEventType } from "@/lib/moments/title-analysis"
+import { getChipsForEventType, searchChips, ALL_CHIPS } from "@/lib/moments/title-analysis"
 
 interface ContextEnrichmentPromptProps {
   eventTitle: string
@@ -26,8 +27,27 @@ export function ContextEnrichmentPrompt({
 }: ContextEnrichmentPromptProps) {
   const [userContext, setUserContext] = useState("")
   const [selectedChips, setSelectedChips] = useState<string[]>([])
+  const [chipSearchQuery, setChipSearchQuery] = useState("")
+  const [showAllChips, setShowAllChips] = useState(false)
 
-  const chips = getChipsForEventType(analysis.detectedEventType)
+  // Get chips based on event type
+  const eventTypeChips = getChipsForEventType(analysis.detectedEventType)
+
+  // Get chips to display based on search or default
+  const displayChips = useMemo(() => {
+    if (chipSearchQuery.trim()) {
+      // Search mode - show matching chips from ALL_CHIPS
+      return searchChips(chipSearchQuery, analysis.detectedEventType)
+    }
+    if (showAllChips) {
+      // Show more chips - combine event-specific and popular from ALL_CHIPS
+      const popularChips = ALL_CHIPS.slice(0, 20).filter(c => !eventTypeChips.includes(c))
+      return [...eventTypeChips, ...popularChips]
+    }
+    // Default - show first 8 chips for the event type
+    return eventTypeChips.slice(0, 8)
+  }, [chipSearchQuery, showAllChips, eventTypeChips, analysis.detectedEventType])
+
   const questions = analysis.suggestedQuestions || []
 
   const handleChipToggle = (chip: string) => {
@@ -82,19 +102,27 @@ export function ContextEnrichmentPrompt({
       {/* Event Title */}
       <div className="p-3 rounded-lg bg-muted/50 border border-border">
         <p className="font-medium">{eventTitle}</p>
-        {analysis.genericReason === 'short' && (
+        {analysis.isGeneric ? (
+          <>
+            {analysis.genericReason === 'short' && (
+              <p className="text-xs text-muted-foreground mt-1">
+                This title is quite brief. Adding context will help find better matches.
+              </p>
+            )}
+            {analysis.genericReason === 'common_pattern' && (
+              <p className="text-xs text-muted-foreground mt-1">
+                This is a common meeting type. What specifically will you discuss?
+              </p>
+            )}
+            {analysis.genericReason === 'no_description' && (
+              <p className="text-xs text-muted-foreground mt-1">
+                No description found. What&apos;s the focus of this meeting?
+              </p>
+            )}
+          </>
+        ) : (
           <p className="text-xs text-muted-foreground mt-1">
-            This title is quite brief. Adding context will help find better matches.
-          </p>
-        )}
-        {analysis.genericReason === 'common_pattern' && (
-          <p className="text-xs text-muted-foreground mt-1">
-            This is a common meeting type. What specifically will you discuss?
-          </p>
-        )}
-        {analysis.genericReason === 'no_description' && (
-          <p className="text-xs text-muted-foreground mt-1">
-            No description found. What&apos;s the focus of this meeting?
+            Add context to find more targeted thoughts.
           </p>
         )}
       </div>
@@ -108,11 +136,39 @@ export function ContextEnrichmentPrompt({
         </div>
       )}
 
+      {/* Chip Search */}
+      <div className="space-y-2">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search for topics..."
+            value={chipSearchQuery}
+            onChange={(e) => setChipSearchQuery(e.target.value)}
+            className="pl-9 h-9"
+            disabled={isLoading}
+          />
+        </div>
+      </div>
+
       {/* Quick-select Chips */}
       <div className="space-y-2">
-        <p className="text-xs text-muted-foreground">Quick select:</p>
-        <div className="flex flex-wrap gap-2">
-          {chips.map((chip) => (
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            {chipSearchQuery ? 'Search results:' : 'Quick select:'}
+          </p>
+          {selectedChips.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setSelectedChips([])}
+              className="text-xs text-primary hover:underline"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2 max-h-[180px] overflow-y-auto">
+          {displayChips.map((chip) => (
             <button
               key={chip}
               type="button"
@@ -130,12 +186,49 @@ export function ContextEnrichmentPrompt({
             </button>
           ))}
         </div>
+        {/* Show more / Show less toggle */}
+        {!chipSearchQuery && eventTypeChips.length > 8 && (
+          <button
+            type="button"
+            onClick={() => setShowAllChips(!showAllChips)}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            {showAllChips ? (
+              <>
+                <ChevronUp className="h-3 w-3" />
+                Show less
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-3 w-3" />
+                Show more topics
+              </>
+            )}
+          </button>
+        )}
       </div>
+
+      {/* Selected Chips Summary */}
+      {selectedChips.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          <span className="text-xs text-muted-foreground">Selected:</span>
+          {selectedChips.map((chip) => (
+            <Badge
+              key={chip}
+              variant="secondary"
+              className="text-xs cursor-pointer hover:bg-destructive/20"
+              onClick={() => handleChipToggle(chip)}
+            >
+              {chip} ×
+            </Badge>
+          ))}
+        </div>
+      )}
 
       {/* Text Input */}
       <div className="space-y-2">
         <Textarea
-          placeholder="Add more context... (optional)"
+          placeholder="Add more specific context... (optional)"
           value={userContext}
           onChange={(e) => setUserContext(e.target.value)}
           className="min-h-[80px] resize-none"

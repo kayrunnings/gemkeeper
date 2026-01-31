@@ -50,13 +50,9 @@ export function QuickMomentEntry({ onClose }: QuickMomentEntryProps) {
       const data = await response.json()
       const moment: MomentWithThoughts = data.moment
 
-      if (moment.gems_matched_count === 0) {
-        setMatchedThoughts(moment)
-      } else {
-        // Navigate to prep card
-        router.push(`/moments/${moment.id}/prepare`)
-        onClose()
-      }
+      // Always navigate to prep card - it handles enrichment if no matches found
+      router.push(`/moments/${moment.id}/prepare`)
+      onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong")
     } finally {

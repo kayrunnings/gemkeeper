@@ -160,17 +160,94 @@ export const QUESTIONS_BY_EVENT_TYPE: Record<EventType, string[]> = {
   ],
 }
 
-// Quick-select chips for enrichment UI
+// Quick-select chips for enrichment UI - expanded with more options
 export const CHIPS_BY_EVENT_TYPE: Record<EventType, string[]> = {
-  '1:1': ['Career', 'Feedback', 'Project Update', 'Personal', 'Blockers'],
-  'team_meeting': ['Decision', 'Brainstorm', 'Status Update', 'Planning', 'Alignment'],
-  'interview': ['Technical', 'Behavioral', 'Culture Fit', 'Experience', 'Questions'],
-  'presentation': ['Persuade', 'Inform', 'Train', 'Inspire', 'Report'],
-  'review': ['Performance', 'Code', 'Design', 'Process', 'Goals'],
-  'planning': ['Quarterly', 'Sprint', 'Project', 'Strategy', 'Resource'],
-  'social': ['Networking', 'Team Bonding', 'Celebration', 'Casual'],
-  'external': ['Sales', 'Partnership', 'Vendor', 'Client', 'Networking'],
-  'unknown': ['Work', 'Personal', 'Learning', 'Collaboration'],
+  '1:1': [
+    'Career', 'Feedback', 'Project Update', 'Personal', 'Blockers',
+    'Goals', 'Growth', 'Mentorship', 'Performance', 'Promotion',
+    'Work-Life Balance', 'Team Dynamics', 'Concerns', 'Recognition'
+  ],
+  'team_meeting': [
+    'Decision', 'Brainstorm', 'Status Update', 'Planning', 'Alignment',
+    'Problem Solving', 'Retrospective', 'Launch', 'Roadmap',
+    'Blockers', 'Priorities', 'Dependencies', 'Resources', 'Deadlines'
+  ],
+  'interview': [
+    'Technical', 'Behavioral', 'Culture Fit', 'Experience', 'Questions',
+    'Leadership', 'Problem Solving', 'Communication', 'Team Fit', 'Growth',
+    'Role Clarity', 'Challenges', 'Motivation', 'Values'
+  ],
+  'presentation': [
+    'Persuade', 'Inform', 'Train', 'Inspire', 'Report',
+    'Pitch', 'Demo', 'Proposal', 'Results', 'Vision',
+    'Updates', 'Explain', 'Teach', 'Convince', 'Showcase'
+  ],
+  'review': [
+    'Performance', 'Code', 'Design', 'Process', 'Goals',
+    'Feedback', 'Growth', 'Achievements', 'Areas to Improve', 'Next Steps',
+    'Self-Reflection', 'Accomplishments', 'Challenges', 'Development'
+  ],
+  'planning': [
+    'Quarterly', 'Sprint', 'Project', 'Strategy', 'Resource',
+    'OKRs', 'Budget', 'Timeline', 'Milestones', 'Priorities',
+    'Dependencies', 'Risks', 'Scope', 'Stakeholders', 'Success Criteria'
+  ],
+  'social': [
+    'Networking', 'Team Bonding', 'Celebration', 'Casual',
+    'Get to Know', 'Fun', 'Icebreaker', 'Relationship Building', 'Gratitude',
+    'Appreciation', 'Introductions', 'New Connections'
+  ],
+  'external': [
+    'Sales', 'Partnership', 'Vendor', 'Client', 'Networking',
+    'Negotiation', 'Contract', 'Proposal', 'Discovery', 'Demo',
+    'Follow-up', 'Relationship', 'Requirements', 'Pricing', 'Closing'
+  ],
+  'unknown': [
+    'Work', 'Personal', 'Learning', 'Collaboration',
+    'Discussion', 'Problem Solving', 'Updates', 'Decision Making', 'Planning',
+    'Feedback', 'Ideas', 'Goals', 'Questions', 'Support', 'Alignment'
+  ],
+}
+
+// All available chips across all categories for search - comprehensive list
+export const ALL_CHIPS = [
+  // Communication & Mindset
+  'Active Listening', 'Empathy', 'Patience', 'Open Mind', 'Curiosity',
+  'Confidence', 'Presence', 'Calm', 'Focus', 'Gratitude',
+  // Work Topics
+  'Career', 'Feedback', 'Project', 'Goals', 'Growth',
+  'Performance', 'Strategy', 'Priorities', 'Decisions', 'Leadership',
+  'Innovation', 'Creativity', 'Problem Solving', 'Collaboration', 'Communication',
+  // Meeting Types
+  'Brainstorm', 'Planning', 'Review', 'Update', 'Demo',
+  'Pitch', 'Negotiation', 'Interview', 'Training', 'Workshop',
+  // Relationships
+  'Networking', 'Mentorship', 'Team Building', 'Relationship', 'Trust',
+  'Support', 'Recognition', 'Appreciation', 'Conflict Resolution', 'Alignment',
+  // Personal Development
+  'Learning', 'Skill Building', 'Self-Reflection', 'Mindfulness', 'Resilience',
+  'Time Management', 'Work-Life Balance', 'Health', 'Energy', 'Motivation',
+  // Specific Scenarios
+  'Difficult Conversation', 'Giving Feedback', 'Receiving Feedback', 'Asking for Help', 'Saying No',
+  'Delegation', 'Accountability', 'Setting Boundaries', 'Managing Up', 'Change Management',
+  // Other common topics
+  'Deadlines', 'Blockers', 'Dependencies', 'Resources', 'Budget',
+  'Timeline', 'Milestones', 'Risks', 'Scope', 'Stakeholders',
+]
+
+/**
+ * Search chips by query
+ */
+export function searchChips(query: string, eventType?: EventType): string[] {
+  const normalizedQuery = query.toLowerCase().trim()
+  if (!normalizedQuery) {
+    return eventType ? CHIPS_BY_EVENT_TYPE[eventType] || [] : []
+  }
+
+  // Search in ALL_CHIPS
+  return ALL_CHIPS.filter(chip =>
+    chip.toLowerCase().includes(normalizedQuery)
+  ).slice(0, 15) // Limit results
 }
 
 /**
