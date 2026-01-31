@@ -94,16 +94,17 @@ export async function POST(
         const patterns: MomentPatterns = {
           eventType: analysis.detectedEventType,
           keywords: extractKeywords(enrichedDescription),
-          recurringEventId: moment.calendar_event_id || undefined,
+          externalEventId: moment.calendar_event_id || undefined,
         }
         const { thoughts: learnedThoughts } = await getLearnedThoughts(user.id, patterns)
 
         // Format learned thoughts for the prompt
         const learnedThoughtsForPrompt: LearnedThought[] = (learnedThoughts || []).map(lt => ({
           gem_id: lt.gem_id,
-          content: gemsForMatching.find(g => g.id === lt.gem_id)?.content || '',
-          confidence: lt.confidence,
+          gem_content: lt.gem_content || gemsForMatching.find(g => g.id === lt.gem_id)?.content || '',
+          confidence_score: lt.confidence_score,
           pattern_sources: lt.pattern_sources || [],
+          helpful_count: lt.helpful_count,
         }))
 
         const matchResult = await matchGemsToMoment(
