@@ -567,6 +567,8 @@ fewer strong matches than many weak ones.
 
 MOMENT: {moment_description}
 
+{learned_thoughts_section}
+
 USER'S SAVED THOUGHTS:
 {gems_list}
 
@@ -618,6 +620,36 @@ Return JSON array (max 5 matches, minimum score 0.5):
 
 Return empty array [] if nothing truly fits.
 JSON only, no other text.`
+
+// =============================================================================
+// 10b. MOMENT MATCHING - LEARNED THOUGHTS SECTION (Epic 14)
+// =============================================================================
+
+/**
+ * Generate the learned thoughts section for the moment matching prompt.
+ * Only included when there are learned thoughts to consider.
+ */
+export function buildLearnedThoughtsSection(
+  learnedThoughts: Array<{ gem_id: string; gem_content: string; confidence_score: number }>
+): string {
+  if (!learnedThoughts || learnedThoughts.length === 0) {
+    return ''
+  }
+
+  const thoughtsList = learnedThoughts
+    .map((t, i) => `${i + 1}. [ID: ${t.gem_id}] "${t.gem_content}" (confidence: ${Math.round(t.confidence_score * 100)}%)`)
+    .join('\n')
+
+  return `## PREVIOUSLY HELPFUL THOUGHTS (Epic 14 Learning)
+
+The user has marked these thoughts as helpful for similar moments in the past.
+Consider including them if they're still relevant, but also find new matches.
+Give these thoughts a slight boost in relevance scoring (+0.1) if they fit.
+
+${thoughtsList}
+
+---`
+}
 
 // =============================================================================
 // 11. FOR YOU SUGGESTIONS (Home Page)

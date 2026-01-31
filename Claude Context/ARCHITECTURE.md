@@ -49,7 +49,10 @@ gemkeeper/
 │   │   ├── schedules/            # Thought schedule endpoints
 │   │   │   └── parse/            # NLP schedule parsing
 │   │   ├── moments/              # Moment endpoints
-│   │   │   └── match/            # AI thought matching
+│   │   │   ├── match/            # AI thought matching
+│   │   │   └── learn/            # Epic 14: Learning endpoints
+│   │   │       ├── helpful/      # Record helpful thought
+│   │   │       └── not-helpful/  # Record not-helpful thought
 │   │   └── auth/                 # OAuth callbacks
 │   │       └── google-calendar/  # Google Calendar OAuth
 │   ├── auth/                     # Auth actions
@@ -95,7 +98,8 @@ gemkeeper/
 │   │   ├── FloatingMomentButton.tsx  # Fixed FAB (ThoughtFolio 2.0)
 │   │   ├── FloatingButtonMenu.tsx    # Menu options
 │   │   ├── QuickMomentEntry.tsx      # Inline moment entry
-│   │   └── CalendarEventPicker.tsx   # Event selector
+│   │   ├── CalendarEventPicker.tsx   # Event selector
+│   │   └── ContextEnrichmentPrompt.tsx  # Epic 14: Context enrichment UI
 │   ├── capture/                  # AI Capture components (ThoughtFolio 2.0)
 │   │   ├── AICaptureModal.tsx    # Main capture modal (Cmd+N)
 │   │   ├── CaptureEmptyState.tsx # Initial state
@@ -127,8 +131,11 @@ gemkeeper/
 │   ├── settings/                 # Settings components
 │   └── ...                       # Other components
 ├── lib/                          # Utilities and services
+│   ├── moments/                  # Epic 14: Moment Intelligence
+│   │   ├── title-analysis.ts     # Generic title detection, event type classification
+│   │   └── learning.ts           # Learning service for pattern associations
 │   ├── ai/                       # AI/Gemini integration
-│   │   ├── prompts.ts            # Centralized AI prompt templates (v2.0.0)
+│   │   ├── prompts.ts            # Centralized AI prompt templates (v2.1.0)
 │   │   ├── gemini.ts             # Gemini API logic
 │   │   ├── rate-limit.ts         # Rate limiting & caching
 │   │   ├── content-detector.ts   # Content type detection (ThoughtFolio 2.0)
@@ -144,6 +151,7 @@ gemkeeper/
 │   │   ├── note-link.ts          # Note-thought link types (ThoughtFolio 2.0)
 │   │   ├── search.ts             # Search types (ThoughtFolio 2.0)
 │   │   ├── capture.ts            # AI Capture types (ThoughtFolio 2.0)
+│   │   ├── learning.ts           # Epic 14: Learning types (pattern associations)
 │   │   └── gem.ts                # Legacy gem types (backward compat)
 │   ├── hooks/                    # React hooks
 │   │   ├── useGlobalShortcuts.ts # Global keyboard shortcuts (Cmd+K, Cmd+N)
@@ -362,11 +370,16 @@ User-created situations for thought matching.
 | source | VARCHAR(20) | manual/calendar |
 | calendar_event_id | VARCHAR(255) | External event ID |
 | calendar_event_title | VARCHAR(500) | Event title |
+| calendar_event_start | TIMESTAMPTZ | Event start time |
 | gems_matched_count | INTEGER | Number of thoughts matched |
 | ai_processing_time_ms | INTEGER | AI matching duration |
 | status | VARCHAR(20) | active/completed/dismissed |
+| user_context | TEXT | Additional context provided by user (Epic 14) |
+| detected_event_type | TEXT | Auto-detected event type (Epic 14) |
 | created_at | TIMESTAMPTZ | |
 | updated_at | TIMESTAMPTZ | |
+
+**Event Types (Epic 14):** 1:1, team_meeting, interview, presentation, review, planning, social, external, unknown
 
 #### `moment_gems`
 Junction table linking moments to matched thoughts.
@@ -382,6 +395,34 @@ Junction table linking moments to matched thoughts.
 | was_helpful | BOOLEAN | User feedback |
 | was_reviewed | BOOLEAN | User marked "got it" |
 | created_at | TIMESTAMPTZ | |
+
+#### `moment_learnings` (Epic 14)
+Pattern-based learning for moment matching. Records which thoughts were helpful for specific patterns.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| user_id | UUID | FK → auth.users |
+| pattern_type | TEXT | event_type, keyword, recurring, attendee |
+| pattern_key | TEXT | Pattern identifier (e.g., "1:1", "event:abc123") |
+| gem_id | UUID | FK → gems |
+| helpful_count | INTEGER | Times marked helpful (default 1) |
+| not_helpful_count | INTEGER | Times marked not helpful (default 0) |
+| last_helpful_at | TIMESTAMPTZ | Last helpful timestamp |
+| created_at | TIMESTAMPTZ | |
+| updated_at | TIMESTAMPTZ | |
+
+**Pattern Types:**
+- `event_type`: Event classification (1:1, team_meeting, etc.)
+- `keyword`: Keywords from description/user context
+- `recurring`: Recurring calendar events (uses base event ID)
+- `attendee`: Meeting attendees (future use)
+
+**Learning Thresholds:**
+- Minimum 3 helpful marks before suggesting
+- Minimum 70% confidence (helpful / total)
+
+**Indexes:** `idx_moment_learnings_lookup` (user_id, pattern_type, pattern_key), `idx_moment_learnings_gem` (gem_id)
 
 #### `calendar_connections`
 OAuth tokens for connected calendars.
@@ -783,6 +824,44 @@ Match thoughts to moment using AI. Searches ALL thoughts with `status IN ('activ
 - `MAX_GEMS_TO_MATCH = 5` — Maximum thoughts returned
 - `MIN_RELEVANCE_SCORE = 0.5` — Minimum score threshold (0.0-1.0)
 - `MATCHING_TIMEOUT_MS = 5000` — AI timeout in milliseconds
+
+#### POST `/api/moments/learn/helpful` (Epic 14)
+Record that a thought was helpful for a moment. Creates pattern associations for future learning.
+
+**Request:**
+```typescript
+{
+  moment_id: string;
+  gem_id: string;
+}
+```
+
+**Response:**
+```typescript
+{
+  success: boolean;
+  message: string;
+}
+```
+
+#### POST `/api/moments/learn/not-helpful` (Epic 14)
+Record that a thought was NOT helpful. Updates confidence scores for pattern associations.
+
+**Request:**
+```typescript
+{
+  moment_id: string;
+  gem_id: string;
+}
+```
+
+**Response:**
+```typescript
+{
+  success: boolean;
+  message: string;
+}
+```
 
 ### Calendar
 
@@ -1442,12 +1521,23 @@ Background sync hook that automatically syncs calendar connections based on user
 
 ### Moment Matching Flow
 ```
-1. User describes upcoming situation
-2. Fetch ALL user's thoughts where status IN ('active', 'passive')
-3. Send to Gemini for matching
-4. Return top 3-5 with relevance scores
-5. Display prep card
-6. User can mark as helpful after moment
+1. User describes upcoming situation (or selects calendar event)
+2. If event title is generic (e.g., "Meeting", "1:1"):
+   a. Detect event type (1:1, team_meeting, interview, etc.)
+   b. Show context enrichment prompt with quick-select chips
+   c. User provides additional context (optional, can skip)
+3. Fetch ALL user's thoughts where status IN ('active', 'passive')
+4. Epic 14 Learning: Check for learned thoughts
+   a. Query moment_learnings for patterns matching event type/keywords
+   b. Filter by helpful_count >= 3 and confidence >= 70%
+   c. Pass learned thoughts to matching prompt for boosted scoring
+5. Send to Gemini for matching (with learned thoughts context)
+6. Return top 3-5 with relevance scores + match source (ai/learned/both)
+7. Display prep card with "Helped before" badge on learned thoughts
+8. User reviews thoughts, marks "Got it" or "Not helpful"
+9. Feedback triggers learning:
+   - "Got it" → POST /api/moments/learn/helpful → creates pattern associations
+   - "Not helpful" → POST /api/moments/learn/not-helpful → updates confidence
 ```
 
 ### Calendar Sync & Moment Creation Flow
@@ -1672,6 +1762,7 @@ CSS animation classes for enhanced UX:
 | Core Thoughts | Complete | CRUD, contexts, Active List |
 | Daily Check-in | Complete | Single daily touchpoint, thought surfacing, graduation tracking |
 | Moments (Epic 8) | Complete | AI matching, calendar integration, rate limiting (20/hr) |
+| Moment Intelligence (Epic 14) | Complete | Smart context prompting, learning system |
 | Discovery (Epic 12) | Complete | Web search, save/skip workflow |
 | Notes | Complete | Standalone notes with tags, folders, extract-to-thoughts |
 | Glassmorphism UI | Complete | Dark/light theme support |

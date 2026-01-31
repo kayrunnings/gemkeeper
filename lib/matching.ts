@@ -9,7 +9,8 @@ import {
   MIN_RELEVANCE_SCORE,
   MATCHING_TIMEOUT_MS
 } from "@/types/matching"
-import { MOMENT_MATCHING_PROMPT } from "@/lib/ai/prompts"
+import { MOMENT_MATCHING_PROMPT, buildLearnedThoughtsSection } from "@/lib/ai/prompts"
+import type { LearnedThought } from "@/lib/types/learning"
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
 
@@ -73,10 +74,15 @@ function validateMatches(
 
 /**
  * Match gems to a moment using AI
+ *
+ * @param momentDescription - Description of the upcoming moment
+ * @param gems - User's saved thoughts to match against
+ * @param learnedThoughts - Optional: Previously helpful thoughts for similar moments (Epic 14)
  */
 export async function matchGemsToMoment(
   momentDescription: string,
-  gems: GemForMatching[]
+  gems: GemForMatching[],
+  learnedThoughts?: LearnedThought[]
 ): Promise<MatchingResponse> {
   const startTime = Date.now()
 
@@ -100,8 +106,14 @@ export async function matchGemsToMoment(
       },
     })
 
+    // Epic 14: Build learned thoughts section if available
+    const learnedSection = learnedThoughts && learnedThoughts.length > 0
+      ? buildLearnedThoughtsSection(learnedThoughts)
+      : ''
+
     const prompt = MOMENT_MATCHING_PROMPT
       .replace('{moment_description}', momentDescription)
+      .replace('{learned_thoughts_section}', learnedSection)
       .replace('{gems_list}', formatGemsForPrompt(gems))
 
     // Create a timeout promise
