@@ -21,16 +21,16 @@ Tightly integrate Sources as a first-class entity throughout ThoughtFolio, conne
 ## Implementation Progress
 
 ### Completed (January 2026)
-- **Phase 1.1-1.4**: Full Sources → Thoughts integration
-- **Phase 2.1-2.3**: Note-sources schema and service layer
+- **Phase 1.1-1.5**: Full Sources → Thoughts integration (including ThoughtEditForm)
+- **Phase 2.1-2.5**: Note-sources schema, service layer, and UI (NoteEditor, source detail page tabs)
 - **Phase 3.1-3.4**: Source capture flow with status system
-- **Phase 4.1-4.3**: Source-contexts schema and service layer
+- **Phase 4.1-4.4**: Source-contexts schema, service layer, and UI (AddSourceModal, source detail page)
 - **Phase 5.1**: Source effectiveness view created
 
 ### Remaining Work
-- Phase 2.4-2.6: Note UI updates for multi-source selection
+- Phase 2.6: Capture flow auto-link notes to sources
 - Phase 3.5-3.6: Reading list view, quick add improvements
-- Phase 4.4-4.5: Context UI updates, smart context suggestion
+- Phase 4.5: Smart context suggestion
 - Phase 5.2-5.4: Source stats components, moment integration
 - Phase 6: Unified source view with tabs
 
@@ -50,7 +50,8 @@ Tightly integrate Sources as a first-class entity throughout ThoughtFolio, conne
 - [x] 1.2.1 Update `components/thoughts/ThoughtCard.tsx` - Add source chip/badge when `source_id` exists
 - [x] 1.2.2 Create `components/ui/SourceBadge.tsx` - Reusable source indicator with icon + name (includes SourceBadge, SourceStatusBadge, SourceLink)
 - [x] 1.2.3 Update thought detail page - Add "From Source" section linking to source detail
-- [x] 1.2.4 Update `components/thoughts/ThoughtForm.tsx` - Add source search/select field (SourceSelector with toggle)
+- [x] 1.2.4 Update `components/thought-form.tsx` - Add source search/select field (SourceSelector with toggle)
+- [x] 1.2.5 Update `components/thought-edit-form.tsx` - Add SourceSelector for editing existing thoughts
 
 ### 1.3 Source Detail Page Enhancement
 - [x] 1.3.1 Enhance `/app/library/sources/[id]/page.tsx`:
@@ -89,17 +90,17 @@ Tightly integrate Sources as a first-class entity throughout ThoughtFolio, conne
 - [ ] 2.3.2 Add tests for note-source service
 
 ### 2.4 Note UI Updates
-- [ ] 2.4.1 Update `components/notes/NoteForm.tsx` - Add "Sources" multi-select field
-- [ ] 2.4.2 Create `components/notes/SourceSelector.tsx` - Search + select multiple sources
-- [ ] 2.4.3 Update `components/notes/NoteCard.tsx` - Show source badges
-- [ ] 2.4.4 Update note detail page - Show linked sources section with links
+- [x] 2.4.1 Update `components/note-editor.tsx` - Add MultiSourceSelector field
+- [x] 2.4.2 Use `components/sources/SourceSelector.tsx` - Search + select multiple sources (MultiSourceSelector)
+- [x] 2.4.3 Note editors show linked source badges via MultiSourceSelector
+- [x] 2.4.4 Update note editor - Show linked sources section with badges
 - [ ] 2.4.5 Add "Link to Source" action on note detail page
 
 ### 2.5 Source Detail Page - Notes Section
-- [ ] 2.5.1 Update `/app/library/sources/[id]/page.tsx` - Add "Notes about this source" section
-- [ ] 2.5.2 Show note cards with preview
-- [ ] 2.5.3 Add "Create note about this source" action
-- [ ] 2.5.4 Tab navigation: Thoughts | Notes | Stats
+- [x] 2.5.1 Update `/app/library/sources/[id]/page.tsx` - Add "Notes about this source" section
+- [x] 2.5.2 Show note cards with preview
+- [x] 2.5.3 Add "Create note about this source" action (opens NoteEditor modal)
+- [x] 2.5.4 Tab navigation: Thoughts | Notes
 
 ### 2.6 Capture Flow Updates
 - [ ] 2.6.1 Update `app/api/capture/save/route.ts` - Support `sourceIds` array for notes
@@ -167,9 +168,9 @@ Tightly integrate Sources as a first-class entity throughout ThoughtFolio, conne
 - [x] 4.3.1 Create `lib/source-contexts.ts` with linkContextToSource, unlinkContextFromSource, getSourceContexts, setSourceContexts, getContextSources
 
 ### 4.4 UI Updates
-- [ ] 4.4.1 Update Add/Edit Source Modal - Add "Related Contexts" multi-select
+- [x] 4.4.1 Update AddSourceModal - Add "Related Contexts" multi-select
 - [ ] 4.4.2 Update Source Card - Show primary context badge
-- [ ] 4.4.3 Update Source Detail Page - Show all related contexts
+- [x] 4.4.3 Update Source Detail Page - Show all related contexts with editing
 - [ ] 4.4.4 Add "Sources" section to Context detail/settings page
 - [ ] 4.4.5 Filter sources by context in Library
 
@@ -331,9 +332,9 @@ SELECT ...
 ### Phase 2: Sources → Notes
 - [x] Database schema for note-sources created
 - [x] Service layer implemented (lib/note-sources.ts)
-- [ ] Note form has source multi-select
-- [ ] Note cards show source badges
-- [ ] Source detail page shows linked notes tab
+- [x] Note form has source multi-select (NoteEditor, EnhancedNoteEditor)
+- [x] Note cards show source badges (MultiSourceSelector in editors)
+- [x] Source detail page shows linked notes tab
 
 ### Phase 3: Source Capture Flow
 - [x] Users can add sources directly via AddSourceModal
@@ -345,6 +346,8 @@ SELECT ...
 ### Phase 4: Sources → Contexts
 - [x] Database schema for source-contexts created
 - [x] Service layer implemented (lib/source-contexts.ts)
+- [x] AddSourceModal has context multi-select
+- [x] Source detail page shows/edits linked contexts
 - [ ] Source cards show primary context badge
 - [ ] Context pages show related sources
 - [ ] New thoughts default to source's primary context

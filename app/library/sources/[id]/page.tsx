@@ -8,7 +8,7 @@ import { getSource, updateSource, deleteSource, updateSourceStatus } from "@/lib
 import { getSourceNotes, linkSourceToNote } from "@/lib/note-sources"
 import { getSourceContexts, setSourceContexts } from "@/lib/source-contexts"
 import { getContexts } from "@/lib/contexts"
-import { createNote } from "@/lib/notes"
+import { createNote } from "@/app/notes/actions"
 import { Source, SOURCE_TYPE_LABELS, SOURCE_TYPE_ICONS, SourceType, SourceStatus, SOURCE_STATUS_LABELS, SOURCE_STATUS_ICONS } from "@/lib/types/source"
 import { Thought } from "@/lib/types/thought"
 import type { Context, ContextWithCount } from "@/lib/types/context"
@@ -218,10 +218,10 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
 
   // Handle note save from modal
   const handleNoteSave = async (noteInput: NoteInput, existingId?: string, sourceIds?: string[]) => {
-    const { data, error } = await createNote(noteInput)
-    if (data && !error) {
+    const { note, error } = await createNote(noteInput)
+    if (note && !error) {
       // Link the source to the note
-      await linkSourceToNote(data.id, id)
+      await linkSourceToNote(note.id, id)
       // Reload notes
       const { data: notes } = await getSourceNotes(id)
       setLinkedNotes(notes || [])

@@ -36,6 +36,7 @@ Before starting work, read these files in `Claude Context/`:
 - **Daily Check-in** - Single daily touchpoint for thought accountability and graduation tracking
 - **Epic 8: Moments** - Individual scheduling, moments matching (Cmd+M shortcut), calendar integration, rate limiting (20/hr)
 - **Epic 12: Discovery** - AI-powered content discovery with Google Search grounding
+- **Epic 13: Sources Integration** - First-class source entities (books, articles, podcasts) with Thoughts→Sources linking, Notes→Sources linking, Sources→Contexts linking, status tracking (Want to Read/Reading/Completed/Archived), ISBN lookup via Open Library
 - **Notes System** - Standalone long-form notes with tags, folders, and extract-to-thoughts capability
 - **Contexts System** - Life areas for organizing thoughts (8 defaults + custom)
 - **Glassmorphism UI** - Modern UI overhaul with dark/light theme support
@@ -106,7 +107,18 @@ Single daily touchpoint at `/checkin`. Surfaces one thought from the Active List
 On-demand thought matching for upcoming situations. Moments search ALL thoughts with `status IN ('active', 'passive')` across ALL contexts, returning the most relevant with explanations. Rate limited to 20 matches/hour. Keyboard shortcut: Cmd+M / Ctrl+M.
 
 ### Notes
-Standalone long-form content separate from atomic thoughts. Notes have titles and can be organized into folders. Users can **extract thoughts from notes**, creating a bridge between detailed note-taking and atomic insights. 
+Standalone long-form content separate from atomic thoughts. Notes have titles and can be organized into folders. Users can **extract thoughts from notes**, creating a bridge between detailed note-taking and atomic insights. Notes can be linked to multiple sources.
+
+### Sources (Epic 13)
+First-class entities representing knowledge origins (books, articles, podcasts, videos, courses). Sources have:
+- **Status tracking:** Want to Read → Reading → Completed → Archived
+- **Thought linking:** Thoughts can be linked to sources via `source_id`
+- **Note linking:** Notes can be linked to multiple sources via `note_sources` table
+- **Context linking:** Sources can be associated with contexts via `source_contexts` table
+- **ISBN lookup:** Books can be looked up via Open Library API for auto-fill
+- **Cover images:** Stored as URLs, fetched from Open Library for books
+
+Source detail page shows all linked thoughts (with Active/Passive filter) and notes.
 
 ### Discover
 AI-powered content discovery from the web. Dashboard card with three paths: free-text search, context chips, or "Surprise Me". Returns 8 discoveries per session with refresh capability. Daily limits: 8 curated + 8 directed = 16 max. User edits thought before saving (preserves "user's words" principle).

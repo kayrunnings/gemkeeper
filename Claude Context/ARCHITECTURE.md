@@ -118,9 +118,12 @@ gemkeeper/
 │   │   ├── LibraryAllTab.tsx     # Mixed content feed
 │   │   ├── LibraryThoughtsTab.tsx # Full-featured thoughts tab with filters, Add/Extract
 │   │   ├── LibraryNotesTab.tsx   # Notes list with folders
-│   │   ├── LibrarySourcesTab.tsx # Sources grid
+│   │   ├── LibrarySourcesTab.tsx # Sources grid with status filters
 │   │   ├── LibraryArchiveTab.tsx # Archived thoughts
 │   │   └── SourceCard.tsx        # Source display card
+│   ├── sources/                  # Source components (Epic 13)
+│   │   ├── AddSourceModal.tsx    # Add source modal with type-first UX
+│   │   └── SourceSelector.tsx    # Single/multi source selector with quick-create
 │   ├── layout/                   # Layout components
 │   │   └── BottomNavigation.tsx  # Mobile bottom tab bar
 │   ├── extract-from-note-modal.tsx  # Extract thoughts from notes
@@ -156,6 +159,8 @@ gemkeeper/
 │   ├── moments.ts                # Moment service functions
 │   ├── calendar.ts               # Calendar service functions
 │   ├── sources.ts                # Source CRUD service (ThoughtFolio 2.0)
+│   ├── note-sources.ts           # Note-source linking service (Epic 13)
+│   ├── source-contexts.ts        # Source-context linking service (Epic 13)
 │   ├── note-links.ts             # Note-thought linking service (ThoughtFolio 2.0)
 │   ├── search.ts                 # Full-text search service (ThoughtFolio 2.0)
 │   ├── url-extractor.ts          # URL content extraction
@@ -297,9 +302,10 @@ Core feature table for knowledge/insights. Note: Database table is named `gems` 
 | id | UUID | Primary key |
 | user_id | UUID | FK → auth.users |
 | context_id | UUID | FK → contexts |
+| source_id | UUID | FK → sources (Epic 13) |
 | content | TEXT | Thought text (max 200 chars) |
-| source | TEXT | Book/podcast/article name |
-| source_url | TEXT | URL to source |
+| source | TEXT | Book/podcast/article name (legacy, use source_id) |
+| source_url | TEXT | URL to source (legacy, use source_id) |
 | context_tag | ENUM | Legacy field (deprecated) |
 | custom_context | TEXT | Legacy field (deprecated) |
 | is_on_active_list | BOOLEAN | On Active List for Daily Check-in (max 10) |
@@ -529,6 +535,7 @@ First-class source entities representing books, articles, podcasts, etc.
 | name | TEXT | Source title |
 | author | TEXT | Author/creator name |
 | type | TEXT | book/article/podcast/video/course/other |
+| status | TEXT | want_to_read/reading/completed/archived (Epic 13) |
 | url | TEXT | Source URL if applicable |
 | isbn | TEXT | ISBN for books |
 | cover_image_url | TEXT | Cover image URL |
@@ -536,6 +543,37 @@ First-class source entities representing books, articles, podcasts, etc.
 | search_vector | TSVECTOR | Full-text search index |
 | created_at | TIMESTAMPTZ | |
 | updated_at | TIMESTAMPTZ | |
+
+**Status Values (Epic 13):**
+- `want_to_read` - User wants to consume this source
+- `reading` - Currently being consumed (default)
+- `completed` - Finished consuming
+- `archived` - No longer relevant
+
+#### `note_sources` (Epic 13)
+Many-to-many relationship between notes and sources.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| note_id | UUID | FK → notes (CASCADE) |
+| source_id | UUID | FK → sources (CASCADE) |
+| created_at | TIMESTAMPTZ | |
+
+**Constraints:** UNIQUE(note_id, source_id)
+
+#### `source_contexts` (Epic 13)
+Many-to-many relationship between sources and contexts.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| source_id | UUID | FK → sources (CASCADE) |
+| context_id | UUID | FK → contexts (CASCADE) |
+| is_primary | BOOLEAN | Primary context for this source |
+| created_at | TIMESTAMPTZ | |
+
+**Constraints:** UNIQUE(source_id, context_id)
 
 #### `note_thought_links` (ThoughtFolio 2.0)
 Bi-directional linking between notes and thoughts.

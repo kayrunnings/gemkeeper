@@ -113,7 +113,7 @@ export function ThoughtEditForm({ thought, isOpen, onClose, onThoughtUpdated }: 
       content: content.trim(),
       context_tag: contextTag,
       // Link to source entity if selected
-      source_id: selectedSource?.id || null,
+      source_id: selectedSource?.id || undefined,
       // Also set source name from selected source or manual entry
       source: selectedSource
         ? selectedSource.name
