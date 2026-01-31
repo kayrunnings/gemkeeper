@@ -5,12 +5,17 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { getSource, updateSource, deleteSource, updateSourceStatus } from "@/lib/sources"
-import { getSourceNotes } from "@/lib/note-sources"
-import { getSourceContexts } from "@/lib/source-contexts"
+import { getSourceNotes, linkSourceToNote } from "@/lib/note-sources"
+import { getSourceContexts, setSourceContexts } from "@/lib/source-contexts"
+import { getContexts } from "@/lib/contexts"
+import { createNote } from "@/lib/notes"
 import { Source, SOURCE_TYPE_LABELS, SOURCE_TYPE_ICONS, SourceType, SourceStatus, SOURCE_STATUS_LABELS, SOURCE_STATUS_ICONS } from "@/lib/types/source"
 import { Thought } from "@/lib/types/thought"
-import type { Context } from "@/lib/types/context"
+import type { Context, ContextWithCount } from "@/lib/types/context"
 import { LayoutShell } from "@/components/layout-shell"
+import { ThoughtForm } from "@/components/thought-form"
+import { NoteEditor } from "@/components/note-editor"
+import { NoteInput } from "@/lib/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -85,6 +90,17 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
   type ThoughtFilter = "all" | "active" | "passive"
   const [thoughtFilter, setThoughtFilter] = useState<ThoughtFilter>("all")
 
+  // Modal state
+  const [showThoughtForm, setShowThoughtForm] = useState(false)
+  const [showNoteEditor, setShowNoteEditor] = useState(false)
+
+  // Context editing state
+  const [allContexts, setAllContexts] = useState<ContextWithCount[]>([])
+  const [isEditingContexts, setIsEditingContexts] = useState(false)
+  const [editContextIds, setEditContextIds] = useState<string[]>([])
+  const [editPrimaryContextId, setEditPrimaryContextId] = useState<string | null>(null)
+  const [isSavingContexts, setIsSavingContexts] = useState(false)
+
   useEffect(() => {
     async function loadSource() {
       const supabase = createClient()
@@ -128,6 +144,16 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
       // Load linked contexts
       const { data: contexts } = await getSourceContexts(id)
       setLinkedContexts(contexts || [])
+
+      // Initialize edit context state
+      const contextIds = (contexts || []).map(c => c.id)
+      setEditContextIds(contextIds)
+      const primaryContext = (contexts || []).find(c => c.is_primary)
+      setEditPrimaryContextId(primaryContext?.id || null)
+
+      // Load all contexts for editing
+      const { contexts: allCtx } = await getContexts()
+      setAllContexts(allCtx)
 
       setIsLoading(false)
     }
@@ -182,6 +208,73 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
       setSource(data)
       showSuccess(`Status updated to "${SOURCE_STATUS_LABELS[newStatus]}"`)
     }
+  }
+
+  // Handle thought created from modal
+  const handleThoughtCreated = (thought: Thought) => {
+    setLinkedThoughts(prev => [thought, ...prev])
+    setShowThoughtForm(false)
+  }
+
+  // Handle note save from modal
+  const handleNoteSave = async (noteInput: NoteInput, existingId?: string, sourceIds?: string[]) => {
+    const { data, error } = await createNote(noteInput)
+    if (data && !error) {
+      // Link the source to the note
+      await linkSourceToNote(data.id, id)
+      // Reload notes
+      const { data: notes } = await getSourceNotes(id)
+      setLinkedNotes(notes || [])
+    }
+    setShowNoteEditor(false)
+  }
+
+  // Handle context editing
+  const toggleContextSelection = (contextId: string) => {
+    setEditContextIds(prev => {
+      if (prev.includes(contextId)) {
+        // If removing primary, clear it
+        if (editPrimaryContextId === contextId) {
+          setEditPrimaryContextId(null)
+        }
+        return prev.filter(id => id !== contextId)
+      } else {
+        // First selected becomes primary
+        if (prev.length === 0) {
+          setEditPrimaryContextId(contextId)
+        }
+        return [...prev, contextId]
+      }
+    })
+  }
+
+  const handleSaveContexts = async () => {
+    if (!source) return
+    setIsSavingContexts(true)
+
+    const { error } = await setSourceContexts(
+      source.id,
+      editContextIds,
+      editPrimaryContextId || undefined
+    )
+
+    if (error) {
+      showError(new Error(error), "Failed to update contexts")
+    } else {
+      // Reload contexts
+      const { data: contexts } = await getSourceContexts(id)
+      setLinkedContexts(contexts || [])
+      showSuccess("Contexts updated")
+      setIsEditingContexts(false)
+    }
+    setIsSavingContexts(false)
+  }
+
+  const cancelContextEditing = () => {
+    // Reset to current values
+    setEditContextIds(linkedContexts.map(c => c.id))
+    setEditPrimaryContextId(linkedContexts.find(c => c.is_primary)?.id || null)
+    setIsEditingContexts(false)
   }
 
   // Filter thoughts based on selection
@@ -446,15 +539,83 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
             </Card>
 
             {/* Linked Contexts */}
-            {linkedContexts.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Tag className="h-4 w-4" />
-                    Contexts
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Tag className="h-4 w-4" />
+                  Contexts
+                </CardTitle>
+                {!isEditingContexts ? (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setIsEditingContexts(true)}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={cancelContextEditing}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleSaveContexts}
+                      disabled={isSavingContexts}
+                    >
+                      {isSavingContexts ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent>
+                {isEditingContexts ? (
+                  <div className="space-y-2">
+                    {allContexts.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No contexts available</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {allContexts.map((context) => {
+                          const isSelected = editContextIds.includes(context.id)
+                          const isPrimary = editPrimaryContextId === context.id
+                          return (
+                            <button
+                              key={context.id}
+                              type="button"
+                              onClick={() => toggleContextSelection(context.id)}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
+                                isSelected
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted hover:bg-muted/80"
+                              }`}
+                            >
+                              <span
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: context.color || "#6B7280" }}
+                              />
+                              {context.name}
+                              {isPrimary && <CheckCircle className="h-3 w-3 ml-1" />}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                    {editContextIds.length > 1 && (
+                      <p className="text-xs text-muted-foreground">
+                        First selected context is primary
+                      </p>
+                    )}
+                  </div>
+                ) : linkedContexts.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {linkedContexts.map((context) => (
                       <Badge
@@ -471,9 +632,11 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
                       </Badge>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                ) : (
+                  <p className="text-sm text-muted-foreground">No contexts linked</p>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
 
@@ -510,11 +673,9 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
             <>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Thoughts from this source</h2>
-                <Button asChild size="sm">
-                  <Link href={`/thoughts/extract?source=${source.id}`}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add thought
-                  </Link>
+                <Button size="sm" onClick={() => setShowThoughtForm(true)}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add thought
                 </Button>
               </div>
 
@@ -597,11 +758,9 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
             <>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Notes about this source</h2>
-                <Button asChild size="sm">
-                  <Link href={`/library?tab=notes&sourceId=${source.id}`}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add note
-                  </Link>
+                <Button size="sm" onClick={() => setShowNoteEditor(true)}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add note
                 </Button>
               </div>
 
@@ -674,6 +833,23 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Thought Form Modal */}
+      <ThoughtForm
+        isOpen={showThoughtForm}
+        onClose={() => setShowThoughtForm(false)}
+        onThoughtCreated={handleThoughtCreated}
+        defaultSource={source}
+      />
+
+      {/* Note Editor Modal */}
+      <NoteEditor
+        note={null}
+        isOpen={showNoteEditor}
+        onClose={() => setShowNoteEditor(false)}
+        onSave={handleNoteSave}
+        defaultSourceId={source.id}
+      />
     </LayoutShell>
   )
 }

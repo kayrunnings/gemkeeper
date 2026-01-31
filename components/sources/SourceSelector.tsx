@@ -215,19 +215,28 @@ export function MultiSourceSelector({
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Load selected sources from IDs
+  // Load selected sources from IDs - refetch when IDs change
   useEffect(() => {
-    if (selectedSourceIds.length > 0 && selectedSources.length === 0) {
-      // Load sources by searching for each ID
-      Promise.all(
-        selectedSourceIds.map((id) =>
-          searchSources(id, 1).then(({ data }) => data[0])
-        )
-      ).then((sources) => {
-        setSelectedSources(sources.filter(Boolean))
-      })
+    // Create a sorted string to compare arrays
+    const currentIds = selectedSources.map(s => s.id).sort().join(',')
+    const newIds = [...selectedSourceIds].sort().join(',')
+
+    // Only reload if IDs don't match
+    if (currentIds !== newIds) {
+      if (selectedSourceIds.length === 0) {
+        setSelectedSources([])
+      } else {
+        // Load sources by searching for each ID
+        Promise.all(
+          selectedSourceIds.map((id) =>
+            searchSources(id, 1).then(({ data }) => data[0])
+          )
+        ).then((sources) => {
+          setSelectedSources(sources.filter(Boolean))
+        })
+      }
     }
-  }, [selectedSourceIds, selectedSources.length])
+  }, [selectedSourceIds, selectedSources])
 
   // Search on query change
   useEffect(() => {

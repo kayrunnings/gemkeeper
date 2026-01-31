@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Thought,
   CreateThoughtInput,
@@ -47,11 +47,12 @@ interface ThoughtFormProps {
   isOpen: boolean
   onClose: () => void
   onThoughtCreated: (thought: Thought) => void
+  defaultSource?: Source | null
 }
 
-export function ThoughtForm({ isOpen, onClose, onThoughtCreated }: ThoughtFormProps) {
+export function ThoughtForm({ isOpen, onClose, onThoughtCreated, defaultSource }: ThoughtFormProps) {
   const [content, setContent] = useState("")
-  const [selectedSource, setSelectedSource] = useState<Source | null>(null)
+  const [selectedSource, setSelectedSource] = useState<Source | null>(defaultSource || null)
   const [manualSourceName, setManualSourceName] = useState("")
   const [sourceUrl, setSourceUrl] = useState("")
   const [useManualSource, setUseManualSource] = useState(false)
@@ -59,6 +60,13 @@ export function ThoughtForm({ isOpen, onClose, onThoughtCreated }: ThoughtFormPr
   const [customContext, setCustomContext] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Update selectedSource when defaultSource changes or modal opens
+  useEffect(() => {
+    if (isOpen && defaultSource) {
+      setSelectedSource(defaultSource)
+    }
+  }, [isOpen, defaultSource])
 
   const contentLength = content.length
   const isContentTooLong = contentLength > MAX_CONTENT_LENGTH
@@ -73,7 +81,7 @@ export function ThoughtForm({ isOpen, onClose, onThoughtCreated }: ThoughtFormPr
 
   const resetForm = () => {
     setContent("")
-    setSelectedSource(null)
+    setSelectedSource(defaultSource || null)
     setManualSourceName("")
     setSourceUrl("")
     setUseManualSource(false)
