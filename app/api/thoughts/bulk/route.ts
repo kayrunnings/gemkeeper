@@ -7,6 +7,7 @@ interface BulkThoughtInput {
   context_tag: ContextTag
   source?: string
   source_url?: string
+  source_id?: string
 }
 
 export async function POST(request: NextRequest) {
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
     context_tag: thought.context_tag,
     source: thought.source || null,
     source_url: thought.source_url || null,
+    source_id: thought.source_id || null,
     status: "active" as const,
     application_count: 0,
     skip_count: 0,

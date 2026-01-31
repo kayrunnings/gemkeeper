@@ -4,7 +4,7 @@ import { memo } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Source, SOURCE_TYPE_LABELS, SOURCE_TYPE_ICONS } from "@/lib/types/source"
+import { Source, SOURCE_TYPE_LABELS, SOURCE_TYPE_ICONS, SOURCE_STATUS_LABELS, SOURCE_STATUS_ICONS } from "@/lib/types/source"
 import { Gem } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -13,6 +13,7 @@ interface SourceCardProps {
   linkedThoughtsCount?: number
   className?: string
   onClick?: () => void
+  showStatus?: boolean
 }
 
 export const SourceCard = memo(function SourceCard({
@@ -20,9 +21,19 @@ export const SourceCard = memo(function SourceCard({
   linkedThoughtsCount = 0,
   className,
   onClick,
+  showStatus = true,
 }: SourceCardProps) {
   const typeIcon = SOURCE_TYPE_ICONS[source.type]
   const typeLabel = SOURCE_TYPE_LABELS[source.type]
+  const statusIcon = source.status ? SOURCE_STATUS_ICONS[source.status] : null
+  const statusLabel = source.status ? SOURCE_STATUS_LABELS[source.status] : null
+
+  const statusColors: Record<string, string> = {
+    want_to_read: "bg-blue-500/10 text-blue-600 border-blue-500/30",
+    reading: "bg-amber-500/10 text-amber-600 border-amber-500/30",
+    completed: "bg-green-500/10 text-green-600 border-green-500/30",
+    archived: "bg-gray-500/10 text-gray-500 border-gray-500/30",
+  }
 
   const content = (
     <Card
@@ -65,6 +76,16 @@ export const SourceCard = memo(function SourceCard({
               <span className="mr-1">{typeIcon}</span>
               {typeLabel}
             </Badge>
+
+            {showStatus && source.status && (
+              <Badge
+                variant="outline"
+                className={cn("text-xs", statusColors[source.status])}
+              >
+                <span className="mr-1">{statusIcon}</span>
+                {statusLabel}
+              </Badge>
+            )}
 
             {linkedThoughtsCount > 0 && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">

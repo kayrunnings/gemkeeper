@@ -70,6 +70,24 @@ Thoughts applied 5+ times. Automatically moved to ThoughtBank as "mastered knowl
 ### Moments
 User-described upcoming situations that trigger AI matching against ALL thoughts with `status IN ('active', 'passive')` across ALL contexts. Returns the most relevant thoughts with explanations.
 
+### Sources (Epic 13)
+First-class entities representing knowledge origins (books, articles, podcasts, videos, courses). Sources enable tracking where thoughts come from and support workflows like "everything from this book."
+
+| Property | Description |
+|----------|-------------|
+| `name` | Title of the source (e.g., "Atomic Habits") |
+| `author` | Creator name |
+| `type` | book/article/podcast/video/course/other |
+| `status` | want_to_read/reading/completed/archived |
+| `isbn` | For books (enables Open Library lookup) |
+| `url` | Link to source content |
+| `cover_image_url` | Cover art URL |
+
+**Relationships:**
+- Thoughts → Sources: `source_id` FK links thoughts to sources
+- Notes → Sources: Many-to-many via `note_sources` table
+- Sources → Contexts: Many-to-many via `source_contexts` table
+
 ---
 
 ## Core Features
@@ -617,6 +635,59 @@ interface Discovery {
 
 ---
 
+### 12. Sources Integration (Epic 13)
+
+**Description:** First-class source entities that connect thoughts, notes, and contexts, enabling powerful workflows like "everything from this book" and source effectiveness tracking.
+
+**User Story:** As a user, I want to track where my knowledge comes from so I can see all insights from a specific book/article and manage my reading list.
+
+**Features:**
+- Add sources directly (books, articles, podcasts, videos, courses)
+- ISBN lookup with Open Library API (auto-fills book details and cover)
+- Status tracking (Want to Read → Reading → Completed → Archived)
+- Link thoughts to sources during capture
+- Link notes to multiple sources
+- Associate sources with contexts
+- Source detail page with linked thoughts and notes
+
+**Functional Requirements:**
+
+| ID | Requirement | Testable Criteria |
+|----|-------------|-------------------|
+| FR-12.1 | User can add source via modal | AddSourceModal creates source record |
+| FR-12.2 | User can look up book by ISBN | Open Library API returns book details |
+| FR-12.3 | Sources have status tracking | Status column exists with valid values |
+| FR-12.4 | User can filter sources by status | Library tab shows filtered results |
+| FR-12.5 | Thoughts can be linked to sources | source_id FK populated |
+| FR-12.6 | Notes can be linked to multiple sources | note_sources join table used |
+| FR-12.7 | Sources can be linked to contexts | source_contexts join table used |
+| FR-12.8 | Source detail page shows linked content | Thoughts/Notes tabs display links |
+| FR-12.9 | User can change source status | Dropdown updates status |
+| FR-12.10 | User can edit source contexts | Context multi-select saves changes |
+
+**Acceptance Criteria:**
+- [x] User can add source via Add Source modal
+- [x] ISBN lookup fetches book details from Open Library
+- [x] Cover images auto-populate for books with covers
+- [x] User can select source type (Book, Article, Podcast, Video, Course, Other)
+- [x] User can set source status (Want to Read, Reading, Completed, Archived)
+- [x] Library Sources tab has status filter tabs
+- [x] ThoughtForm has source selector for linking
+- [x] ThoughtEditForm allows changing linked source
+- [x] NoteEditor supports multi-source linking
+- [x] Source detail page shows Thoughts and Notes tabs
+- [x] User can add thought/note directly from source detail page
+- [x] User can edit contexts on source detail page
+- [x] AddSourceModal supports context selection
+
+**Source Status Flow:**
+
+```
+Want to Read → Reading → Completed → Archived
+```
+
+---
+
 ## Future Features (Not in Current Scope)
 
 ### Multi-Theme System
@@ -718,3 +789,4 @@ interface Discovery {
 - Mozilla Readability for article parsing
 - youtube-transcript for YouTube content
 - Gemini grounding for discovery web search
+- Open Library API for ISBN book lookup and cover images

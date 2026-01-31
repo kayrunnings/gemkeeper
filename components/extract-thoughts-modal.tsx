@@ -29,6 +29,9 @@ import {
 import { ExtractedThoughtCard, ExtractedThought } from "./extracted-thought-card"
 import { AIConsentModal } from "./ai-consent-modal"
 import { grantAIConsent } from "@/app/settings/actions"
+import { SourceSelector } from "./sources/SourceSelector"
+import { Source } from "@/lib/types/source"
+import { getOrCreateSource } from "@/lib/sources"
 
 interface ExtractThoughtsModalProps {
   isOpen: boolean
@@ -66,6 +69,8 @@ export function ExtractThoughtsModal({
   const [urlInput, setUrlInput] = useState("")
   const [isExtractingUrl, setIsExtractingUrl] = useState(false)
   const [source, setSource] = useState("")
+  const [selectedSource, setSelectedSource] = useState<Source | null>(null)
+  const [useManualSource, setUseManualSource] = useState(false)
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
   const [extractedThoughts, setExtractedThoughts] = useState<ExtractedThought[]>([])
   const [selectedThoughts, setSelectedThoughts] = useState<Set<number>>(new Set())
@@ -89,6 +94,8 @@ export function ExtractThoughtsModal({
       setUrlInput("")
       setIsExtractingUrl(false)
       setSource("")
+      setSelectedSource(null)
+      setUseManualSource(false)
       setMediaFiles([])
       setExtractedThoughts([])
       setSelectedThoughts(new Set())
@@ -153,7 +160,22 @@ export function ExtractThoughtsModal({
       if (data.success && data.content) {
         // Populate content and source from extracted data
         setContent(data.content.text || "")
-        setSource(data.content.title || data.content.siteName || urlInput)
+        const sourceName = data.content.title || data.content.siteName || urlInput
+        setSource(sourceName)
+
+        // Auto-create or find source entity from URL
+        try {
+          const sourceType = data.content.type === "youtube" ? "video" : "article"
+          const result = await getOrCreateSource(sourceName, sourceType)
+          if (result.data) {
+            setSelectedSource(result.data)
+            setUseManualSource(false)
+          }
+        } catch {
+          // Silently fall back to manual source if auto-create fails
+          setUseManualSource(true)
+        }
+
         setInputMode("text") // Switch to text mode to show the extracted content
         setError(null)
       } else {
@@ -290,7 +312,8 @@ export function ExtractThoughtsModal({
         .map((thought) => ({
           content: thought.content,
           context_tag: thought.context_tag,
-          source: source || undefined,
+          source: useManualSource ? source : selectedSource?.name || source || undefined,
+          source_id: !useManualSource && selectedSource ? selectedSource.id : undefined,
         }))
 
       const response = await fetch("/api/thoughts/bulk", {
@@ -559,13 +582,37 @@ export function ExtractThoughtsModal({
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="source">Source (optional)</Label>
-                  <Input
-                    id="source"
-                    value={source}
-                    onChange={(e) => setSource(e.target.value)}
-                    placeholder="e.g., Book title, article name"
-                  />
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="source">Source (optional)</Label>
+                    <button
+                      type="button"
+                      onClick={() => setUseManualSource(!useManualSource)}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {useManualSource ? "Use existing source" : "Enter manually"}
+                    </button>
+                  </div>
+                  {useManualSource ? (
+                    <Input
+                      id="source"
+                      value={source}
+                      onChange={(e) => setSource(e.target.value)}
+                      placeholder="e.g., Book title, article name"
+                    />
+                  ) : (
+                    <SourceSelector
+                      selectedSourceId={selectedSource?.id || null}
+                      onSourceSelect={setSelectedSource}
+                      placeholder="Search or create a source..."
+                      allowCreate
+                    />
+                  )}
+                  {selectedSource && !useManualSource && (
+                    <p className="text-xs text-muted-foreground">
+                      Linked to: {selectedSource.name}
+                      {selectedSource.author && ` by ${selectedSource.author}`}
+                    </p>
+                  )}
                 </div>
 
                 {usage && (

@@ -68,6 +68,7 @@ export async function createThought(input: CreateThoughtInput): Promise<{ though
       content: input.content,
       source: input.source || null,
       source_url: input.source_url || null,
+      source_id: input.source_id || null,
       context_tag: input.context_tag,
       custom_context: input.context_tag === "other" ? input.custom_context || null : null,
       status: "active",

@@ -28,6 +28,7 @@ This captures the core value proposition: proactive surfacing. You don't have to
 - A system for applying what you learn
 - A curator of your most important insights organized by life context
 - A coach that knows your values and reminds you of them
+- A tracker of knowledge sources (books, articles, podcasts) and their insights
 
 ### What ThoughtFolio Is Not
 
@@ -52,6 +53,7 @@ This captures the core value proposition: proactive surfacing. You don't have to
 4. Your knowledge, not AI-generated content
 5. URL-based extraction from articles and videos
 6. AI-powered discovery of new relevant content
+7. First-class source tracking with reading list management
 
 ---
 

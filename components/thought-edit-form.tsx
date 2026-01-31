@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Thought,
   CreateThoughtInput,
   ContextTag,
   CONTEXT_TAG_LABELS,
 } from "@/lib/types/thought"
+import { Source } from "@/lib/types/source"
 import {
   Dialog,
   DialogContent,
@@ -24,8 +25,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronDown, AlertCircle, Loader2 } from "lucide-react"
+import { SourceSelector } from "@/components/sources/SourceSelector"
+import { ChevronDown, AlertCircle, Loader2, BookOpen } from "lucide-react"
 import { updateThought } from "@/lib/thoughts"
+import { getSource } from "@/lib/sources"
 import { cn } from "@/lib/utils"
 
 const CONTEXT_TAGS: ContextTag[] = [
@@ -50,12 +53,26 @@ interface ThoughtEditFormProps {
 
 export function ThoughtEditForm({ thought, isOpen, onClose, onThoughtUpdated }: ThoughtEditFormProps) {
   const [content, setContent] = useState(thought.content)
-  const [source, setSource] = useState(thought.source || "")
+  const [selectedSource, setSelectedSource] = useState<Source | null>(null)
+  const [manualSourceName, setManualSourceName] = useState(thought.source || "")
   const [sourceUrl, setSourceUrl] = useState(thought.source_url || "")
+  const [useManualSource, setUseManualSource] = useState(!thought.source_id)
   const [contextTag, setContextTag] = useState<ContextTag>(thought.context_tag)
   const [customContext, setCustomContext] = useState(thought.custom_context || "")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Load linked source when dialog opens
+  useEffect(() => {
+    if (isOpen && thought.source_id) {
+      getSource(thought.source_id).then(({ data }) => {
+        if (data) {
+          setSelectedSource(data)
+          setUseManualSource(false)
+        }
+      })
+    }
+  }, [isOpen, thought.source_id])
 
   const contentLength = content.length
   const isContentTooLong = contentLength > MAX_CONTENT_LENGTH
@@ -69,11 +86,20 @@ export function ThoughtEditForm({ thought, isOpen, onClose, onThoughtUpdated }: 
   const handleClose = () => {
     // Reset to original values
     setContent(thought.content)
-    setSource(thought.source || "")
+    setManualSourceName(thought.source || "")
     setSourceUrl(thought.source_url || "")
     setContextTag(thought.context_tag)
     setCustomContext(thought.custom_context || "")
+    setUseManualSource(!thought.source_id)
     setError(null)
+    // Reload source
+    if (thought.source_id) {
+      getSource(thought.source_id).then(({ data }) => {
+        setSelectedSource(data)
+      })
+    } else {
+      setSelectedSource(null)
+    }
     onClose()
   }
 
@@ -86,7 +112,12 @@ export function ThoughtEditForm({ thought, isOpen, onClose, onThoughtUpdated }: 
     const input: Partial<CreateThoughtInput> = {
       content: content.trim(),
       context_tag: contextTag,
-      source: source.trim() || undefined,
+      // Link to source entity if selected
+      source_id: selectedSource?.id || undefined,
+      // Also set source name from selected source or manual entry
+      source: selectedSource
+        ? selectedSource.name
+        : manualSourceName.trim() || undefined,
       source_url: sourceUrl.trim() || undefined,
       custom_context: contextTag === "other" ? customContext.trim() : undefined,
     }
@@ -192,27 +223,64 @@ export function ThoughtEditForm({ thought, isOpen, onClose, onThoughtUpdated }: 
 
           {/* Source (optional) */}
           <div className="space-y-2">
-            <Label htmlFor="source">Source (optional)</Label>
-            <Input
-              id="source"
-              placeholder="Book, article, person, etc."
-              value={source}
-              onChange={(e) => setSource(e.target.value)}
-              maxLength={200}
-            />
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-1.5">
+                <BookOpen className="h-4 w-4" />
+                Source (optional)
+              </Label>
+              <button
+                type="button"
+                onClick={() => {
+                  setUseManualSource(!useManualSource)
+                  if (!useManualSource) {
+                    setSelectedSource(null)
+                  } else {
+                    setManualSourceName("")
+                  }
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                {useManualSource ? "Search sources" : "Enter manually"}
+              </button>
+            </div>
+
+            {useManualSource ? (
+              <Input
+                id="manual-source"
+                placeholder="Book, article, person, etc."
+                value={manualSourceName}
+                onChange={(e) => setManualSourceName(e.target.value)}
+                maxLength={200}
+              />
+            ) : (
+              <SourceSelector
+                selectedSourceId={selectedSource?.id}
+                onSourceSelect={setSelectedSource}
+                placeholder="Search or create a source..."
+                allowCreate={true}
+              />
+            )}
+            <p className="text-xs text-muted-foreground">
+              {useManualSource
+                ? "Enter source name as plain text"
+                : "Link to an existing source or create a new one"
+              }
+            </p>
           </div>
 
-          {/* Source URL (optional) */}
-          <div className="space-y-2">
-            <Label htmlFor="source-url">Source URL (optional)</Label>
-            <Input
-              id="source-url"
-              type="url"
-              placeholder="https://..."
-              value={sourceUrl}
-              onChange={(e) => setSourceUrl(e.target.value)}
-            />
-          </div>
+          {/* Source URL (optional) - only show for manual source or when no source selected */}
+          {(useManualSource || !selectedSource) && (
+            <div className="space-y-2">
+              <Label htmlFor="source-url">Source URL (optional)</Label>
+              <Input
+                id="source-url"
+                type="url"
+                placeholder="https://..."
+                value={sourceUrl}
+                onChange={(e) => setSourceUrl(e.target.value)}
+              />
+            </div>
+          )}
         </div>
 
         <DialogFooter>
