@@ -99,7 +99,7 @@ gemkeeper/
 │   │   ├── FloatingButtonMenu.tsx    # Menu options
 │   │   ├── QuickMomentEntry.tsx      # Inline moment entry
 │   │   ├── CalendarEventPicker.tsx   # Event selector
-│   │   └── ContextEnrichmentPrompt.tsx  # Epic 14: Context enrichment UI
+│   │   └── ContextEnrichmentPrompt.tsx  # Epic 14: Context enrichment UI with chip search
 │   ├── capture/                  # AI Capture components (ThoughtFolio 2.0)
 │   │   ├── AICaptureModal.tsx    # Main capture modal (Cmd+N)
 │   │   ├── CaptureEmptyState.tsx # Initial state
@@ -132,8 +132,8 @@ gemkeeper/
 │   └── ...                       # Other components
 ├── lib/                          # Utilities and services
 │   ├── moments/                  # Epic 14: Moment Intelligence
-│   │   ├── title-analysis.ts     # Generic title detection, event type classification
-│   │   └── learning.ts           # Learning service for pattern associations
+│   │   ├── title-analysis.ts     # Generic title detection, event type classification, chip search
+│   │   └── learning.ts           # Learning service for pattern associations (threshold: 1)
 │   ├── ai/                       # AI/Gemini integration
 │   │   ├── prompts.ts            # Centralized AI prompt templates (v2.1.0)
 │   │   ├── gemini.ts             # Gemini API logic
