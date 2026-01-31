@@ -1,5 +1,7 @@
 // Moment types for situational thought surfacing
 import type { Thought } from "@/lib/types/thought"
+import type { EventType } from "@/lib/moments/title-analysis"
+import type { MatchSource } from "@/lib/types/learning"
 
 export type MomentSource = 'manual' | 'calendar'
 export type MomentStatus = 'active' | 'completed' | 'dismissed'
@@ -18,6 +20,9 @@ export interface Moment {
   completed_at: string | null
   created_at: string
   updated_at: string
+  // Epic 14: Moment Intelligence fields
+  user_context: string | null  // Additional context provided by user
+  detected_event_type: EventType | null  // Auto-detected event type
 }
 
 export interface MomentThought {
@@ -31,6 +36,9 @@ export interface MomentThought {
   was_reviewed: boolean
   created_at: string
   thought?: Thought  // Joined thought data
+  // Epic 14: Learning fields
+  match_source?: MatchSource  // Whether match came from AI, learned patterns, or both
+  learned_confidence?: number  // Confidence score if from learned pattern
 }
 
 // Legacy alias for backward compatibility

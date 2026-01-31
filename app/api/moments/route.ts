@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import type { MomentWithGems, CalendarEventData } from "@/types/moments"
 import { MAX_MOMENT_DESCRIPTION_LENGTH } from "@/types/moments"
+import type { EventType } from "@/lib/moments/title-analysis"
+import { combineContextForMatching } from "@/lib/moments/title-analysis"
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -13,10 +15,19 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { description, source = 'manual', calendarData } = body as {
+    const {
+      description,
+      source = 'manual',
+      calendarData,
+      // Epic 14: Moment Intelligence fields
+      user_context,
+      detected_event_type,
+    } = body as {
       description?: string
       source?: 'manual' | 'calendar'
       calendarData?: CalendarEventData
+      user_context?: string | null
+      detected_event_type?: EventType | null
     }
 
     // Validate description
@@ -41,6 +52,9 @@ export async function POST(request: NextRequest) {
       source,
       status: 'active',
       gems_matched_count: 0,
+      // Epic 14: Store enrichment data
+      user_context: user_context || null,
+      detected_event_type: detected_event_type || null,
     }
 
     if (calendarData) {
@@ -48,6 +62,12 @@ export async function POST(request: NextRequest) {
       insertData.calendar_event_title = calendarData.title
       insertData.calendar_event_start = calendarData.start_time
     }
+
+    // Epic 14: Combine description with user context for better matching
+    const matchingDescription = combineContextForMatching(
+      description.trim(),
+      user_context || undefined
+    )
 
     const { data: moment, error: momentError } = await supabase
       .from("moments")
@@ -92,6 +112,73 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // Epic 14: Fetch learned thoughts that might be relevant
+    // Build pattern conditions based on event type and keywords
+    let learnedGemIds: string[] = []
+    try {
+      const patternConditions: Array<{ type: string; key: string }> = []
+
+      // Event type pattern
+      if (detected_event_type && detected_event_type !== 'unknown') {
+        patternConditions.push({ type: 'event_type', key: detected_event_type })
+      }
+
+      // Recurring event pattern (if calendar event)
+      if (calendarData?.event_id) {
+        const baseEventId = calendarData.event_id.split('_')[0]
+        patternConditions.push({ type: 'recurring', key: `event:${baseEventId}` })
+      }
+
+      // Extract keywords from description for keyword patterns
+      const keywords = description.toLowerCase()
+        .replace(/[^\w\s]/g, ' ')
+        .split(/\s+/)
+        .filter(word => word.length > 3)
+        .slice(0, 5)
+
+      for (const keyword of keywords) {
+        patternConditions.push({ type: 'keyword', key: keyword })
+      }
+
+      if (patternConditions.length > 0) {
+        // Fetch learnings that match any of our patterns
+        const { data: learnings } = await supabase
+          .from('moment_learnings')
+          .select('gem_id, helpful_count, not_helpful_count')
+          .eq('user_id', user.id)
+          .gte('helpful_count', 3)
+
+        if (learnings && learnings.length > 0) {
+          // Filter and aggregate by gem_id
+          const gemHelpfulness = new Map<string, { helpful: number; total: number }>()
+
+          for (const learning of learnings) {
+            const existing = gemHelpfulness.get(learning.gem_id)
+            const helpful = learning.helpful_count || 0
+            const notHelpful = learning.not_helpful_count || 0
+
+            if (existing) {
+              existing.helpful += helpful
+              existing.total += helpful + notHelpful
+            } else {
+              gemHelpfulness.set(learning.gem_id, {
+                helpful,
+                total: helpful + notHelpful,
+              })
+            }
+          }
+
+          // Get gem IDs with confidence >= 0.7
+          learnedGemIds = [...gemHelpfulness.entries()]
+            .filter(([, data]) => data.total > 0 && data.helpful / data.total >= 0.7)
+            .map(([gemId]) => gemId)
+        }
+      }
+    } catch (learnedError) {
+      console.error("Error fetching learned thoughts:", learnedError)
+      // Continue without learned thoughts
+    }
+
     // Call AI matching endpoint
     const startTime = Date.now()
     let matchedGems: Array<{
@@ -99,6 +186,17 @@ export async function POST(request: NextRequest) {
       relevance_score: number
       relevance_reason: string | null
     }> = []
+
+    // Epic 14: Build learned thoughts array with content for prompt
+    const learnedThoughtsForPrompt = learnedGemIds.length > 0
+      ? gems
+          .filter(g => learnedGemIds.includes(g.id))
+          .map(g => ({
+            gem_id: g.id,
+            gem_content: g.content,
+            confidence_score: 0.8, // Simplified confidence for now
+          }))
+      : []
 
     try {
       const matchResponse = await fetch(
@@ -110,13 +208,16 @@ export async function POST(request: NextRequest) {
             "Cookie": request.headers.get("Cookie") || "",
           },
           body: JSON.stringify({
-            moment_description: description,
+            // Epic 14: Use combined description with user context for better matching
+            moment_description: matchingDescription,
             gems: gems.map(g => ({
               id: g.id,
               content: g.content,
               context_tag: g.context_tag,
               source: g.source,
             })),
+            // Epic 14: Pass learned thoughts
+            learned_thoughts: learnedThoughtsForPrompt,
           }),
         }
       )

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { matchGemsToMoment } from "@/lib/matching"
 import type { GemForMatching } from "@/types/matching"
+import type { LearnedThought } from "@/lib/types/learning"
 
 // Rate limiting: track user requests
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
@@ -43,9 +44,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { moment_description, gems } = body as {
+    const { moment_description, gems, learned_thoughts } = body as {
       moment_description?: string
       gems?: GemForMatching[]
+      learned_thoughts?: LearnedThought[]  // Epic 14
     }
 
     // Validate moment description
@@ -80,8 +82,12 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Call matching service
-    const result = await matchGemsToMoment(moment_description, validGems)
+    // Call matching service (Epic 14: Pass learned thoughts)
+    const result = await matchGemsToMoment(
+      moment_description,
+      validGems,
+      learned_thoughts
+    )
 
     return NextResponse.json(result)
   } catch (error) {

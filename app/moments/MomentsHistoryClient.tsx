@@ -1,10 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import {
   Sparkles,
@@ -12,18 +18,25 @@ import {
   ChevronRight,
   Filter,
   Plus,
+  ArrowUpDown,
 } from "lucide-react"
-import type { Moment, MomentSource } from "@/types/moments"
+import type { Moment, MomentSource, MomentWithThoughts } from "@/types/moments"
 import { LayoutShell } from "@/components/layout-shell"
 import { createClient } from "@/lib/supabase/client"
+import { MomentEntryModal } from "@/components/moments/MomentEntryModal"
 
 interface MomentsHistoryClientProps {
   initialMoments: Moment[]
 }
 
+type SortOption = 'newest' | 'oldest' | 'most_thoughts' | 'upcoming'
+
 export function MomentsHistoryClient({ initialMoments }: MomentsHistoryClientProps) {
   const [filter, setFilter] = useState<MomentSource | 'all'>('all')
+  const [sortBy, setSortBy] = useState<SortOption>('newest')
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [moments, setMoments] = useState(initialMoments)
   const router = useRouter()
   const supabase = createClient()
 
@@ -35,15 +48,40 @@ export function MomentsHistoryClient({ initialMoments }: MomentsHistoryClientPro
     getUser()
   }, [supabase])
 
-  const filteredMoments = (filter === 'all'
-    ? initialMoments
-    : initialMoments.filter(m => m.source === filter))
-    // Sort by event start time (for calendar) or created_at, newest/soonest first
-    .sort((a, b) => {
-      const aTime = new Date(a.calendar_event_start || a.created_at).getTime()
-      const bTime = new Date(b.calendar_event_start || b.created_at).getTime()
-      return bTime - aTime
+  // Filter and sort moments
+  const filteredMoments = useMemo(() => {
+    const filtered = filter === 'all'
+      ? moments
+      : moments.filter(m => m.source === filter)
+
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        case 'oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        case 'most_thoughts':
+          return (b.gems_matched_count || 0) - (a.gems_matched_count || 0)
+        case 'upcoming':
+          // Sort by scheduled/event time, upcoming first
+          const aTime = a.calendar_event_start
+            ? new Date(a.calendar_event_start).getTime()
+            : new Date(a.created_at).getTime()
+          const bTime = b.calendar_event_start
+            ? new Date(b.calendar_event_start).getTime()
+            : new Date(b.created_at).getTime()
+          return aTime - bTime
+        default:
+          return 0
+      }
     })
+  }, [moments, filter, sortBy])
+
+  const handleMomentCreated = (moment: MomentWithThoughts) => {
+    // Add the new moment to the list and navigate to its prep card
+    setMoments(prev => [moment, ...prev])
+    router.push(`/moments/${moment.id}/prepare`)
+  }
 
   const formatDateTime = (moment: Moment): string => {
     // Use calendar_event_start for calendar events, otherwise created_at
@@ -87,24 +125,57 @@ export function MomentsHistoryClient({ initialMoments }: MomentsHistoryClientPro
               Prepare for situations with your thoughts
             </p>
           </div>
+          <Button onClick={() => setIsModalOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            New Moment
+          </Button>
         </div>
 
-      {/* Filter */}
-      <div className="flex items-center gap-2 mb-6">
-        <Filter className="h-4 w-4 text-muted-foreground" />
-        <div className="flex gap-2">
-          {(['all', 'manual', 'calendar'] as const).map((option) => (
-            <Button
-              key={option}
-              variant={filter === option ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilter(option)}
-              className="capitalize"
-            >
-              {option === 'all' ? 'All' : option}
-            </Button>
-          ))}
+      {/* Filter & Sort */}
+      <div className="flex flex-wrap items-center gap-4 mb-6">
+        {/* Filter */}
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <div className="flex gap-2">
+            {(['all', 'manual', 'calendar'] as const).map((option) => (
+              <Button
+                key={option}
+                variant={filter === option ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilter(option)}
+                className="capitalize"
+              >
+                {option === 'all' ? 'All' : option}
+              </Button>
+            ))}
+          </div>
         </div>
+
+        {/* Sort */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <ArrowUpDown className="h-4 w-4" />
+              {sortBy === 'newest' ? 'Newest First' :
+               sortBy === 'oldest' ? 'Oldest First' :
+               sortBy === 'most_thoughts' ? 'Most Thoughts' : 'Upcoming'}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setSortBy('newest')}>
+              Newest First
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy('oldest')}>
+              Oldest First
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy('most_thoughts')}>
+              Most Thoughts
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy('upcoming')}>
+              Upcoming
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Moments List */}
@@ -169,6 +240,12 @@ export function MomentsHistoryClient({ initialMoments }: MomentsHistoryClientPro
       )}
       </div>
 
+      {/* New Moment Modal */}
+      <MomentEntryModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onMomentCreated={handleMomentCreated}
+      />
     </LayoutShell>
   )
 }

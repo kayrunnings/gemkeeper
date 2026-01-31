@@ -10,7 +10,7 @@ ThoughtFolio is a knowledge accountability partner that helps users capture insi
 
 **Last Updated:** January 2026
 
-**Feature Status:** All core features complete (Contexts, Active List, Daily Check-in, Moments, Discovery, Calendar Integration, Graduation System, Sources Integration)
+**Feature Status:** All core features complete (Contexts, Active List, Daily Check-in, Moments, Moment Intelligence, Discovery, Calendar Integration, Graduation System)
 
 ---
 
@@ -458,6 +458,73 @@ First-class entities representing knowledge origins (books, articles, podcasts, 
 - `success` — Matches found, redirect to prep card
 - `empty` — No matches found, encouraging message
 - `error` — Error occurred, retry option
+
+---
+
+### 9.5. Moment Intelligence (Epic 14)
+
+**Description:** Enhances the Moments system with intelligent context prompting and learning capabilities. When calendar events have generic titles, proactively asks users for more context before matching. Over time, learns which thoughts are helpful for similar moments and surfaces them automatically.
+
+**User Story:** As a user, I want ThoughtFolio to get smarter at suggesting the right thoughts for recurring situations so I don't have to start fresh each time I prepare for similar moments.
+
+**Features:**
+
+**Phase 1: Smart Context Prompting**
+- Detect generic event titles (e.g., "Meeting", "1:1", "Sync")
+- Auto-detect event types (1:1, team_meeting, interview, presentation, review, planning, social)
+- Prompt users with contextual questions before matching
+- Quick-select chips based on event type
+- Store and display user-provided context
+
+**Phase 2: Learning System**
+- Record pattern associations when users mark thoughts helpful
+- Learn from event type, keywords, recurring events
+- Surface previously helpful thoughts for similar moments
+- "Helped before" badge for learned thought suggestions
+
+**Functional Requirements:**
+
+| ID | Requirement | Testable Criteria |
+|----|-------------|-------------------|
+| FR-9.5.1 | System detects generic event titles | Short titles, common patterns flagged as generic |
+| FR-9.5.2 | System auto-detects event type | 1:1, interview, presentation, etc. correctly identified |
+| FR-9.5.3 | User prompted for context on generic events | ContextEnrichmentPrompt modal appears |
+| FR-9.5.4 | Quick-select chips shown by event type | Chips match detected event type |
+| FR-9.5.5 | User can skip enrichment | Proceeds with original title only |
+| FR-9.5.6 | User context stored on moment | user_context field populated |
+| FR-9.5.7 | Marking helpful records learning | moment_learnings entry created/updated |
+| FR-9.5.8 | Marking not helpful records signal | not_helpful_count incremented |
+| FR-9.5.9 | Threshold of 3 helpful marks required | Thoughts only suggested after 3+ helpful marks |
+| FR-9.5.10 | Confidence threshold of 70% | helpful / (helpful + not_helpful) >= 0.7 |
+| FR-9.5.11 | Learned thoughts shown with badge | "Helped before" badge displayed |
+| FR-9.5.12 | AI prompt includes learned context | Prompt has learned_thoughts_section |
+
+**Event Type Detection:**
+
+| Pattern | Detected Type |
+|---------|---------------|
+| "1:1", "one on one", "1-on-1" | `1:1` |
+| "team meeting", "standup", "weekly sync" | `team_meeting` |
+| "interview" | `interview` |
+| "presentation", "demo", "pitch" | `presentation` |
+| "review", "feedback", "performance" | `review` |
+| "planning", "roadmap", "strategy" | `planning` |
+| "happy hour", "lunch", "coffee" | `social` |
+
+**Acceptance Criteria:**
+- [x] Generic event titles are detected (short, common patterns)
+- [x] Event type is auto-detected (1:1, interview, presentation, etc.)
+- [x] User is prompted with contextual questions before matching
+- [x] Quick-select chips shown based on event type
+- [x] User can skip enrichment and proceed with original title
+- [x] Combined context used for matching
+- [x] User context stored and displayed in PrepCard
+- [x] Marking thought "helpful" records learning associations
+- [x] Marking thought "not helpful" records negative signal
+- [x] Learnings are pattern-specific (event_type, keyword, recurring)
+- [x] Thoughts with >= 3 helpful marks suggested for similar moments
+- [x] Learned thoughts indicated with "Helped before" badge
+- [x] AI prompt includes learned thoughts as context
 
 ---
 

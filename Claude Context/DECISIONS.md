@@ -920,6 +920,64 @@ This caused calendar moments to appear in the dashboard but show "No thoughts ma
 
 ---
 
+### 2026-01-31: Epic 14 - Moment Intelligence
+
+**Decision:** Implement smart context prompting and learning system for Moments feature.
+
+**Status:** COMPLETED
+
+**Rationale:**
+- Generic event titles (e.g., "Meeting", "1:1", "Sync") don't provide enough context for good thought matching
+- Users marking thoughts helpful/not helpful was captured but never used to improve future matching
+- Recurring events (weekly 1:1s, standup meetings) should remember what worked before
+- "Thoughts that find you" core principle means the system should get smarter over time
+
+**Key Design Choices:**
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Learning threshold | 3 helpful marks | Avoids false patterns from single instances |
+| Confidence threshold | 70% | helpful / (helpful + not_helpful) >= 0.7 for suggestion |
+| Pattern types | event_type, keyword, recurring, attendee | Covers main ways moments repeat |
+| Enrichment timing | Before matching | More context = better matches |
+| Learning storage | Separate `moment_learnings` table | Clean separation, doesn't bloat moments table |
+| Keyword extraction | Simple stop-word removal | Start simple, can add NLP later |
+
+**Implementation:**
+
+1. **Phase 1: Smart Context Prompting**
+   - `lib/moments/title-analysis.ts` - Generic title detection, event type classification
+   - `components/moments/ContextEnrichmentPrompt.tsx` - UI for adding context
+   - Quick-select chips by event type (1:1, team_meeting, interview, etc.)
+   - Stores `user_context` and `detected_event_type` on moments table
+
+2. **Phase 2: Learning System**
+   - `moment_learnings` table tracks pattern → thought associations
+   - `lib/moments/learning.ts` - Recording helpful/not helpful signals
+   - API routes: `/api/moments/learn/helpful` and `/api/moments/learn/not-helpful`
+   - "Helped before" badge in PrepCard for learned thoughts
+   - AI prompt includes learned thoughts section
+
+**Alternatives Considered:**
+- AI-only learning (semantic similarity) → Rejected: too opaque, users want explainable suggestions
+- Per-moment learning only → Rejected: doesn't generalize to similar moments
+- Complex NLP for keywords → Rejected: start simple, iterate if needed
+- No threshold (suggest after 1 helpful) → Rejected: creates noisy suggestions
+
+**Consequences:**
+- New database table: `moment_learnings`
+- New columns on `moments`: `user_context`, `detected_event_type`
+- New field on `moment_gems`: `match_source` ('ai' | 'learned' | 'both')
+- AI prompt updated with `{learned_thoughts_section}` placeholder
+- PrepCard shows "Helped before" badge for learned suggestions
+
+**Key Learnings:**
+- Pattern-based learning (event_type, keyword, recurring) provides explainable AI behavior
+- Threshold of 3 helpful marks balances responsiveness with accuracy
+- Separate learning table allows flexible querying without moment schema changes
+
+---
+
 ### 2026-01-30: Fix Calendar Sync Window Not Respecting Lead Time Setting
 
 **Issue:** Users could set "Prepare how far in advance?" to values like 3 days or 1 week in calendar settings, but the calendar sync was hardcoded to only fetch events within the next 24 hours. This meant:
