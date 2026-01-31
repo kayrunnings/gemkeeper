@@ -542,12 +542,46 @@ USING (auth.uid() = user_id);
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Learning threshold | 3 helpful marks | Avoids false patterns from single instances |
+| Learning threshold | 1 helpful mark (was 3, reduced for testing) | Easier testing; can revert to 3 for production |
 | Pattern types | event_type, keyword, recurring, attendee | Covers the main ways moments repeat |
 | Recurring detection | Both exact ID + fuzzy match | Google IDs are reliable; fuzzy catches renamed events |
 | Enrichment timing | Before matching | More context = better matches (vs. asking after 0 matches) |
 | Learning storage | Separate table | Clean separation, easy to query, doesn't bloat moments table |
 | Keyword extraction | Simple stop-word removal | Start simple, can add NLP later if needed |
+
+---
+
+## User Testing Feedback (January 2026)
+
+Based on user testing, the following enhancements were implemented:
+
+### Context Enrichment Improvements
+- [x] Context enrichment prompt now shows for **all** calendar events (not just generic titles)
+- [x] If no thoughts are found, always offer "Add Context & Try Again" option
+- [x] Quick add floating button now navigates to prep card (which handles enrichment)
+
+### Chip Selection Enhancements
+- [x] Expanded chips to 12-15 per event type (was 4-5)
+- [x] Added `ALL_CHIPS` array with 60+ comprehensive topics
+- [x] Added chip search functionality (`searchChips()` in title-analysis.ts)
+- [x] "Show more topics" toggle to reveal additional chips
+- [x] Selected chips summary with easy removal
+
+### Visual Feedback
+- [x] "Got it" button now shows visual confirmation overlay: "Noted! This will help future matches."
+- [x] Confirmation fades after 2 seconds
+
+### Moments Page Improvements
+- [x] Added "New Moment" button in header to create moments from the list page
+- [x] Added sorting dropdown with options:
+  - Newest First
+  - Oldest First
+  - Most Thoughts
+  - Upcoming
+
+### Testing Configuration
+- [x] Reduced `LEARNING_HELPFUL_THRESHOLD` from 3 to 1 for easier testing
+- [x] Can be reverted to 3 for production after testing is complete
 
 ---
 
