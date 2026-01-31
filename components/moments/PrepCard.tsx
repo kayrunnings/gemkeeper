@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -19,12 +19,15 @@ import {
   BookOpen,
   RotateCcw,
   MessageSquare,
+  Loader2,
 } from "lucide-react"
 import type { MomentWithThoughts, MomentThought } from "@/types/moments"
 import type { Thought } from "@/lib/types/thought"
 import type { Note } from "@/lib/types"
 import { CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS } from "@/lib/types/thought"
 import { recordMomentThoughtFeedback, markThoughtReviewed, updateMomentStatus } from "@/lib/moments"
+import { analyzeEventTitle, type TitleAnalysis } from "@/lib/moments/title-analysis"
+import { ContextEnrichmentPrompt } from "./ContextEnrichmentPrompt"
 
 // Extended type for moment thought with linked notes
 interface MomentThoughtWithNotes extends MomentThought {
@@ -251,6 +254,58 @@ export function PrepCard({ moment, onComplete, readOnly = false }: PrepCardProps
   const router = useRouter()
   const [isCompleting, setIsCompleting] = useState(false)
 
+  // Epic 14: Enrichment state for generic titles without context
+  const [showEnrichment, setShowEnrichment] = useState(false)
+  const [isEnriching, setIsEnriching] = useState(false)
+  const [titleAnalysis, setTitleAnalysis] = useState<TitleAnalysis | null>(null)
+  const [matchedThoughts, setMatchedThoughts] = useState(moment.matched_thoughts)
+  const [userContext, setUserContext] = useState(moment.user_context)
+
+  // Check if we should show enrichment prompt
+  useEffect(() => {
+    const title = moment.calendar_event_title || moment.description
+    const analysis = analyzeEventTitle(title)
+    setTitleAnalysis(analysis)
+
+    // Show enrichment if: title is generic, no user_context yet, and few/no matches
+    if (analysis.isGeneric && !moment.user_context && moment.matched_thoughts.length <= 1) {
+      setShowEnrichment(true)
+    }
+  }, [moment])
+
+  // Handle enrichment submission
+  const handleEnrichmentSubmit = async (context: string) => {
+    setIsEnriching(true)
+    try {
+      const response = await fetch(`/api/moments/${moment.id}/enrich`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_context: context,
+          detected_event_type: titleAnalysis?.detectedEventType || null,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to enrich moment')
+      }
+
+      const data = await response.json()
+      setMatchedThoughts(data.matched_thoughts || [])
+      setUserContext(context)
+      setShowEnrichment(false)
+    } catch (error) {
+      console.error('Enrichment failed:', error)
+    } finally {
+      setIsEnriching(false)
+    }
+  }
+
+  // Handle skip enrichment
+  const handleSkipEnrichment = () => {
+    setShowEnrichment(false)
+  }
+
   // Calculate time until event (for calendar moments)
   const getTimeUntil = (startTime: string): string => {
     const start = new Date(startTime)
@@ -281,7 +336,7 @@ export function PrepCard({ moment, onComplete, readOnly = false }: PrepCardProps
     router.back()
   }
 
-  const sortedThoughts = [...moment.matched_thoughts].sort(
+  const sortedThoughts = [...matchedThoughts].sort(
     (a, b) => b.relevance_score - a.relevance_score
   )
 
@@ -310,10 +365,10 @@ export function PrepCard({ moment, onComplete, readOnly = false }: PrepCardProps
             {moment.calendar_event_title || moment.description}
           </h1>
           {/* Epic 14: Show user-provided context if present */}
-          {moment.user_context && (
+          {userContext && (
             <div className="flex items-start gap-2 text-sm text-muted-foreground">
               <MessageSquare className="h-4 w-4 mt-0.5 text-blue-500" />
-              <span className="italic">{moment.user_context}</span>
+              <span className="italic">{userContext}</span>
             </div>
           )}
           {moment.calendar_event_start && (
@@ -325,8 +380,40 @@ export function PrepCard({ moment, onComplete, readOnly = false }: PrepCardProps
         </div>
       </div>
 
+      {/* Epic 14: Show enrichment prompt for generic titles */}
+      {showEnrichment && titleAnalysis && (
+        <Card>
+          <CardContent className="pt-6">
+            <ContextEnrichmentPrompt
+              eventTitle={moment.calendar_event_title || moment.description}
+              analysis={titleAnalysis}
+              onSubmit={handleEnrichmentSubmit}
+              onSkip={handleSkipEnrichment}
+              isLoading={isEnriching}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Loading state while enriching */}
+      {isEnriching && (
+        <Card className="text-center py-12">
+          <CardContent className="space-y-4">
+            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 text-primary animate-spin" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-lg font-medium">Finding your thoughts...</p>
+              <p className="text-sm text-muted-foreground">
+                Matching your knowledge to this moment
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Matched Thoughts */}
-      {isEmpty ? (
+      {!showEnrichment && !isEnriching && isEmpty ? (
         <Card className="text-center py-12">
           <CardContent className="space-y-4">
             <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center">
@@ -348,7 +435,7 @@ export function PrepCard({ moment, onComplete, readOnly = false }: PrepCardProps
             </Button>
           </CardContent>
         </Card>
-      ) : (
+      ) : !showEnrichment && !isEnriching ? (
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
             {sortedThoughts.length} thought{sortedThoughts.length !== 1 ? 's' : ''} to prepare with
@@ -364,10 +451,10 @@ export function PrepCard({ moment, onComplete, readOnly = false }: PrepCardProps
             />
           ))}
         </div>
-      )}
+      ) : null}
 
       {/* Footer */}
-      {!readOnly && !isEmpty && (
+      {!readOnly && !isEmpty && !showEnrichment && !isEnriching && (
         <div className="sticky bottom-6 pt-4">
           <Button
             onClick={handleComplete}
