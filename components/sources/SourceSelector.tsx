@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { searchSources, getOrCreateSource } from "@/lib/sources"
+import { searchSources, getOrCreateSource, getSourcesByIds } from "@/lib/sources"
 import { Source, SOURCE_TYPE_ICONS } from "@/lib/types/source"
 import { Loader2, Plus, X, BookOpen, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -226,13 +226,9 @@ export function MultiSourceSelector({
       if (selectedSourceIds.length === 0) {
         setSelectedSources([])
       } else {
-        // Load sources by searching for each ID
-        Promise.all(
-          selectedSourceIds.map((id) =>
-            searchSources(id, 1).then(({ data }) => data[0])
-          )
-        ).then((sources) => {
-          setSelectedSources(sources.filter(Boolean))
+        // Load sources by IDs
+        getSourcesByIds(selectedSourceIds).then(({ data }) => {
+          setSelectedSources(data)
         })
       }
     }

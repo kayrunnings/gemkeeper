@@ -264,6 +264,36 @@ export async function searchSources(
 }
 
 /**
+ * Get sources by IDs
+ */
+export async function getSourcesByIds(
+  ids: string[]
+): Promise<{ data: Source[]; error: string | null }> {
+  if (ids.length === 0) {
+    return { data: [], error: null }
+  }
+
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { data: [], error: "Not authenticated" }
+  }
+
+  const { data, error } = await supabase
+    .from("sources")
+    .select("*")
+    .eq("user_id", user.id)
+    .in("id", ids)
+
+  if (error) {
+    return { data: [], error: error.message }
+  }
+
+  return { data: data || [], error: null }
+}
+
+/**
  * Get or create a source by name (for quick source creation)
  */
 export async function getOrCreateSource(
