@@ -124,7 +124,6 @@ export async function POST(
             relevance_reason: match.relevance_reason,
             was_helpful: null,
             was_reviewed: false,
-            match_source: match.match_source || 'ai',
           }))
 
           await supabase.from("moment_gems").insert(momentGemsData)
