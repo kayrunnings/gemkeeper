@@ -14,8 +14,9 @@ import { Thought } from "@/lib/types/thought"
 import type { Context, ContextWithCount } from "@/lib/types/context"
 import { LayoutShell } from "@/components/layout-shell"
 import { ThoughtForm } from "@/components/thought-form"
-import { NoteEditor } from "@/components/note-editor"
-import { NoteInput } from "@/lib/types"
+import { EnhancedNoteEditor } from "@/components/notes/enhanced-note-editor"
+import { NoteInput, Note, Folder } from "@/lib/types"
+import { setNoteSources } from "@/lib/note-sources"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -94,6 +95,12 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
   const [showThoughtForm, setShowThoughtForm] = useState(false)
   const [showNoteEditor, setShowNoteEditor] = useState(false)
 
+  // EnhancedNoteEditor state
+  const [availableThoughts, setAvailableThoughts] = useState<Thought[]>([])
+  const [folders, setFolders] = useState<Folder[]>([])
+  const [hasAIConsent, setHasAIConsent] = useState(false)
+  const [editingNote, setEditingNote] = useState<Note | null>(null)
+
   // Context editing state
   const [allContexts, setAllContexts] = useState<ContextWithCount[]>([])
   const [isEditingContexts, setIsEditingContexts] = useState(false)
@@ -154,6 +161,31 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
       // Load all contexts for editing
       const { contexts: allCtx } = await getContexts()
       setAllContexts(allCtx)
+
+      // Load additional data for EnhancedNoteEditor
+      const [foldersResult, profileResult, thoughtsResult] = await Promise.all([
+        supabase
+          .from("folders")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("name", { ascending: true }),
+        supabase
+          .from("profiles")
+          .select("ai_consent_given")
+          .eq("id", user.id)
+          .single(),
+        supabase
+          .from("gems")
+          .select("*")
+          .eq("user_id", user.id)
+          .in("status", ["active", "passive"])
+          .order("updated_at", { ascending: false })
+          .limit(100),
+      ])
+
+      if (!foldersResult.error) setFolders(foldersResult.data || [])
+      setHasAIConsent(profileResult.data?.ai_consent_given ?? false)
+      if (!thoughtsResult.error) setAvailableThoughts(thoughtsResult.data as Thought[] || [])
 
       setIsLoading(false)
     }
@@ -217,27 +249,75 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
   }
 
   // Handle note save from modal
-  const handleNoteSave = async (noteInput: NoteInput, existingId?: string, sourceIds?: string[]) => {
-    const { note, error } = await createNote(noteInput)
-    if (note && !error) {
-      // Link the source to the note
-      await linkSourceToNote(note.id, id)
-      // Reload notes
-      const { data: notes } = await getSourceNotes(id)
-      setLinkedNotes(notes || [])
+  const handleNoteSave = async (noteInput: NoteInput & { folder_id?: string | null }, existingId?: string) => {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    if (existingId) {
+      // Update existing note
+      const updateData: { title: string | null; content: string | null; folder_id?: string | null } = {
+        title: noteInput.title || null,
+        content: noteInput.content || null,
+      }
+      if (noteInput.folder_id !== undefined) {
+        updateData.folder_id = noteInput.folder_id
+      }
+
+      const { data, error } = await supabase
+        .from("notes")
+        .update(updateData)
+        .eq("id", existingId)
+        .select()
+        .single()
+
+      if (!error && data) {
+        // Make sure the source is linked
+        await linkSourceToNote(data.id, id)
+        // Reload notes
+        const { data: notes } = await getSourceNotes(id)
+        setLinkedNotes(notes || [])
+        showSuccess("Note updated")
+      } else if (error) {
+        showError(new Error(error.message), "Failed to update note")
+      }
+    } else {
+      // Create new note
+      const { data, error } = await supabase
+        .from("notes")
+        .insert({
+          user_id: user.id,
+          title: noteInput.title || null,
+          content: noteInput.content || null,
+          folder_id: noteInput.folder_id || null,
+        })
+        .select()
+        .single()
+
+      if (!error && data) {
+        // Link the source to the note
+        await linkSourceToNote(data.id, id)
+        // Also set this as the note's source
+        await setNoteSources(data.id, [id])
+        // Reload notes
+        const { data: notes } = await getSourceNotes(id)
+        setLinkedNotes(notes || [])
+        showSuccess("Note created")
+      } else if (error) {
+        showError(new Error(error.message), "Failed to create note")
+      }
     }
     setShowNoteEditor(false)
+    setEditingNote(null)
   }
 
   // Handle context editing
   const toggleContextSelection = (contextId: string) => {
     setEditContextIds(prev => {
       if (prev.includes(contextId)) {
-        // If removing primary, clear it
-        if (editPrimaryContextId === contextId) {
-          setEditPrimaryContextId(null)
-        }
-        return prev.filter(id => id !== contextId)
+        // Clicking already-selected context makes it primary
+        setEditPrimaryContextId(contextId)
+        return prev // Don't remove, just set as primary
       } else {
         // First selected becomes primary
         if (prev.length === 0) {
@@ -245,6 +325,20 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
         }
         return [...prev, contextId]
       }
+    })
+  }
+
+  // Remove a context from selection
+  const removeContextSelection = (contextId: string) => {
+    setEditContextIds(prev => {
+      const newIds = prev.filter(id => id !== contextId)
+      // If removing primary, set first remaining as primary
+      if (editPrimaryContextId === contextId && newIds.length > 0) {
+        setEditPrimaryContextId(newIds[0])
+      } else if (newIds.length === 0) {
+        setEditPrimaryContextId(null)
+      }
+      return newIds
     })
   }
 
@@ -588,30 +682,48 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
                           const isSelected = editContextIds.includes(context.id)
                           const isPrimary = editPrimaryContextId === context.id
                           return (
-                            <button
+                            <div
                               key={context.id}
-                              type="button"
-                              onClick={() => toggleContextSelection(context.id)}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
+                              className={`inline-flex items-center gap-1.5 rounded-full text-sm transition-all ${
                                 isSelected
                                   ? "bg-primary text-primary-foreground"
                                   : "bg-muted hover:bg-muted/80"
                               }`}
                             >
-                              <span
-                                className="w-2 h-2 rounded-full"
-                                style={{ backgroundColor: context.color || "#6B7280" }}
-                              />
-                              {context.name}
-                              {isPrimary && <CheckCircle className="h-3 w-3 ml-1" />}
-                            </button>
+                              <button
+                                type="button"
+                                onClick={() => toggleContextSelection(context.id)}
+                                className="inline-flex items-center gap-1.5 pl-3 py-1.5 pr-1"
+                                title={isSelected ? "Click to make primary" : "Click to add"}
+                              >
+                                <span
+                                  className="w-2 h-2 rounded-full"
+                                  style={{ backgroundColor: context.color || "#6B7280" }}
+                                />
+                                {context.name}
+                                {isPrimary && <CheckCircle className="h-3 w-3 ml-1" />}
+                              </button>
+                              {isSelected && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    removeContextSelection(context.id)
+                                  }}
+                                  className="p-1 pr-2 hover:text-destructive"
+                                  title="Remove context"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              )}
+                            </div>
                           )
                         })}
                       </div>
                     )}
-                    {editContextIds.length > 1 && (
+                    {editContextIds.length > 0 && (
                       <p className="text-xs text-muted-foreground">
-                        First selected context is primary
+                        Click to add. Click selected to make primary. Click X to remove.
                       </p>
                     )}
                   </div>
@@ -843,12 +955,24 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
       />
 
       {/* Note Editor Modal */}
-      <NoteEditor
-        note={null}
+      <EnhancedNoteEditor
+        note={editingNote}
         isOpen={showNoteEditor}
-        onClose={() => setShowNoteEditor(false)}
+        onClose={() => {
+          setShowNoteEditor(false)
+          setEditingNote(null)
+        }}
         onSave={handleNoteSave}
-        defaultSourceId={source.id}
+        contexts={allContexts.map(c => ({
+          id: c.id,
+          name: c.name,
+          color: c.color || '#6366f1',
+          slug: c.slug,
+        }))}
+        availableThoughts={availableThoughts}
+        hasAIConsent={hasAIConsent}
+        folders={folders}
+        defaultSourceIds={[source.id]}
       />
     </LayoutShell>
   )

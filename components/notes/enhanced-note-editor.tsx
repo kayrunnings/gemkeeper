@@ -91,6 +91,8 @@ interface EnhancedNoteEditorProps {
   // Folder support
   folders?: Folder[]
   onCreateFolder?: (name: string) => Promise<Folder | null>
+  // Pre-select sources when creating a new note (e.g., from source details page)
+  defaultSourceIds?: string[]
 }
 
 interface AttachmentFile {
@@ -116,6 +118,7 @@ export function EnhancedNoteEditor({
   isDraft = false,
   folders = [],
   onCreateFolder,
+  defaultSourceIds = [],
 }: EnhancedNoteEditorProps) {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
@@ -257,7 +260,8 @@ export function EnhancedNoteEditor({
         setSelectedFolderId(null)
         setAttachments([])
         setLinkedThoughts([])
-        setLinkedSourceIds([])
+        // Use default sources if provided (e.g., when creating from source details page)
+        setLinkedSourceIds(defaultSourceIds)
         setCurrentDraftId(undefined)
       }
       setExtractedThoughts([])
@@ -266,7 +270,7 @@ export function EnhancedNoteEditor({
       setNewThoughtContent("")
       setSelectedText("")
     }
-  }, [isOpen, note])
+  }, [isOpen, note, defaultSourceIds])
 
   const loadLinkedThoughts = async (noteId: string) => {
     const { data, error } = await getLinkedThoughts(noteId)
