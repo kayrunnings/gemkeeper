@@ -7,6 +7,7 @@ import {
   ContextTag,
   CONTEXT_TAG_LABELS,
 } from "@/lib/types/thought"
+import { Source } from "@/lib/types/source"
 import {
   Dialog,
   DialogContent,
@@ -24,7 +25,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronDown, AlertCircle, Loader2 } from "lucide-react"
+import { SourceSelector } from "@/components/sources/SourceSelector"
+import { ChevronDown, AlertCircle, Loader2, BookOpen } from "lucide-react"
 import { createThought } from "@/app/thoughts/actions"
 import { cn } from "@/lib/utils"
 
@@ -49,8 +51,10 @@ interface ThoughtFormProps {
 
 export function ThoughtForm({ isOpen, onClose, onThoughtCreated }: ThoughtFormProps) {
   const [content, setContent] = useState("")
-  const [source, setSource] = useState("")
+  const [selectedSource, setSelectedSource] = useState<Source | null>(null)
+  const [manualSourceName, setManualSourceName] = useState("")
   const [sourceUrl, setSourceUrl] = useState("")
+  const [useManualSource, setUseManualSource] = useState(false)
   const [contextTag, setContextTag] = useState<ContextTag | null>(null)
   const [customContext, setCustomContext] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -69,8 +73,10 @@ export function ThoughtForm({ isOpen, onClose, onThoughtCreated }: ThoughtFormPr
 
   const resetForm = () => {
     setContent("")
-    setSource("")
+    setSelectedSource(null)
+    setManualSourceName("")
     setSourceUrl("")
+    setUseManualSource(false)
     setContextTag(null)
     setCustomContext("")
     setError(null)
@@ -90,7 +96,13 @@ export function ThoughtForm({ isOpen, onClose, onThoughtCreated }: ThoughtFormPr
     const input: CreateThoughtInput = {
       content: content.trim(),
       context_tag: contextTag,
-      ...(source.trim() && { source: source.trim() }),
+      // Link to source entity if selected
+      ...(selectedSource && { source_id: selectedSource.id }),
+      // Also set source name from selected source or manual entry
+      ...(selectedSource
+        ? { source: selectedSource.name }
+        : manualSourceName.trim() && { source: manualSourceName.trim() }
+      ),
       ...(sourceUrl.trim() && { source_url: sourceUrl.trim() }),
       ...(contextTag === "other" && customContext.trim() && {
         custom_context: customContext.trim(),
@@ -204,27 +216,64 @@ export function ThoughtForm({ isOpen, onClose, onThoughtCreated }: ThoughtFormPr
 
           {/* Source (optional) */}
           <div className="space-y-2">
-            <Label htmlFor="source">Source (optional)</Label>
-            <Input
-              id="source"
-              placeholder="Book, article, person, etc."
-              value={source}
-              onChange={(e) => setSource(e.target.value)}
-              maxLength={200}
-            />
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-1.5">
+                <BookOpen className="h-4 w-4" />
+                Source (optional)
+              </Label>
+              <button
+                type="button"
+                onClick={() => {
+                  setUseManualSource(!useManualSource)
+                  if (!useManualSource) {
+                    setSelectedSource(null)
+                  } else {
+                    setManualSourceName("")
+                  }
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                {useManualSource ? "Search sources" : "Enter manually"}
+              </button>
+            </div>
+
+            {useManualSource ? (
+              <Input
+                id="manual-source"
+                placeholder="Book, article, person, etc."
+                value={manualSourceName}
+                onChange={(e) => setManualSourceName(e.target.value)}
+                maxLength={200}
+              />
+            ) : (
+              <SourceSelector
+                selectedSourceId={selectedSource?.id}
+                onSourceSelect={setSelectedSource}
+                placeholder="Search or create a source..."
+                allowCreate={true}
+              />
+            )}
+            <p className="text-xs text-muted-foreground">
+              {useManualSource
+                ? "Enter source name as plain text"
+                : "Link to an existing source or create a new one"
+              }
+            </p>
           </div>
 
-          {/* Source URL (optional) */}
-          <div className="space-y-2">
-            <Label htmlFor="source-url">Source URL (optional)</Label>
-            <Input
-              id="source-url"
-              type="url"
-              placeholder="https://..."
-              value={sourceUrl}
-              onChange={(e) => setSourceUrl(e.target.value)}
-            />
-          </div>
+          {/* Source URL (optional) - only show for manual source or when no source selected */}
+          {(useManualSource || !selectedSource) && (
+            <div className="space-y-2">
+              <Label htmlFor="source-url">Source URL (optional)</Label>
+              <Input
+                id="source-url"
+                type="url"
+                placeholder="https://..."
+                value={sourceUrl}
+                onChange={(e) => setSourceUrl(e.target.value)}
+              />
+            </div>
+          )}
         </div>
 
         <DialogFooter>
