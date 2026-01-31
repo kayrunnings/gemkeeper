@@ -955,25 +955,27 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
       />
 
       {/* Note Editor Modal */}
-      <EnhancedNoteEditor
-        note={editingNote}
-        isOpen={showNoteEditor}
-        onClose={() => {
-          setShowNoteEditor(false)
-          setEditingNote(null)
-        }}
-        onSave={handleNoteSave}
-        contexts={allContexts.map(c => ({
-          id: c.id,
-          name: c.name,
-          color: c.color || '#6366f1',
-          slug: c.slug,
-        }))}
-        availableThoughts={availableThoughts}
-        hasAIConsent={hasAIConsent}
-        folders={folders}
-        defaultSourceIds={[source.id]}
-      />
+      {source && (
+        <EnhancedNoteEditor
+          note={editingNote}
+          isOpen={showNoteEditor}
+          onClose={() => {
+            setShowNoteEditor(false)
+            setEditingNote(null)
+          }}
+          onSave={handleNoteSave}
+          contexts={allContexts.map(c => ({
+            id: c.id,
+            name: c.name,
+            color: c.color || '#6366f1',
+            slug: c.slug,
+          }))}
+          availableThoughts={availableThoughts}
+          hasAIConsent={hasAIConsent}
+          folders={folders}
+          defaultSourceIds={[source.id]}
+        />
+      )}
     </LayoutShell>
   )
 }

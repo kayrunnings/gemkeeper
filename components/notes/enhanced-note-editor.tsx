@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -653,7 +654,12 @@ export function EnhancedNoteEditor({
       <DialogContent className="sm:max-w-7xl w-[95vw] h-[90vh] max-h-[90vh] overflow-hidden flex flex-col p-0 [&>button]:hidden">
         <DialogHeader className="shrink-0 px-6 pt-4 pb-4 border-b">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl">{note ? "Edit Note" : "New Note"}</DialogTitle>
+            <div>
+              <DialogTitle className="text-xl">{note ? "Edit Note" : "New Note"}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {note ? "Edit your note with rich text, attachments, and linked sources" : "Create a new note with rich text, attachments, and linked sources"}
+              </DialogDescription>
+            </div>
             <div className="flex items-center gap-2">
               {/* Draft saved indicator */}
               {draftSaved && (
