@@ -3,6 +3,9 @@
 
 export type SourceType = 'book' | 'article' | 'podcast' | 'video' | 'course' | 'other'
 
+// Source status for tracking reading progress (Epic 13)
+export type SourceStatus = 'want_to_read' | 'reading' | 'completed' | 'archived'
+
 export interface Source {
   id: string
   user_id: string
@@ -13,6 +16,7 @@ export interface Source {
   isbn: string | null
   cover_image_url: string | null
   metadata: Record<string, unknown>
+  status: SourceStatus
   created_at: string
   updated_at: string
 }
@@ -25,6 +29,7 @@ export interface CreateSourceInput {
   isbn?: string
   cover_image_url?: string
   metadata?: Record<string, unknown>
+  status?: SourceStatus
 }
 
 export interface UpdateSourceInput extends Partial<CreateSourceInput> {}
@@ -41,10 +46,26 @@ export const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
 
 // Source type icons (emoji)
 export const SOURCE_TYPE_ICONS: Record<SourceType, string> = {
-  book: '\uD83D\uDCD6',
-  article: '\uD83D\uDCF0',
-  podcast: '\uD83C\uDFA7',
-  video: '\uD83C\uDFAC',
-  course: '\uD83C\uDF93',
-  other: '\uD83D\uDCCC',
+  book: '📖',
+  article: '📰',
+  podcast: '🎧',
+  video: '🎬',
+  course: '🎓',
+  other: '📌',
+}
+
+// Source status labels (Epic 13)
+export const SOURCE_STATUS_LABELS: Record<SourceStatus, string> = {
+  want_to_read: 'Want to Read',
+  reading: 'Reading',
+  completed: 'Completed',
+  archived: 'Archived',
+}
+
+// Source status icons (Epic 13)
+export const SOURCE_STATUS_ICONS: Record<SourceStatus, string> = {
+  want_to_read: '📚',
+  reading: '📖',
+  completed: '✅',
+  archived: '📦',
 }

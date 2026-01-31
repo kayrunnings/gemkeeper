@@ -4,8 +4,8 @@ import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { getSource, updateSource, deleteSource } from "@/lib/sources"
-import { Source, SOURCE_TYPE_LABELS, SOURCE_TYPE_ICONS, SourceType } from "@/lib/types/source"
+import { getSource, updateSource, deleteSource, updateSourceStatus } from "@/lib/sources"
+import { Source, SOURCE_TYPE_LABELS, SOURCE_TYPE_ICONS, SourceType, SourceStatus, SOURCE_STATUS_LABELS, SOURCE_STATUS_ICONS } from "@/lib/types/source"
 import { Thought } from "@/lib/types/thought"
 import { LayoutShell } from "@/components/layout-shell"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -34,7 +34,16 @@ import {
   Trash2,
   X,
   Quote,
+  CheckCircle,
+  Zap,
+  ChevronDown,
 } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useToast } from "@/components/error-toast"
 
 interface SourceDetailPageProps {
@@ -59,6 +68,10 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
   const [editAuthor, setEditAuthor] = useState("")
   const [editType, setEditType] = useState<SourceType>("other")
   const [editUrl, setEditUrl] = useState("")
+
+  // Filter state
+  type ThoughtFilter = "all" | "active" | "passive"
+  const [thoughtFilter, setThoughtFilter] = useState<ThoughtFilter>("all")
 
   useEffect(() => {
     async function loadSource() {
@@ -136,6 +149,31 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
       router.push("/library?tab=sources")
     }
   }
+
+  const handleStatusChange = async (newStatus: SourceStatus) => {
+    if (!source) return
+
+    const { data, error } = await updateSourceStatus(source.id, newStatus)
+
+    if (error) {
+      showError(new Error(error), "Failed to update status")
+    } else if (data) {
+      setSource(data)
+      showSuccess(`Status updated to "${SOURCE_STATUS_LABELS[newStatus]}"`)
+    }
+  }
+
+  // Filter thoughts based on selection
+  const filteredThoughts = linkedThoughts.filter((t) => {
+    if (thoughtFilter === "active") return t.is_on_active_list
+    if (thoughtFilter === "passive") return !t.is_on_active_list
+    return true
+  })
+
+  // Calculate stats
+  const activeCount = linkedThoughts.filter((t) => t.is_on_active_list).length
+  const passiveCount = linkedThoughts.filter((t) => !t.is_on_active_list).length
+  const totalApplications = linkedThoughts.reduce((sum, t) => sum + t.application_count, 0)
 
   if (isLoading) {
     return (
@@ -246,10 +284,35 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
                             by {source.author}
                           </p>
                         )}
-                        <Badge variant="secondary">
-                          <span className="mr-1">{typeIcon}</span>
-                          {typeLabel}
-                        </Badge>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="secondary">
+                            <span className="mr-1">{typeIcon}</span>
+                            {typeLabel}
+                          </Badge>
+
+                          {/* Status dropdown */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm" className="h-6 gap-1">
+                                <span>{SOURCE_STATUS_ICONS[source.status]}</span>
+                                {SOURCE_STATUS_LABELS[source.status]}
+                                <ChevronDown className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              {(Object.keys(SOURCE_STATUS_LABELS) as SourceStatus[]).map((status) => (
+                                <DropdownMenuItem
+                                  key={status}
+                                  onClick={() => handleStatusChange(status)}
+                                  className={source.status === status ? "bg-accent" : ""}
+                                >
+                                  <span className="mr-2">{SOURCE_STATUS_ICONS[status]}</span>
+                                  {SOURCE_STATUS_LABELS[status]}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </>
                     )}
                   </div>
@@ -330,11 +393,25 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground flex items-center gap-2">
                     <Gem className="h-4 w-4" />
-                    Thoughts
+                    Total Thoughts
                   </span>
                   <span className="font-medium">{linkedThoughts.length}</span>
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground flex items-center gap-2">
+                    <Zap className="h-4 w-4" />
+                    On Active List
+                  </span>
+                  <span className="font-medium">{activeCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4" />
+                    Applications
+                  </span>
+                  <span className="font-medium">{totalApplications}</span>
+                </div>
+                <div className="pt-2 border-t text-xs text-muted-foreground">
                   Added {new Date(source.created_at).toLocaleDateString()}
                 </div>
               </CardContent>
@@ -357,15 +434,49 @@ export default function SourceDetailPage({ params }: SourceDetailPageProps) {
             </Button>
           </div>
 
+          {/* Filter tabs */}
+          {linkedThoughts.length > 0 && (
+            <div className="flex items-center gap-2 mb-4">
+              <Button
+                variant={thoughtFilter === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setThoughtFilter("all")}
+              >
+                All ({linkedThoughts.length})
+              </Button>
+              <Button
+                variant={thoughtFilter === "active" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setThoughtFilter("active")}
+              >
+                <Zap className="h-3 w-3 mr-1" />
+                Active ({activeCount})
+              </Button>
+              <Button
+                variant={thoughtFilter === "passive" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setThoughtFilter("passive")}
+              >
+                Passive ({passiveCount})
+              </Button>
+            </div>
+          )}
+
           {linkedThoughts.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
                 No thoughts from this source yet.
               </CardContent>
             </Card>
+          ) : filteredThoughts.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                No {thoughtFilter === "active" ? "active" : "passive"} thoughts from this source.
+              </CardContent>
+            </Card>
           ) : (
             <div className="space-y-3">
-              {linkedThoughts.map((thought) => (
+              {filteredThoughts.map((thought) => (
                 <Link key={thought.id} href={`/thoughts/${thought.id}`}>
                   <Card className="group hover:shadow-md transition-all cursor-pointer">
                     <CardContent className="p-4 flex items-start gap-3">

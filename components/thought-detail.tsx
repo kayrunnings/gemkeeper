@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Thought, CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS, MAX_ACTIVE_LIST } from "@/lib/types/thought"
 import type { ContextWithCount } from "@/lib/types/context"
+import type { Source } from "@/lib/types/source"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -20,15 +21,18 @@ import {
   ChevronUp,
   Star,
   StarOff,
+  BookOpen,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThoughtEditForm } from "@/components/thought-edit-form"
 import { RetireThoughtDialog } from "@/components/retire-thought-dialog"
 import { GraduateThoughtDialog } from "@/components/graduate-thought-dialog"
 import { SchedulePicker } from "@/components/schedules/SchedulePicker"
+import { SourceLink } from "@/components/ui/SourceBadge"
 import { getThoughtSchedules, getNextTriggerForThought } from "@/lib/schedules"
 import { toggleActiveList, getActiveListCount } from "@/lib/thoughts"
 import { getContexts } from "@/lib/contexts"
+import { getSource } from "@/lib/sources"
 import { useToast } from "@/components/error-toast"
 import type { ThoughtSchedule } from "@/types/schedules"
 
@@ -50,9 +54,10 @@ export function ThoughtDetail({ thought, onThoughtUpdated, onThoughtRetired, onT
   const [contexts, setContexts] = useState<ContextWithCount[]>([])
   const [activeListCount, setActiveListCount] = useState(0)
   const [isOnActiveList, setIsOnActiveList] = useState(thought.is_on_active_list)
+  const [linkedSource, setLinkedSource] = useState<Source | null>(null)
   const { showError, showSuccess } = useToast()
 
-  // Load schedules and contexts
+  // Load schedules, contexts, and source
   useEffect(() => {
     async function loadData() {
       // Load schedules
@@ -71,9 +76,15 @@ export function ThoughtDetail({ thought, onThoughtUpdated, onThoughtRetired, onT
       // Load active list count
       const { count } = await getActiveListCount()
       setActiveListCount(count)
+
+      // Load linked source if exists
+      if (thought.source_id) {
+        const { data: sourceData } = await getSource(thought.source_id)
+        setLinkedSource(sourceData)
+      }
     }
     loadData()
-  }, [thought.id])
+  }, [thought.id, thought.source_id])
 
   // Sync isOnActiveList with thought prop
   useEffect(() => {
@@ -191,8 +202,24 @@ export function ThoughtDetail({ thought, onThoughtUpdated, onThoughtRetired, onT
             </p>
           </div>
 
-          {/* Source */}
-          {thought.source && (
+          {/* Linked Source (Epic 13) */}
+          {linkedSource && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <BookOpen className="h-4 w-4" />
+                <span>From Source</span>
+              </div>
+              <SourceLink
+                sourceId={linkedSource.id}
+                sourceName={linkedSource.name}
+                sourceType={linkedSource.type}
+                coverImageUrl={linkedSource.cover_image_url}
+              />
+            </div>
+          )}
+
+          {/* Legacy Source text (for older thoughts without source_id) */}
+          {!linkedSource && thought.source && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>Source:</span>
               {thought.source_url ? (

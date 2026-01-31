@@ -13,9 +13,11 @@ export interface Thought {
   content: string
   source: string | null
   source_url: string | null
-  // New: Foreign key to contexts table
+  // Foreign key to sources table (Epic 13)
+  source_id: string | null
+  // Foreign key to contexts table
   context_id: string | null
-  // New: Whether thought is on the Active List for daily prompts
+  // Whether thought is on the Active List for daily prompts
   is_on_active_list: boolean
   // Legacy fields (deprecated, kept for backwards compat)
   context_tag: ContextTag
@@ -36,9 +38,11 @@ export interface CreateThoughtInput {
   content: string
   source?: string
   source_url?: string
-  // New: Use context_id for new thoughts
+  // Link to source entity (Epic 13)
+  source_id?: string
+  // Use context_id for new thoughts
   context_id?: string
-  // New: Whether to add to Active List (defaults to false - Passive)
+  // Whether to add to Active List (defaults to false - Passive)
   is_on_active_list?: boolean
   // Legacy fields (deprecated, kept for backwards compat)
   context_tag?: ContextTag
