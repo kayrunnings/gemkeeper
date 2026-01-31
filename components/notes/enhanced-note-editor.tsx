@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { Note, NoteInput, Folder } from "@/lib/types"
 import { Thought, ContextTag, CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS, CONTEXT_TAG_DOT_COLORS } from "@/lib/types/thought"
 import {
@@ -227,6 +227,13 @@ export function EnhancedNoteEditor({
     onClose()
   }, [title, content, currentDraftId, onSaveDraft, onClose])
 
+  // Memoize defaultSourceIds to prevent infinite re-renders
+  const stableDefaultSourceIds = useMemo(
+    () => defaultSourceIds,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [defaultSourceIds.join(',')]
+  )
+
   // Initialize form when dialog opens
   useEffect(() => {
     if (isOpen) {
@@ -262,7 +269,7 @@ export function EnhancedNoteEditor({
         setAttachments([])
         setLinkedThoughts([])
         // Use default sources if provided (e.g., when creating from source details page)
-        setLinkedSourceIds(defaultSourceIds)
+        setLinkedSourceIds(stableDefaultSourceIds)
         setCurrentDraftId(undefined)
       }
       setExtractedThoughts([])
@@ -271,7 +278,7 @@ export function EnhancedNoteEditor({
       setNewThoughtContent("")
       setSelectedText("")
     }
-  }, [isOpen, note, defaultSourceIds])
+  }, [isOpen, note, stableDefaultSourceIds])
 
   const loadLinkedThoughts = async (noteId: string) => {
     const { data, error } = await getLinkedThoughts(noteId)
