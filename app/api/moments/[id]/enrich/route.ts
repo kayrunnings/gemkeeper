@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { matchGemsToMoment } from "@/lib/matching"
-import { getLearnedThoughts } from "@/lib/moments/learning"
+import { getLearnedThoughts, extractKeywords } from "@/lib/moments/learning"
 import { analyzeEventTitle, combineContextForMatching } from "@/lib/moments/title-analysis"
 import type { GemForMatching } from "@/types/matching"
-import type { LearnedThought } from "@/lib/types/learning"
+import type { LearnedThought, MomentPatterns } from "@/lib/types/learning"
 
 /**
  * Add context to an existing moment and re-run AI matching
@@ -91,15 +91,15 @@ export async function POST(
       try {
         // Epic 14: Get learned thoughts for similar patterns
         const analysis = analyzeEventTitle(originalDescription)
-        const learnedThoughts = await getLearnedThoughts(
-          user.id,
-          analysis.detectedEventType,
-          originalDescription,
-          moment.calendar_event_id || undefined
-        )
+        const patterns: MomentPatterns = {
+          eventType: analysis.detectedEventType,
+          keywords: extractKeywords(enrichedDescription),
+          recurringEventId: moment.calendar_event_id || undefined,
+        }
+        const { thoughts: learnedThoughts } = await getLearnedThoughts(user.id, patterns)
 
         // Format learned thoughts for the prompt
-        const learnedThoughtsForPrompt: LearnedThought[] = learnedThoughts.map(lt => ({
+        const learnedThoughtsForPrompt: LearnedThought[] = (learnedThoughts || []).map(lt => ({
           gem_id: lt.gem_id,
           content: gemsForMatching.find(g => g.id === lt.gem_id)?.content || '',
           confidence: lt.confidence,
