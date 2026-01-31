@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -16,45 +16,99 @@ import {
   Loader2,
   AlertCircle,
   Sprout,
+  Calendar,
 } from "lucide-react"
-import type { MomentWithThoughts } from "@/types/moments"
+import type { MomentWithThoughts, CalendarEventData } from "@/types/moments"
 import { MAX_MOMENT_DESCRIPTION_LENGTH } from "@/types/moments"
+import { analyzeEventTitle, type TitleAnalysis, type EventType } from "@/lib/moments/title-analysis"
+import { ContextEnrichmentPrompt } from "./ContextEnrichmentPrompt"
 
 interface MomentEntryModalProps {
   isOpen: boolean
   onClose: () => void
   onMomentCreated: (moment: MomentWithThoughts) => void
+  // Optional: Pre-populate from calendar event
+  calendarEvent?: {
+    id: string
+    title: string
+    description?: string
+    start_time: string
+  }
 }
 
-type ModalState = 'idle' | 'loading' | 'success' | 'empty' | 'error'
+type ModalState = 'idle' | 'enrichment' | 'loading' | 'success' | 'empty' | 'error'
 
 export function MomentEntryModal({
   isOpen,
   onClose,
   onMomentCreated,
+  calendarEvent,
 }: MomentEntryModalProps) {
   const [description, setDescription] = useState("")
   const [state, setState] = useState<ModalState>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  // Epic 14: Enrichment state
+  const [titleAnalysis, setTitleAnalysis] = useState<TitleAnalysis | null>(null)
+  const [userContext, setUserContext] = useState<string>("")
+  const [detectedEventType, setDetectedEventType] = useState<EventType | null>(null)
+
+  // Handle calendar event pre-population
+  useEffect(() => {
+    if (calendarEvent && isOpen) {
+      const analysis = analyzeEventTitle(
+        calendarEvent.title,
+        calendarEvent.description
+      )
+      setTitleAnalysis(analysis)
+      setDetectedEventType(analysis.detectedEventType)
+      setDescription(calendarEvent.title)
+
+      // If generic, show enrichment; otherwise go straight to loading
+      if (analysis.isGeneric) {
+        setState('enrichment')
+      }
+    }
+  }, [calendarEvent, isOpen])
 
   const handleClose = () => {
     setDescription("")
     setState('idle')
     setErrorMessage(null)
+    setTitleAnalysis(null)
+    setUserContext("")
+    setDetectedEventType(null)
     onClose()
   }
 
-  const handleSubmit = async () => {
-    if (!description.trim()) return
+  const handleSubmit = async (contextOverride?: string) => {
+    const finalDescription = description.trim()
+    if (!finalDescription) return
 
     setState('loading')
     setErrorMessage(null)
+
+    // Prepare request body with Epic 14 fields
+    const requestBody: Record<string, unknown> = {
+      description: finalDescription,
+      user_context: contextOverride || userContext || null,
+      detected_event_type: detectedEventType || null,
+    }
+
+    // Add calendar data if from calendar event
+    if (calendarEvent) {
+      requestBody.source = 'calendar'
+      requestBody.calendarData = {
+        event_id: calendarEvent.id,
+        title: calendarEvent.title,
+        start_time: calendarEvent.start_time,
+      }
+    }
 
     try {
       const response = await fetch("/api/moments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: description.trim() }),
+        body: JSON.stringify(requestBody),
       })
 
       if (!response.ok) {
@@ -78,9 +132,39 @@ export function MomentEntryModal({
     }
   }
 
+  // Handle enrichment submission
+  const handleEnrichmentSubmit = (context: string) => {
+    setUserContext(context)
+    // Use combined description for matching
+    const enrichedDescription = context
+      ? `${description}: ${context}`
+      : description
+    handleSubmit(context)
+  }
+
+  // Handle skip enrichment
+  const handleSkipEnrichment = () => {
+    handleSubmit()
+  }
+
+  // Handle manual description entry - check if generic
+  const handleManualSubmit = () => {
+    const analysis = analyzeEventTitle(description.trim())
+    setTitleAnalysis(analysis)
+    setDetectedEventType(analysis.detectedEventType)
+
+    if (analysis.isGeneric) {
+      setState('enrichment')
+    } else {
+      handleSubmit()
+    }
+  }
+
   const handleRetry = () => {
     setState('idle')
     setErrorMessage(null)
+    setTitleAnalysis(null)
+    setUserContext("")
   }
 
   const isDisabled = !description.trim() || state === 'loading'
@@ -90,16 +174,22 @@ export function MomentEntryModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-amber-500" />
-            New Moment
+            {calendarEvent ? (
+              <Calendar className="h-5 w-5 text-blue-500" />
+            ) : (
+              <Sparkles className="h-5 w-5 text-amber-500" />
+            )}
+            {state === 'enrichment' ? 'Add Context' : 'New Moment'}
           </DialogTitle>
           <DialogDescription>
-            Describe what&apos;s coming up and we&apos;ll find your relevant thoughts.
+            {state === 'enrichment'
+              ? "Help us find better matches by adding some context."
+              : "Describe what's coming up and we'll find your relevant thoughts."}
           </DialogDescription>
         </DialogHeader>
 
         {/* Idle / Input State */}
-        {(state === 'idle' || state === 'loading') && (
+        {state === 'idle' && (
           <div className="space-y-4">
             <div className="space-y-2">
               <Textarea
@@ -108,7 +198,6 @@ export function MomentEntryModal({
                 onChange={(e) => setDescription(e.target.value)}
                 className="min-h-[120px] resize-none"
                 maxLength={MAX_MOMENT_DESCRIPTION_LENGTH}
-                disabled={state === 'loading'}
               />
               <p className="text-xs text-muted-foreground text-right">
                 {description.length}/{MAX_MOMENT_DESCRIPTION_LENGTH}
@@ -116,31 +205,44 @@ export function MomentEntryModal({
             </div>
 
             <Button
-              onClick={handleSubmit}
+              onClick={handleManualSubmit}
               disabled={isDisabled}
               className="w-full gap-2"
             >
-              {state === 'loading' ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Finding your wisdom...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  Find My Thoughts
-                </>
-              )}
+              <Sparkles className="h-4 w-4" />
+              Find My Thoughts
             </Button>
           </div>
         )}
 
-        {/* Loading State with Shimmer */}
+        {/* Enrichment State (Epic 14) */}
+        {state === 'enrichment' && titleAnalysis && (
+          <ContextEnrichmentPrompt
+            eventTitle={description}
+            analysis={titleAnalysis}
+            onSubmit={handleEnrichmentSubmit}
+            onSkip={handleSkipEnrichment}
+            isLoading={false}
+          />
+        )}
+
+        {/* Loading State */}
         {state === 'loading' && (
-          <div className="space-y-3 mt-4">
-            <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
-            <div className="h-4 w-1/2 bg-muted rounded animate-pulse" />
-            <div className="h-4 w-2/3 bg-muted rounded animate-pulse" />
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Finding your thoughts...</p>
+                <p className="text-xs text-muted-foreground">
+                  Matching your knowledge to this moment
+                </p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-1/2 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-2/3 bg-muted rounded animate-pulse" />
+            </div>
           </div>
         )}
 

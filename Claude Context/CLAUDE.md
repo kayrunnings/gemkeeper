@@ -36,6 +36,7 @@ Before starting work, read these files in `Claude Context/`:
 - **Daily Check-in** - Single daily touchpoint for thought accountability and graduation tracking
 - **Epic 8: Moments** - Individual scheduling, moments matching (Cmd+M shortcut), calendar integration, rate limiting (20/hr)
 - **Epic 12: Discovery** - AI-powered content discovery with Google Search grounding
+- **Epic 14: Moment Intelligence** - Smart context prompting for generic events, learning system for helpful thoughts
 - **Notes System** - Standalone long-form notes with tags, folders, and extract-to-thoughts capability
 - **Contexts System** - Life areas for organizing thoughts (8 defaults + custom)
 - **Glassmorphism UI** - Modern UI overhaul with dark/light theme support
@@ -104,6 +105,10 @@ Single daily touchpoint at `/checkin`. Surfaces one thought from the Active List
 
 ### Moments
 On-demand thought matching for upcoming situations. Moments search ALL thoughts with `status IN ('active', 'passive')` across ALL contexts, returning the most relevant with explanations. Rate limited to 20 matches/hour. Keyboard shortcut: Cmd+M / Ctrl+M.
+
+**Moment Intelligence (Epic 14):**
+- **Smart Context Prompting** - Detects generic calendar events (e.g., "Meeting", "1:1", "Sync") and prompts for more context via quick-select chips and text input. Event types auto-detected: 1:1, team_meeting, interview, presentation, review, planning, social.
+- **Learning System** - Records which thoughts were helpful/not helpful for patterns (event type, keywords, recurring events). After 3+ helpful marks with 70%+ confidence, those thoughts are boosted in future similar moments and shown with "Helped before" badge.
 
 ### Notes
 Standalone long-form content separate from atomic thoughts. Notes have titles and can be organized into folders. Users can **extract thoughts from notes**, creating a bridge between detailed note-taking and atomic insights. 

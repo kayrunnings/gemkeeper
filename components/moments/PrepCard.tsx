@@ -17,6 +17,8 @@ import {
   ExternalLink,
   FileText,
   BookOpen,
+  RotateCcw,
+  MessageSquare,
 } from "lucide-react"
 import type { MomentWithThoughts, MomentThought } from "@/types/moments"
 import type { Thought } from "@/lib/types/thought"
@@ -37,22 +39,43 @@ interface PrepCardProps {
 
 interface ThoughtCardProps {
   momentThought: MomentThoughtWithNotes & { thought?: Thought }
+  momentId: string  // Epic 14: Need moment ID for learning
   onReviewed: () => void
   onFeedback: (wasHelpful: boolean) => void
   readOnly?: boolean
 }
 
-function MatchedThoughtCard({ momentThought, onReviewed, onFeedback, readOnly }: ThoughtCardProps) {
+function MatchedThoughtCard({ momentThought, momentId, onReviewed, onFeedback, readOnly }: ThoughtCardProps) {
   const [isReviewed, setIsReviewed] = useState(momentThought.was_reviewed)
   const [feedback, setFeedback] = useState<boolean | null>(momentThought.was_helpful)
 
   const thought = momentThought.thought
   if (!thought) return null
 
+  // Epic 14: Check if this thought came from learning
+  const isFromLearning = momentThought.match_source === 'learned' || momentThought.match_source === 'both'
+
   const handleGotIt = async () => {
     if (readOnly || isReviewed) return
     setIsReviewed(true)
+
+    // Mark as reviewed in moment_gems table
     await markThoughtReviewed(momentThought.id)
+
+    // Epic 14: Record helpful signal for learning
+    try {
+      await fetch('/api/moments/learn/helpful', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          moment_id: momentId,
+          gem_id: momentThought.gem_id,
+        }),
+      })
+    } catch (err) {
+      console.error('Failed to record learning:', err)
+    }
+
     onReviewed()
   }
 
@@ -60,7 +83,24 @@ function MatchedThoughtCard({ momentThought, onReviewed, onFeedback, readOnly }:
     if (readOnly) return
     setFeedback(false)
     setIsReviewed(true)
+
+    // Record feedback in moment_gems table
     await recordMomentThoughtFeedback(momentThought.id, false)
+
+    // Epic 14: Record not-helpful signal for learning
+    try {
+      await fetch('/api/moments/learn/not-helpful', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          moment_id: momentId,
+          gem_id: momentThought.gem_id,
+        }),
+      })
+    } catch (err) {
+      console.error('Failed to record learning:', err)
+    }
+
     onFeedback(false)
   }
 
@@ -81,17 +121,29 @@ function MatchedThoughtCard({ momentThought, onReviewed, onFeedback, readOnly }:
     >
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
-          <Badge
-            variant="outline"
-            className={cn(
-              "text-xs",
-              CONTEXT_TAG_COLORS[thought.context_tag]
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-xs",
+                CONTEXT_TAG_COLORS[thought.context_tag]
+              )}
+            >
+              {thought.context_tag === "other" && thought.custom_context
+                ? thought.custom_context
+                : CONTEXT_TAG_LABELS[thought.context_tag]}
+            </Badge>
+            {/* Epic 14: "Helped before" badge for learned thoughts */}
+            {isFromLearning && (
+              <Badge
+                variant="secondary"
+                className="text-xs gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Helped before
+              </Badge>
             )}
-          >
-            {thought.context_tag === "other" && thought.custom_context
-              ? thought.custom_context
-              : CONTEXT_TAG_LABELS[thought.context_tag]}
-          </Badge>
+          </div>
           {/* Relevance indicator */}
           <div className="flex items-center gap-1.5" title={`${Math.round(momentThought.relevance_score * 100)}% relevant`}>
             <div
@@ -257,6 +309,13 @@ export function PrepCard({ moment, onComplete, readOnly = false }: PrepCardProps
           <h1 className="text-xl font-semibold">
             {moment.calendar_event_title || moment.description}
           </h1>
+          {/* Epic 14: Show user-provided context if present */}
+          {moment.user_context && (
+            <div className="flex items-start gap-2 text-sm text-muted-foreground">
+              <MessageSquare className="h-4 w-4 mt-0.5 text-blue-500" />
+              <span className="italic">{moment.user_context}</span>
+            </div>
+          )}
           {moment.calendar_event_start && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
@@ -298,6 +357,7 @@ export function PrepCard({ moment, onComplete, readOnly = false }: PrepCardProps
             <MatchedThoughtCard
               key={momentThought.id}
               momentThought={momentThought}
+              momentId={moment.id}
               onReviewed={() => {}}
               onFeedback={() => {}}
               readOnly={readOnly}
