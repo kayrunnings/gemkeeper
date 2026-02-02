@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { Note, NoteInput, Folder } from "@/lib/types"
 import { Thought, ContextTag, CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS, CONTEXT_TAG_DOT_COLORS } from "@/lib/types/thought"
 import {
@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -91,6 +92,8 @@ interface EnhancedNoteEditorProps {
   // Folder support
   folders?: Folder[]
   onCreateFolder?: (name: string) => Promise<Folder | null>
+  // Pre-select sources when creating a new note (e.g., from source details page)
+  defaultSourceIds?: string[]
 }
 
 interface AttachmentFile {
@@ -116,6 +119,7 @@ export function EnhancedNoteEditor({
   isDraft = false,
   folders = [],
   onCreateFolder,
+  defaultSourceIds = [],
 }: EnhancedNoteEditorProps) {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
@@ -223,6 +227,13 @@ export function EnhancedNoteEditor({
     onClose()
   }, [title, content, currentDraftId, onSaveDraft, onClose])
 
+  // Memoize defaultSourceIds to prevent infinite re-renders
+  const stableDefaultSourceIds = useMemo(
+    () => defaultSourceIds,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [defaultSourceIds.join(',')]
+  )
+
   // Initialize form when dialog opens
   useEffect(() => {
     if (isOpen) {
@@ -257,7 +268,8 @@ export function EnhancedNoteEditor({
         setSelectedFolderId(null)
         setAttachments([])
         setLinkedThoughts([])
-        setLinkedSourceIds([])
+        // Use default sources if provided (e.g., when creating from source details page)
+        setLinkedSourceIds(stableDefaultSourceIds)
         setCurrentDraftId(undefined)
       }
       setExtractedThoughts([])
@@ -266,7 +278,7 @@ export function EnhancedNoteEditor({
       setNewThoughtContent("")
       setSelectedText("")
     }
-  }, [isOpen, note])
+  }, [isOpen, note, stableDefaultSourceIds])
 
   const loadLinkedThoughts = async (noteId: string) => {
     const { data, error } = await getLinkedThoughts(noteId)
@@ -649,7 +661,12 @@ export function EnhancedNoteEditor({
       <DialogContent className="sm:max-w-7xl w-[95vw] h-[90vh] max-h-[90vh] overflow-hidden flex flex-col p-0 [&>button]:hidden">
         <DialogHeader className="shrink-0 px-6 pt-4 pb-4 border-b">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl">{note ? "Edit Note" : "New Note"}</DialogTitle>
+            <div>
+              <DialogTitle className="text-xl">{note ? "Edit Note" : "New Note"}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {note ? "Edit your note with rich text, attachments, and linked sources" : "Create a new note with rich text, attachments, and linked sources"}
+              </DialogDescription>
+            </div>
             <div className="flex items-center gap-2">
               {/* Draft saved indicator */}
               {draftSaved && (
