@@ -4,6 +4,7 @@ import type { MomentWithGems, CalendarEventData } from "@/types/moments"
 import { MAX_MOMENT_DESCRIPTION_LENGTH } from "@/types/moments"
 import type { EventType } from "@/lib/moments/title-analysis"
 import { combineContextForMatching } from "@/lib/moments/title-analysis"
+import { LEARNING_HELPFUL_THRESHOLD } from "@/lib/types/learning"
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -146,7 +147,7 @@ export async function POST(request: NextRequest) {
           .from('moment_learnings')
           .select('gem_id, helpful_count, not_helpful_count')
           .eq('user_id', user.id)
-          .gte('helpful_count', 3)
+          .gte('helpful_count', LEARNING_HELPFUL_THRESHOLD)
 
         if (learnings && learnings.length > 0) {
           // Filter and aggregate by gem_id
