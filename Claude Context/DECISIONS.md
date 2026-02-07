@@ -973,7 +973,7 @@ This caused calendar moments to appear in the dashboard but show "No thoughts ma
 
 **Key Learnings:**
 - Pattern-based learning (event_type, keyword, recurring) provides explainable AI behavior
-- Threshold of 3 helpful marks balances responsiveness with accuracy
+- Threshold of 1 helpful mark (`LEARNING_HELPFUL_THRESHOLD`) keeps system responsive; was initially 3 but reduced for testing
 - Separate learning table allows flexible querying without moment schema changes
 
 ---
@@ -1001,6 +1001,25 @@ This caused calendar moments to appear in the dashboard but show "No thoughts ma
 
 **Lesson Learned:**
 When adding user-configurable settings, ensure all related code paths respect that configuration. The sync window and display window should both honor the "Prepare how far in advance?" setting.
+
+---
+
+### 2026-02-07: Epic 15 — Moments Foundation Cleanup
+
+**Decision:** Fix bugs, remove dead code, and consolidate the moments system before building new features.
+
+**Changes:**
+1. **Learning threshold mismatch fixed** — API route was filtering learned thoughts with `helpful_count >= 3` while `LEARNING_HELPFUL_THRESHOLD` is `1`. Now uses the constant.
+2. **"Got it" feedback fixed** — `handleGotIt` now calls `recordMomentThoughtFeedback(id, true)` setting both `was_helpful: true` and `was_reviewed: true`.
+3. **Homepage status filter** — `getRecentMoments()` accepts optional `statusFilter`; homepage passes `'active'` so completed/dismissed moments no longer appear in Apply quadrant.
+4. **Dead code removed** — `UpcomingMomentsCard.tsx` deleted (replaced by `ApplyQuadrant`).
+5. **Moment creation consolidated** — New `lib/moments/create-moment.ts` with `createMomentWithMatching()` is the single source of truth. API route and calendar-sync both delegate to it. Calls `matchGemsToMoment` directly instead of internal fetch to `/api/moments/match`.
+6. **Legacy aliases removed** — `MomentGem`, `MomentWithGems`, `recordMomentGemFeedback`, `markGemReviewed`, `addMomentGems` all removed. Consumers updated to canonical names.
+
+**Rationale:**
+- Foundation must be clean before building Epic 16+ features
+- Two code paths for moment creation caused inconsistency (bare insert vs. full matching)
+- Legacy aliases from gems→thoughts rename added confusion
 
 ---
 
