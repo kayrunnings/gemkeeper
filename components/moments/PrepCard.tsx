@@ -431,6 +431,17 @@ export function PrepCard({ moment, onComplete, readOnly = false }: PrepCardProps
         </Card>
       )}
 
+      {/* Story 18.1: Always-available enrichment link */}
+      {!showEnrichment && !isEnriching && !isEmpty && titleAnalysis && (
+        <button
+          onClick={() => setShowEnrichment(true)}
+          className="flex items-center gap-1.5 text-xs text-blue-500 hover:text-blue-600 transition-colors"
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+          {userContext ? "Refine context for better matches" : "Add context for better matches"}
+        </button>
+      )}
+
       {/* Matched Thoughts */}
       {!showEnrichment && !isEnriching && isEmpty ? (
         <Card className="text-center py-12">

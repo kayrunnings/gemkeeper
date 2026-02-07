@@ -145,17 +145,13 @@ export function MomentEntryModal({
     handleSubmit()
   }
 
-  // Handle manual description entry - check if generic
+  // Story 18.2: Always show enrichment for manual entries too
+  // This lets users add context chips for any moment, not just generic titles
   const handleManualSubmit = () => {
     const analysis = analyzeEventTitle(description.trim())
     setTitleAnalysis(analysis)
     setDetectedEventType(analysis.detectedEventType)
-
-    if (analysis.isGeneric) {
-      setState('enrichment')
-    } else {
-      handleSubmit()
-    }
+    setState('enrichment')
   }
 
   const handleRetry = () => {
