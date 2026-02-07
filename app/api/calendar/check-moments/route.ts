@@ -15,7 +15,12 @@ export async function POST() {
     }
 
     // Get pending events within lead time (pass server supabase client)
-    const { events: pendingEvents, error: fetchError } = await getPendingEventsForMoments(supabase)
+    // Story 16.2: Use catch-up mode to also find events that already started
+    // but are still ongoing (within 1 hour of start time)
+    const { events: pendingEvents, error: fetchError } = await getPendingEventsForMoments(
+      supabase,
+      { catchUp: true }
+    )
 
     if (fetchError) {
       return NextResponse.json({ error: fetchError }, { status: 500 })
