@@ -106,7 +106,8 @@ export async function getMoment(
  * Get recent moments for a user
  */
 export async function getRecentMoments(
-  limit: number = 10
+  limit: number = 10,
+  statusFilter?: MomentStatus
 ): Promise<{ moments: Moment[]; error: string | null }> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -115,12 +116,18 @@ export async function getRecentMoments(
     return { moments: [], error: "Not authenticated" }
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("moments")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(limit)
+
+  if (statusFilter) {
+    query = query.eq("status", statusFilter)
+  }
+
+  const { data, error } = await query
 
   if (error) {
     return { moments: [], error: error.message }

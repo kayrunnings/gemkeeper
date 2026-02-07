@@ -161,7 +161,7 @@ export default function HomePage() {
         const [thoughtResult, momentsResult, contextsResult, calendarResult] =
           await Promise.all([
             getDailyThought(),
-            getRecentMoments(10),
+            getRecentMoments(10, 'active'),
             getContexts(),
             supabase
               .from("calendar_connections")
