@@ -77,13 +77,16 @@ export async function POST(
     const originalDescription = moment.calendar_event_title || moment.description
     const enrichedDescription = combineContextForMatching(originalDescription, user_context)
 
-    // Delete existing matches
-    await supabase
+    // Story 18.5: Fetch existing matches to merge with (instead of deleting)
+    const { data: existingMatches } = await supabase
       .from("moment_gems")
-      .delete()
+      .select("id, gem_id, relevance_score, relevance_reason, was_helpful, was_reviewed")
       .eq("moment_id", momentId)
 
-    let matchedCount = 0
+    const existingByGemId = new Map(
+      (existingMatches || []).map((m) => [m.gem_id, m])
+    )
+
     let processingTimeMs = 0
 
     // Run AI matching if we have thoughts
@@ -114,30 +117,50 @@ export async function POST(
         )
         processingTimeMs = matchResult.processing_time_ms
 
-        if (matchResult.matches.length > 0) {
-          // Insert matched thoughts
-          const momentGemsData = matchResult.matches.map((match) => ({
-            moment_id: momentId,
-            gem_id: match.gem_id,
-            user_id: user.id,
-            relevance_score: match.relevance_score,
-            relevance_reason: match.relevance_reason,
-            was_helpful: null,
-            was_reviewed: false,
-          }))
+        // Story 18.5: Merge new matches with existing ones
+        for (const newMatch of matchResult.matches) {
+          const existing = existingByGemId.get(newMatch.gem_id)
 
-          await supabase.from("moment_gems").insert(momentGemsData)
-          matchedCount = matchResult.matches.length
-
-          // Update moment with match count
-          await supabase
-            .from("moments")
-            .update({
-              gems_matched_count: matchedCount,
-              ai_processing_time_ms: processingTimeMs,
+          if (existing) {
+            // Gem already matched — keep the higher relevance score
+            if (newMatch.relevance_score > existing.relevance_score) {
+              await supabase
+                .from("moment_gems")
+                .update({
+                  relevance_score: newMatch.relevance_score,
+                  relevance_reason: newMatch.relevance_reason,
+                })
+                .eq("id", existing.id)
+            }
+            // Either way, mark it as still present
+            existingByGemId.delete(newMatch.gem_id)
+          } else {
+            // New gem — insert
+            await supabase.from("moment_gems").insert({
+              moment_id: momentId,
+              gem_id: newMatch.gem_id,
+              user_id: user.id,
+              relevance_score: newMatch.relevance_score,
+              relevance_reason: newMatch.relevance_reason,
+              was_helpful: null,
+              was_reviewed: false,
             })
-            .eq("id", momentId)
+          }
         }
+
+        // Update moment with merged match count
+        const { count: totalMatches } = await supabase
+          .from("moment_gems")
+          .select("*", { count: "exact", head: true })
+          .eq("moment_id", momentId)
+
+        await supabase
+          .from("moments")
+          .update({
+            gems_matched_count: totalMatches || 0,
+            ai_processing_time_ms: processingTimeMs,
+          })
+          .eq("id", momentId)
       } catch (matchError) {
         console.error("AI matching error:", matchError)
       }
@@ -159,7 +182,7 @@ export async function POST(
     return NextResponse.json({
       moment: updatedMoment,
       matched_thoughts: momentGems || [],
-      matched_count: matchedCount,
+      matched_count: momentGems?.length || 0,
       processing_time_ms: processingTimeMs,
     })
   } catch (error) {
