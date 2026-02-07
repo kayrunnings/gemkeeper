@@ -9,7 +9,10 @@ import type {
 } from "@/types/moments"
 
 /**
- * Create a new moment
+ * DB-only moment insert — no AI matching or learned thoughts.
+ * For full creation with matching, use createMomentWithMatching from
+ * lib/moments/create-moment.ts instead.
+ * @internal
  */
 export async function createMoment(
   description: string,
