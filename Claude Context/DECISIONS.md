@@ -936,7 +936,7 @@ This caused calendar moments to appear in the dashboard but show "No thoughts ma
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Learning threshold | 3 helpful marks | Avoids false patterns from single instances |
+| Learning threshold | 1 helpful mark (`LEARNING_HELPFUL_THRESHOLD`) | Responsive learning; reduced from 3 during testing |
 | Confidence threshold | 70% | helpful / (helpful + not_helpful) >= 0.7 for suggestion |
 | Pattern types | event_type, keyword, recurring, attendee | Covers main ways moments repeat |
 | Enrichment timing | Before matching | More context = better matches |
@@ -962,7 +962,7 @@ This caused calendar moments to appear in the dashboard but show "No thoughts ma
 - AI-only learning (semantic similarity) → Rejected: too opaque, users want explainable suggestions
 - Per-moment learning only → Rejected: doesn't generalize to similar moments
 - Complex NLP for keywords → Rejected: start simple, iterate if needed
-- No threshold (suggest after 1 helpful) → Rejected: creates noisy suggestions
+- Higher threshold (3+ helpful) → Initially chosen, reduced to 1 in Epic 15 for faster learning
 
 **Consequences:**
 - New database table: `moment_learnings`

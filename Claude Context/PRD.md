@@ -8,9 +8,9 @@ ThoughtFolio is a knowledge accountability partner that helps users capture insi
 
 **Primary URL:** https://gemkeeper.vercel.app (rebrand pending)
 
-**Last Updated:** January 2026
+**Last Updated:** February 2026
 
-**Feature Status:** All core features complete (Contexts, Active List, Daily Check-in, Moments, Moment Intelligence, Discovery, Calendar Integration, Graduation System)
+**Feature Status:** All core features complete (Contexts, Active List, Daily Check-in, Moments, Moment Intelligence, Discovery, Calendar Integration, Graduation System). Epic 15 (Moments Foundation Cleanup) complete.
 
 ---
 
@@ -494,7 +494,7 @@ First-class entities representing knowledge origins (books, articles, podcasts, 
 | FR-9.5.6 | User context stored on moment | user_context field populated |
 | FR-9.5.7 | Marking helpful records learning | moment_learnings entry created/updated |
 | FR-9.5.8 | Marking not helpful records signal | not_helpful_count incremented |
-| FR-9.5.9 | Threshold of 3 helpful marks required | Thoughts only suggested after 3+ helpful marks |
+| FR-9.5.9 | Threshold of 1 helpful mark required (LEARNING_HELPFUL_THRESHOLD) | Thoughts only suggested after 1+ helpful mark |
 | FR-9.5.10 | Confidence threshold of 70% | helpful / (helpful + not_helpful) >= 0.7 |
 | FR-9.5.11 | Learned thoughts shown with badge | "Helped before" badge displayed |
 | FR-9.5.12 | AI prompt includes learned context | Prompt has learned_thoughts_section |
@@ -522,7 +522,7 @@ First-class entities representing knowledge origins (books, articles, podcasts, 
 - [x] Marking thought "helpful" records learning associations
 - [x] Marking thought "not helpful" records negative signal
 - [x] Learnings are pattern-specific (event_type, keyword, recurring)
-- [x] Thoughts with >= 3 helpful marks suggested for similar moments
+- [x] Thoughts with >= 1 helpful mark (LEARNING_HELPFUL_THRESHOLD) suggested for similar moments
 - [x] Learned thoughts indicated with "Helped before" badge
 - [x] AI prompt includes learned thoughts as context
 
