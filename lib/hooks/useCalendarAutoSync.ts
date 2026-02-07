@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useCallback } from "react"
+import { useEffect, useRef, useCallback, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { syncCalendarEvents } from "@/lib/calendar-client"
 
@@ -25,89 +25,102 @@ interface CalendarConnectionForSync {
 }
 
 /**
- * Hook to automatically sync calendars based on user's configured frequency.
- * Checks every minute if any calendars need syncing based on their last_sync_at
- * and sync_frequency_minutes settings.
+ * Best-effort client-side calendar sync supplement (Story 16.1 / 16.2).
+ *
+ * The primary sync driver is the server-side cron job at /api/cron/calendar-sync.
+ * This hook acts as a supplement: it syncs on app load, runs catch-up for missed
+ * events (Story 16.2), and polls every 5 minutes as a fallback.
+ *
+ * Returns sync state for the sync health indicator (Story 16.3).
  */
 export function useCalendarAutoSync() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const isSyncingRef = useRef(false)
+  const hasDoneCatchUp = useRef(false)
+
+  // Sync health state (Story 16.3)
+  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null)
+  const [syncError, setSyncError] = useState<string | null>(null)
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [catchUpCount, setCatchUpCount] = useState(0)
 
   const runAutoSync = useCallback(async () => {
-    // Prevent concurrent sync operations
-    if (isSyncingRef.current) {
-      return
-    }
+    if (isSyncingRef.current) return
 
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
 
-      if (!user) {
-        return
-      }
-
-      // Get all active calendar connections with auto-sync enabled (frequency > 0)
       const { data: connections } = await supabase
         .from("calendar_connections")
-        .select("id, sync_frequency_minutes, last_sync_at")
+        .select("id, sync_frequency_minutes, last_sync_at, sync_error")
         .eq("user_id", user.id)
         .eq("is_active", true)
         .gt("sync_frequency_minutes", 0)
 
-      if (!connections || connections.length === 0) {
-        return
+      if (!connections || connections.length === 0) return
+
+      // Expose sync state from the first connection
+      if (connections[0].last_sync_at) {
+        setLastSyncAt(connections[0].last_sync_at)
+      }
+      if (connections[0].sync_error) {
+        setSyncError(connections[0].sync_error)
       }
 
       const now = new Date()
 
-      // Find connections that need syncing
       const connectionsToSync: CalendarConnectionForSync[] = connections.filter(
         (conn: CalendarConnectionForSync) => {
-          if (!conn.last_sync_at) {
-            // Never synced, should sync now
-            return true
-          }
-
+          if (!conn.last_sync_at) return true
           const lastSync = new Date(conn.last_sync_at)
           const nextSyncTime = new Date(
             lastSync.getTime() + conn.sync_frequency_minutes * 60 * 1000
           )
-
           return now >= nextSyncTime
         }
       )
 
-      if (connectionsToSync.length === 0) {
-        return
-      }
+      if (connectionsToSync.length === 0) return
 
       isSyncingRef.current = true
+      setIsSyncing(true)
+      setSyncError(null)
 
-      // Sync each connection that needs it
       for (const conn of connectionsToSync) {
         try {
           await syncCalendarEvents(conn.id)
         } catch (err) {
           console.error(`Auto-sync failed for connection ${conn.id}:`, err)
+          setSyncError("Sync failed")
         }
       }
 
       // After syncing, check for events that should become moments
-      await checkForUpcomingEvents()
+      const result = await checkForUpcomingEvents()
+      setLastSyncAt(new Date().toISOString())
+
+      // Story 16.2: Catch-up on first mount — report created moments
+      if (!hasDoneCatchUp.current && result.momentsCreated > 0) {
+        setCatchUpCount(result.momentsCreated)
+      }
+      hasDoneCatchUp.current = true
     } catch (err) {
       console.error("Calendar auto-sync error:", err)
+      setSyncError("Sync failed")
     } finally {
       isSyncingRef.current = false
+      setIsSyncing(false)
     }
   }, [])
 
   useEffect(() => {
-    // Run initial sync check on mount
+    // Run initial sync + catch-up on mount
     runAutoSync()
 
-    // Check every minute if any calendars need syncing
-    intervalRef.current = setInterval(runAutoSync, 60 * 1000)
+    // Poll every 5 minutes as a best-effort supplement to cron
+    intervalRef.current = setInterval(runAutoSync, 5 * 60 * 1000)
 
     return () => {
       if (intervalRef.current) {
@@ -116,6 +129,12 @@ export function useCalendarAutoSync() {
     }
   }, [runAutoSync])
 
-  // Return a function to manually trigger sync if needed
-  return { runAutoSync }
+  return {
+    runAutoSync,
+    lastSyncAt,
+    syncError,
+    isSyncing,
+    catchUpCount,
+    clearCatchUp: () => setCatchUpCount(0),
+  }
 }
