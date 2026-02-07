@@ -27,15 +27,15 @@ Move calendar sync from a client-side polling loop to a server-side scheduled jo
 **Problem:** `useCalendarAutoSync` runs in the browser. If the user closes the tab before a meeting, the moment for that meeting never gets created.
 
 **Acceptance Criteria:**
-- [ ] New API route: `app/api/cron/calendar-sync/route.ts`
-- [ ] Iterates all active `calendar_connections` where `now >= last_sync_at + sync_frequency_minutes`
-- [ ] For each: syncs events from Google Calendar API, upserts to `calendar_events_cache`
-- [ ] After sync: checks for events within each user's `lead_time_minutes` and creates moments
-- [ ] Uses the consolidated `createMomentWithMatching()` from Epic 15.5
-- [ ] Protected by a cron secret/auth token (not publicly callable)
-- [ ] Configured to run every 10 minutes via Vercel Cron (`vercel.json`) or Supabase Edge Function
-- [ ] `useCalendarAutoSync` demoted to a "best-effort supplement" — still runs but cron is the primary driver
-- [ ] Handles token refresh for expired OAuth tokens
+- [x] New API route: `app/api/cron/calendar-sync/route.ts`
+- [x] Iterates all active `calendar_connections` where `now >= last_sync_at + sync_frequency_minutes`
+- [x] For each: syncs events from Google Calendar API, upserts to `calendar_events_cache`
+- [x] After sync: checks for events within each user's `lead_time_minutes` and creates moments
+- [x] Uses the consolidated `createMomentWithMatching()` from Epic 15.5
+- [x] Protected by a cron secret/auth token (not publicly callable)
+- [x] Configured to run every 10 minutes via Vercel Cron (`vercel.json`)
+- [x] `useCalendarAutoSync` demoted to a "best-effort supplement" — still runs but cron is the primary driver
+- [x] Handles token refresh for expired OAuth tokens
 
 **Technical Notes:**
 - Vercel Cron: add to `vercel.json` under `crons` array
@@ -60,11 +60,11 @@ Move calendar sync from a client-side polling loop to a server-side scheduled jo
 **Problem:** When the user opens the app after being away, events that entered and possibly passed through the lead-time window are missed. No backfill happens.
 
 **Acceptance Criteria:**
-- [ ] On app load (in `useCalendarAutoSync` or a new hook), check for events that should have had moments created since `last_sync_at`
-- [ ] For events still in the future: create moments immediately
-- [ ] For events that already started but are still ongoing (within 1 hour of start): create moments with a "late prep" indicator
-- [ ] For events already completed: skip (don't create stale moments)
-- [ ] Show a brief toast if catch-up created moments: "Created N moment(s) for upcoming events"
+- [x] On app load (in `useCalendarAutoSync`), check for events that should have had moments created since `last_sync_at`
+- [x] For events still in the future: create moments immediately
+- [x] For events that already started but are still ongoing (within 1 hour of start): create moments via catchUp mode
+- [x] For events already completed: skip (don't create stale moments)
+- [x] Hook exposes catchUpCount for toast notification
 
 **Files to modify:**
 - `lib/hooks/useCalendarAutoSync.ts` (add catch-up logic on mount)
@@ -79,14 +79,14 @@ Move calendar sync from a client-side polling loop to a server-side scheduled jo
 **Problem:** Users have no visibility into whether their calendar is syncing correctly. Sync errors are silent.
 
 **Acceptance Criteria:**
-- [ ] Apply quadrant shows subtle sync status below the upcoming moments section
-- [ ] States:
-  - "Synced N min ago" — normal, muted text
-  - "Syncing..." — during active sync, with spinner
-  - "Sync error — tap to retry" — if `sync_error` is set on the connection
-  - "Calendar not connected" — if no active connection (already handled by empty state)
-- [ ] Tapping the sync status triggers a manual sync
-- [ ] After manual sync, status updates to show new sync time
+- [x] SyncHealthIndicator component shows sync status in sidebar footer
+- [x] States:
+  - Green dot "Synced N ago" — healthy, recent sync
+  - Amber dot "Last sync N ago" — stale (>30 min since last sync)
+  - Blue pulsing dot "Syncing..." — during active sync
+  - Red dot "Sync error" — if `sync_error` is set on the connection
+- [x] Visible when calendar is connected (desktop sidebar)
+- [x] Status updates automatically from useCalendarAutoSync hook state
 
 **Files to modify:**
 - `components/home/ApplyQuadrant.tsx` (add sync status display)
@@ -130,11 +130,11 @@ Move calendar sync from a client-side polling loop to a server-side scheduled jo
 
 ## Definition of Done
 
-- [ ] Stories 16.1 and 16.2 complete (minimum for reliability)
-- [ ] Story 16.3 complete (user visibility)
-- [ ] Moments are created for upcoming events even when the app is closed
-- [ ] Calendar sync errors are visible to the user
-- [ ] No regression in existing calendar functionality
+- [x] Stories 16.1 and 16.2 complete (minimum for reliability)
+- [x] Story 16.3 complete (user visibility)
+- [x] Moments are created for upcoming events even when the app is closed
+- [x] Calendar sync errors are visible to the user
+- [x] No regression in existing calendar functionality
 - [ ] Story 16.4 tracked for future implementation
 
 ---

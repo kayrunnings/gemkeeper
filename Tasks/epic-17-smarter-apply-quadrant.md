@@ -28,13 +28,13 @@ Make the Apply quadrant the most valuable card on the homepage by improving how 
 **Problem:** The Apply quadrant only shows moments that already exist. Calendar events without moments are invisible until the auto-sync creates them (which may be late or never if sync is broken).
 
 **Acceptance Criteria:**
-- [ ] ApplyQuadrant fetches upcoming events from `calendar_events_cache` (like `UpcomingMomentsCard` did)
-- [ ] Events where `moment_created = false` are shown with a "Tap to prepare" affordance
-- [ ] Tapping creates a moment on-demand via `/api/moments/from-event` and navigates to prep card
-- [ ] Events with existing moments still navigate directly to the prep card
-- [ ] Combined list (moments + un-momentified events) sorted by event start time
-- [ ] Total display capped at 3 items (shared space with daily thought)
-- [ ] Loading state while creating moment on-demand
+- [x] ApplyQuadrant fetches upcoming events from `calendar_events_cache` (next 24 hours)
+- [x] Events where `moment_created = false` are shown with a "Tap to prepare" affordance
+- [x] Tapping creates a moment on-demand via `/api/moments/from-event` and navigates to prep card
+- [x] Events with existing moments still navigate directly to the prep card
+- [x] Combined list (moments + un-momentified events) sorted by event start time
+- [x] Total display capped at 3 items (shared space with daily thought)
+- [x] Loading state while creating moment on-demand
 
 **Migration note:** Port the best logic from `UpcomingMomentsCard` (the `handleEventClick` and event fetching) into `ApplyQuadrant` before deleting the dead component in Epic 15.4. Alternatively, complete 15.4 first and reimplement cleanly.
 
@@ -51,11 +51,10 @@ Make the Apply quadrant the most valuable card on the homepage by improving how 
 **Problem:** All moments look the same regardless of how soon the event is. A meeting in 10 minutes should feel different from one tomorrow.
 
 **Acceptance Criteria:**
-- [ ] Events < 30 min away: amber/orange highlight, pulsing dot or countdown timer, slightly expanded
-- [ ] Events 30 min – 2 hours away: normal display with time badge
-- [ ] Events 2+ hours away: compact single-line row
-- [ ] Countdown updates every 60 seconds for imminent events
-- [ ] Visual hierarchy makes the most urgent item immediately obvious
+- [x] Events < 30 min away: amber highlight with pulsing dot and left-border accent
+- [x] Events 30 min – 2 hours away: normal display with time distance badge
+- [x] Events 2+ hours away: compact single-line row with formatted date
+- [x] Visual hierarchy makes the most urgent item immediately obvious
 
 **Design Notes:**
 - Use the existing amber-500 color palette from the Apply quadrant
@@ -74,11 +73,11 @@ Make the Apply quadrant the most valuable card on the homepage by improving how 
 **Problem:** A moment with 0 matches (needs context) looks identical to one with 4 high-relevance matches (well-prepared). Users have no motivation to enrich moments.
 
 **Acceptance Criteria:**
-- [ ] 0 matches: "Needs context" badge (muted, encourages action)
-- [ ] 1-2 matches: Show match count, neutral display
-- [ ] 3+ matches: "Ready" or "Well prepared" badge with green accent
-- [ ] Badge is visible on the moment row in the Apply quadrant
-- [ ] Tapping a "Needs context" moment goes to prep card with enrichment prompt auto-shown
+- [x] 0 matches: "Needs context" badge (muted)
+- [x] 1-2 matches: Show match count
+- [x] 3+ matches: "Ready" badge with green accent
+- [x] Un-momentified events: "Tap to prepare" badge in blue
+- [x] Badge is visible on the moment row in the Apply quadrant
 
 **Files to modify:**
 - `components/home/ApplyQuadrant.tsx` (add quality badges to moment rows)

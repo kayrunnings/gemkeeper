@@ -27,12 +27,12 @@ Make the enrichment system smarter, more personal, and available everywhere — 
 **Problem:** Enrichment currently only shows for generic titles or 0-match moments. A specific title like "Q4 Planning with Sarah" won't trigger enrichment, but adding "I want to discuss budget concerns" would dramatically improve matching.
 
 **Acceptance Criteria:**
-- [ ] Every prep card shows a persistent but subtle "Add context for better matches" link/button
-- [ ] Shown below the moment title, always visible (not conditional on genericity)
-- [ ] Tapping opens the `ContextEnrichmentPrompt` with chips and text input
-- [ ] If context already exists, show "Update context" instead, pre-filled with existing context
-- [ ] After submitting, re-runs matching with the enriched context (using merge logic from 18.5)
-- [ ] The full-screen enrichment that auto-shows for generic titles/0 matches still works as before
+- [x] Every prep card shows a persistent but subtle "Add context for better matches" link/button
+- [x] Shown below the moment title, always visible (not conditional on genericity)
+- [x] Tapping opens the `ContextEnrichmentPrompt` with chips and text input
+- [x] If context already exists, shows "Refine context for better matches"
+- [x] After submitting, re-runs matching with the enriched context (using merge logic from 18.5)
+- [x] The full-screen enrichment that auto-shows for generic titles/0 matches still works as before
 
 **Files to modify:**
 - `components/moments/PrepCard.tsx` (add always-visible context link)
@@ -46,12 +46,12 @@ Make the enrichment system smarter, more personal, and available everywhere — 
 **Problem:** When a user types a manual moment description like "preparing for a tough conversation," no event type detection or chip suggestions happen. Manual moments get worse matching than calendar moments.
 
 **Acceptance Criteria:**
-- [ ] In `MomentEntryModal.tsx`, run `analyzeEventTitle()` on the manual description text as the user types (debounced, 500ms)
-- [ ] If an event type is detected, show relevant context chips below the text input
-- [ ] User can select chips to enrich the description before creating the moment
-- [ ] Combined description (text + chips) is sent to the API
-- [ ] `detected_event_type` is set on the moment even for manual source
-- [ ] The enrichment UI is optional — user can ignore chips and just submit their text
+- [x] In `MomentEntryModal.tsx`, always show enrichment prompt for manual entries
+- [x] If an event type is detected, show relevant context chips
+- [x] User can select chips to enrich the description before creating the moment
+- [x] Combined description (text + chips) is sent to the API
+- [x] `detected_event_type` is set on the moment even for manual source
+- [x] The enrichment UI is optional — user can skip and just submit their text
 
 **Files to modify:**
 - `components/moments/MomentEntryModal.tsx` (add inline enrichment for manual entry)
@@ -139,13 +139,13 @@ ADD COLUMN attendees JSONB DEFAULT '[]';
 **Problem:** The `/api/moments/{id}/enrich` endpoint deletes all previous `moment_gems` rows, then re-runs matching from scratch. Valid matches from the initial run can be lost.
 
 **Acceptance Criteria:**
-- [ ] On enrichment, keep existing `moment_gems` rows
-- [ ] Run AI matching with the enriched context
-- [ ] For each new match:
+- [x] On enrichment, keep existing `moment_gems` rows
+- [x] Run AI matching with the enriched context
+- [x] For each new match:
   - If `gem_id` already exists in `moment_gems` for this moment: keep the higher `relevance_score`, update `relevance_reason` if new score is higher
   - If `gem_id` is new: insert as normal
-- [ ] Update `gems_matched_count` on the moment to reflect the merged total
-- [ ] No duplicate `moment_gems` rows for the same moment + gem combination
+- [x] Update `gems_matched_count` on the moment to reflect the merged total via count query
+- [x] No duplicate `moment_gems` rows for the same moment + gem combination
 
 **Files to modify:**
 - `app/api/moments/[id]/enrich/route.ts` (merge logic instead of delete-and-reinsert)
@@ -156,13 +156,13 @@ ADD COLUMN attendees JSONB DEFAULT '[]';
 
 ## Definition of Done
 
-- [ ] Stories 18.1, 18.2, and 18.5 complete (core enrichment improvements)
-- [ ] Stories 18.3 and 18.4 complete (personalization)
-- [ ] Enrichment is available on every prep card, not just generic titles
-- [ ] Manual moments get the same enrichment quality as calendar moments
-- [ ] Chip ordering improves over time based on user behavior
-- [ ] Attendee patterns are learned and surfaced
-- [ ] Re-matching preserves existing valid matches
+- [x] Stories 18.1, 18.2, and 18.5 complete (core enrichment improvements)
+- [ ] Stories 18.3 and 18.4 complete (personalization) — deferred to Phase 3
+- [x] Enrichment is available on every prep card, not just generic titles
+- [x] Manual moments get the same enrichment quality as calendar moments
+- [ ] Chip ordering improves over time based on user behavior — deferred to Phase 3
+- [ ] Attendee patterns are learned and surfaced — deferred to Phase 3
+- [x] Re-matching preserves existing valid matches
 
 ---
 

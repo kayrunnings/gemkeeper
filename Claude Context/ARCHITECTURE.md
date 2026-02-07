@@ -53,8 +53,10 @@ gemkeeper/
 │   │   │   └── learn/            # Epic 14: Learning endpoints
 │   │   │       ├── helpful/      # Record helpful thought
 │   │   │       └── not-helpful/  # Record not-helpful thought
-│   │   └── auth/                 # OAuth callbacks
-│   │       └── google-calendar/  # Google Calendar OAuth
+│   │   ├── auth/                 # OAuth callbacks
+│   │   │   └── google-calendar/  # Google Calendar OAuth
+│   │   └── cron/                 # Cron job routes (Phase 2)
+│   │       └── calendar-sync/    # Server-side calendar sync (every 10 min)
 │   ├── auth/                     # Auth actions
 │   ├── checkin/                  # Daily check-in page
 │   ├── daily/                    # Redirects to /checkin (legacy)
@@ -128,6 +130,8 @@ gemkeeper/
 │   ├── sources/                  # Source components (Epic 13)
 │   │   ├── AddSourceModal.tsx    # Add source modal with type-first UX
 │   │   └── SourceSelector.tsx    # Single/multi source selector with quick-create
+│   ├── calendar/                 # Calendar components (Phase 2)
+│   │   └── SyncHealthIndicator.tsx  # Sync status dot + label
 │   ├── layout/                   # Layout components
 │   │   └── BottomNavigation.tsx  # Mobile bottom tab bar
 │   ├── extract-from-note-modal.tsx  # Extract thoughts from notes
@@ -145,7 +149,8 @@ gemkeeper/
 │   │   └── content-splitter.ts   # Quote/reflection splitting (ThoughtFolio 2.0)
 │   ├── supabase/                 # Database clients
 │   │   ├── client.ts             # Browser client
-│   │   └── server.ts             # Server client
+│   │   ├── server.ts             # Server client
+│   │   └── admin.ts              # Admin client (service role, for cron jobs)
 │   ├── types/                    # Type definitions
 │   │   ├── thought.ts            # Thought types
 │   │   ├── context.ts            # Context types
@@ -911,6 +916,23 @@ Sync calendar events from Google Calendar to cache.
 
 #### POST `/api/calendar/check-moments`
 Create moments from cached calendar events that are within lead time.
+Story 16.2: Uses catchUp mode to also find events that started ≤1 hour ago.
+
+#### GET `/api/cron/calendar-sync` (Phase 2, Story 16.1)
+Server-side cron job for calendar sync. Runs every 10 minutes via Vercel Cron.
+Protected by `CRON_SECRET` bearer token — not publicly callable.
+Iterates all active calendar connections across all users, syncs events,
+and creates moments for events within each user's lead_time_minutes.
+
+**Response:**
+```typescript
+{
+  connections_checked: number;
+  connections_synced: number;
+  moments_created: number;
+  errors: string[];
+}
+```
 
 **Response:**
 ```typescript
@@ -1520,17 +1542,26 @@ Handles Cmd+K (search) and Cmd+N (capture) keyboard shortcuts globally.
 
 ### Calendar Auto-Sync Hook (`lib/hooks/useCalendarAutoSync.ts`)
 ```typescript
-useCalendarAutoSync(): { runAutoSync: () => Promise<void> }
+useCalendarAutoSync(): {
+  runAutoSync: () => Promise<void>;
+  lastSyncAt: string | null;     // Story 16.3: Last successful sync time
+  syncError: string | null;      // Story 16.3: Current sync error if any
+  isSyncing: boolean;            // Story 16.3: Currently syncing
+  catchUpCount: number;          // Story 16.2: Moments created during catch-up
+  clearCatchUp: () => void;      // Story 16.2: Dismiss catch-up notification
+}
 ```
 
-Background sync hook that automatically syncs calendar connections based on user's configured `sync_frequency_minutes`. Runs in `LayoutShell` to provide app-wide auto-sync.
+Best-effort client-side calendar sync supplement (Phase 2, Stories 16.1/16.2/16.3). The primary sync driver is the server-side cron job at `/api/cron/calendar-sync`. This hook acts as a supplement.
 
 **Behavior:**
-- Checks every 60 seconds if any calendars need syncing
+- Syncs on app load (mount) with catch-up for missed events (Story 16.2)
+- Polls every 5 minutes as a fallback supplement to the cron job
 - Compares `last_sync_at` with `sync_frequency_minutes` to determine if sync is due
 - Only syncs connections where `sync_frequency_minutes > 0` (excludes manual-only)
 - After syncing, automatically calls `/api/calendar/check-moments` to create moments
 - Prevents concurrent sync operations
+- Exposes sync health state for the SyncHealthIndicator component (Story 16.3)
 
 ---
 
@@ -1588,41 +1619,53 @@ Background sync hook that automatically syncs calendar connections based on user
    - "Not helpful" → POST /api/moments/learn/not-helpful → updates confidence
 ```
 
-### Calendar Sync & Moment Creation Flow
+### Calendar Sync & Moment Creation Flow (Phase 2)
 ```
 1. User connects Google Calendar via OAuth
 2. User configures sync settings:
    - Auto-sync frequency: Manual only, Every 5/15/30/60 minutes
    - Lead time: 15/30/60/120 minutes before event
    - Event filter: All events, Meetings only, Custom keywords
-3. On sync (manual button, after connection, or auto-sync):
-   a. Call POST /api/calendar/sync → syncCalendarEvents() in lib/calendar.ts
-   b. Fetch events from Google Calendar API for next 24 hours
-   c. Filter events based on user settings (all/meetings/custom keywords)
-   d. Upsert events to calendar_events_cache table (moment_created = false)
-4. After sync completes, call POST /api/calendar/check-moments:
-   a. Query calendar_events_cache for events where:
-      - moment_created = false
-      - start_time is within lead_time_minutes from now
-   b. For each qualifying event:
-      - Create moment in database with source = 'calendar'
-      - Mark cache event as moment_created = true
-5. Moments appear in dashboard Upcoming Moments card and Moments page
-6. Auto-sync (via useCalendarAutoSync hook in LayoutShell):
-   a. Every 60 seconds, checks if any calendars need syncing
-   b. If last_sync_at + sync_frequency_minutes < now, triggers sync
-   c. After sync, automatically calls check-moments endpoint
+3. PRIMARY: Server-side cron sync (Story 16.1):
+   a. GET /api/cron/calendar-sync runs every 10 minutes (Vercel Cron)
+   b. Iterates ALL active connections across ALL users
+   c. Uses admin Supabase client (service role key, no user session)
+   d. For each due connection: sync events + create moments within lead_time
+4. SUPPLEMENT: Client-side sync (Story 16.1/16.2):
+   a. useCalendarAutoSync runs sync on app load (catch-up)
+   b. Polls every 5 minutes as best-effort fallback
+   c. Story 16.2: On mount, uses catchUp mode to look back 1 hour
+      for events that started but are still ongoing
+5. On any sync:
+   a. Fetch events from Google Calendar API for next 24 hours
+   b. Filter events based on user settings
+   c. Upsert events to calendar_events_cache table
+6. Moment creation:
+   a. check-moments route queries events within lead_time window
+   b. Story 16.2: catchUp=true also finds events started ≤1 hour ago
+   c. For each qualifying event: create moment, mark cache as processed
+7. Dashboard display (Story 17.1/17.2/17.3):
+   a. ApplyQuadrant shows combined list of moments + un-momentified events
+   b. Un-momentified events show "Tap to prepare" — creates moment on-demand
+   c. Urgency: <30 min = amber highlight with pulsing dot
+   d. Quality badges: "Ready" (3+ matches), count, "Needs context", "Tap to prepare"
+8. Sync health (Story 16.3):
+   a. SyncHealthIndicator in sidebar shows last sync time + status
+   b. Green=healthy, amber=stale (>30 min), red=error, blue=syncing
 ```
 
 **Key Files:**
+- `app/api/cron/calendar-sync/route.ts` — Primary cron sync (every 10 min)
+- `lib/supabase/admin.ts` — Admin client for cron (service role key)
+- `vercel.json` — Cron schedule configuration
 - `lib/calendar.ts` — Server-side Google Calendar API integration
 - `lib/calendar-client.ts` — Client-safe calendar functions
-- `lib/hooks/useCalendarAutoSync.ts` — Background auto-sync hook
-- `app/api/calendar/check-moments/route.ts` — API route for moment creation from cached events
-- `components/settings/CalendarSettings.tsx` — Calendar settings UI
-- `components/home/ApplyQuadrant.tsx` — Dashboard display (shows upcoming moments, filters by status='active')
+- `lib/hooks/useCalendarAutoSync.ts` — Best-effort client-side sync supplement
+- `app/api/calendar/check-moments/route.ts` — Moment creation from cached events
+- `components/home/ApplyQuadrant.tsx` — Dashboard display (moments + events combined)
+- `components/calendar/SyncHealthIndicator.tsx` — Sync health status dot
 
-**Important:** The `/api/calendar/check-moments` endpoint MUST be called after `/api/calendar/sync` to convert cached calendar events into moments. Without this call, events are cached but no moments are created. Client components should use the API route (not import `lib/calendar-sync.ts` directly) to avoid bundling server-only dependencies.
+**Important:** The `/api/calendar/check-moments` endpoint MUST be called after `/api/calendar/sync` to convert cached calendar events into moments. The cron job handles this automatically. Client components should use the API route (not import `lib/calendar-sync.ts` directly) to avoid bundling server-only dependencies.
 
 ### Retire Flow
 ```
@@ -1685,6 +1728,7 @@ Required in Vercel:
 | GOOGLE_CALENDAR_CLIENT_ID | Calendar OAuth |
 | GOOGLE_CALENDAR_CLIENT_SECRET | Calendar OAuth |
 | GOOGLE_CALENDAR_REDIRECT_URI | OAuth callback URL |
+| CRON_SECRET | Auth secret for Vercel Cron jobs (Phase 2) |
 
 ---
 
@@ -1836,3 +1880,13 @@ CSS animation classes for enhanced UX:
 | - Animations | Complete | Entry animations, microinteractions |
 | - Navigation Updates | Complete | Check-in label, Phosphor icons consistency |
 | - Dashboard Improvements | Complete | Smart greeting, reordered cards |
+| **Phase 2: Moments Improvements** | Complete | Reliable sync, smarter Apply, enhanced enrichment |
+| - Server-side Cron Sync (16.1) | Complete | Vercel Cron every 10 min, admin client, all users |
+| - Catch-up on App Load (16.2) | Complete | 1-hour lookback for missed events |
+| - Sync Health Indicator (16.3) | Complete | Colored dot in sidebar: healthy/stale/error/syncing |
+| - Calendar Events in Apply (17.1) | Complete | Un-momentified events with "Tap to prepare" |
+| - Urgency Indicators (17.2) | Complete | Amber highlight + pulsing dot for <30 min |
+| - Quality Badges (17.3) | Complete | Ready/count/Needs context/Tap to prepare |
+| - Merge Enrichment (18.5) | Complete | Keeps existing matches, merges higher scores |
+| - Always-Available Enrichment (18.1) | Complete | Persistent "Add context" link on PrepCard |
+| - Manual Enrichment (18.2) | Complete | Enrichment prompt for all manual moments |

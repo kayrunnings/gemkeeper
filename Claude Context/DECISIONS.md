@@ -1021,6 +1021,47 @@ When adding user-configurable settings, ensure all related code paths respect th
 - Two code paths for moment creation caused inconsistency (bare insert vs. full matching)
 - Legacy aliases from gems→thoughts rename added confusion
 
+### 2026-02-07: Phase 2 Moments Improvements — Architecture Decisions
+
+**Decision:** Implement server-side cron as primary sync driver, demote client-side polling to best-effort supplement.
+
+**Rationale:**
+- Client-side polling (useCalendarAutoSync) only runs while the app is open — if a user closes the tab, events are missed
+- Server-side cron ensures sync happens every 10 minutes regardless of app state
+- Using Vercel Cron with a CRON_SECRET bearer token for auth (no user session needed)
+- Admin Supabase client (service role key) bypasses RLS for cross-user iteration
+
+**Alternatives Considered:**
+- Client-only polling → Rejected: unreliable when app is closed
+- WebSocket push → Rejected: over-engineered for 10-minute intervals
+
+---
+
+### 2026-02-07: Merge enrichment matches instead of replacing (Story 18.5)
+
+**Decision:** When re-enriching a moment, merge new matches with existing ones instead of deleting all and re-inserting.
+
+**Rationale:**
+- Preserves user feedback (was_helpful, was_reviewed) on existing matches
+- For duplicate gems: keep the higher relevance_score
+- New gems are inserted normally
+- Users don't lose their "Got it" checkmarks when adding more context
+
+**Alternatives Considered:**
+- Delete-all + reinsert (previous behavior) → Rejected: loses user feedback
+- Soft merge with tombstones → Rejected: over-complicated
+
+---
+
+### 2026-02-07: Always show enrichment prompt for manual moments (Story 18.2)
+
+**Decision:** Always show the enrichment/context prompt for both calendar and manual moment entries, not just for generic titles.
+
+**Rationale:**
+- Even specific titles benefit from context chips (e.g., "Q4 Review" → add "quarterly results, team performance")
+- Users can skip if they don't want to add context
+- Consistent UX regardless of title specificity
+
 ---
 
 ## Deferred Decisions
