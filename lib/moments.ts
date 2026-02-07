@@ -337,8 +337,3 @@ export async function addMomentThoughts(
 
   return { error: null }
 }
-
-// Legacy aliases for backward compatibility during migration
-export const recordMomentGemFeedback = recordMomentThoughtFeedback
-export const markGemReviewed = markThoughtReviewed
-export const addMomentGems = addMomentThoughts
