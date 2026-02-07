@@ -41,15 +41,9 @@ export interface MomentThought {
   learned_confidence?: number  // Confidence score if from learned pattern
 }
 
-// Legacy alias for backward compatibility
-export type MomentGem = MomentThought
-
 export interface MomentWithThoughts extends Moment {
   matched_thoughts: MomentThought[]
 }
-
-// Legacy alias for backward compatibility
-export type MomentWithGems = MomentWithThoughts
 
 export interface CalendarEventData {
   event_id: string

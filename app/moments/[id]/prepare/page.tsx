@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { PrepCard } from "@/components/moments/PrepCard"
-import type { MomentWithGems, MomentThought } from "@/types/moments"
+import type { MomentWithThoughts, MomentThought } from "@/types/moments"
 import type { Note } from "@/lib/types"
 
 interface PreparePageProps {
@@ -81,7 +81,7 @@ export default async function PreparePage({ params }: PreparePageProps) {
     linkedNotes: linkedNotesMap[mg.gem_id] || [],
   }))
 
-  const momentWithGems: MomentWithGems & { matched_thoughts: MomentThoughtWithNotes[] } = {
+  const momentWithGems: MomentWithThoughts & { matched_thoughts: MomentThoughtWithNotes[] } = {
     ...moment,
     matched_thoughts: enhancedMomentGems,
   }

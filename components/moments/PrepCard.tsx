@@ -25,7 +25,7 @@ import type { MomentWithThoughts, MomentThought } from "@/types/moments"
 import type { Thought } from "@/lib/types/thought"
 import type { Note } from "@/lib/types"
 import { CONTEXT_TAG_LABELS, CONTEXT_TAG_COLORS } from "@/lib/types/thought"
-import { recordMomentThoughtFeedback, markThoughtReviewed, updateMomentStatus } from "@/lib/moments"
+import { recordMomentThoughtFeedback, updateMomentStatus } from "@/lib/moments"
 import { analyzeEventTitle, type TitleAnalysis } from "@/lib/moments/title-analysis"
 import { ContextEnrichmentPrompt } from "./ContextEnrichmentPrompt"
 
@@ -62,10 +62,11 @@ function MatchedThoughtCard({ momentThought, momentId, onReviewed, onFeedback, r
   const handleGotIt = async () => {
     if (readOnly || isReviewed) return
     setIsReviewed(true)
+    setFeedback(true)
     setShowConfirmation(true)
 
-    // Mark as reviewed in moment_gems table
-    await markThoughtReviewed(momentThought.id)
+    // Record helpful feedback (sets was_helpful: true AND was_reviewed: true)
+    await recordMomentThoughtFeedback(momentThought.id, true)
 
     // Epic 14: Record helpful signal for learning
     try {

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MomentEntryModal } from "./MomentEntryModal"
-import type { MomentWithGems } from "@/types/moments"
+import type { MomentWithThoughts } from "@/types/moments"
 
 interface MomentFABProps {
   className?: string
@@ -29,7 +29,7 @@ export function MomentFAB({ className }: MomentFABProps) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  const handleMomentCreated = (moment: MomentWithGems) => {
+  const handleMomentCreated = (moment: MomentWithThoughts) => {
     // Navigate to the prep card page
     router.push(`/moments/${moment.id}/prepare`)
   }

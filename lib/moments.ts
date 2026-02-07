@@ -9,7 +9,10 @@ import type {
 } from "@/types/moments"
 
 /**
- * Create a new moment
+ * DB-only moment insert — no AI matching or learned thoughts.
+ * For full creation with matching, use createMomentWithMatching from
+ * lib/moments/create-moment.ts instead.
+ * @internal
  */
 export async function createMoment(
   description: string,
@@ -106,7 +109,8 @@ export async function getMoment(
  * Get recent moments for a user
  */
 export async function getRecentMoments(
-  limit: number = 10
+  limit: number = 10,
+  statusFilter?: MomentStatus
 ): Promise<{ moments: Moment[]; error: string | null }> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -115,12 +119,18 @@ export async function getRecentMoments(
     return { moments: [], error: "Not authenticated" }
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("moments")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(limit)
+
+  if (statusFilter) {
+    query = query.eq("status", statusFilter)
+  }
+
+  const { data, error } = await query
 
   if (error) {
     return { moments: [], error: error.message }
@@ -327,8 +337,3 @@ export async function addMomentThoughts(
 
   return { error: null }
 }
-
-// Legacy aliases for backward compatibility during migration
-export const recordMomentGemFeedback = recordMomentThoughtFeedback
-export const markGemReviewed = markThoughtReviewed
-export const addMomentGems = addMomentThoughts

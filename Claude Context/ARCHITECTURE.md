@@ -1162,7 +1162,7 @@ interface SearchResult {
 | Daily Thought Card | `components/home/DailyThoughtCard.tsx` | Today's thought display with 3 states |
 | Activity Stats | `components/home/ActivityStatsCard.tsx` | Usage statistics |
 | Quick Actions Row | `components/home/QuickActionsRow.tsx` | 4-card grid: Add Thought, Extract with AI, New Moment, Your Thoughts |
-| Upcoming Moments | `components/home/UpcomingMomentsCard.tsx` | Recent moments widget |
+| Apply Quadrant | `components/home/ApplyQuadrant.tsx` | Daily check-in + upcoming moments |
 
 **QuickActionsRow Features:**
 - **Add Thought** — Opens ThoughtForm modal directly (amber/orange gradient)
@@ -1358,7 +1358,7 @@ syncMicrosoftCalendar(connectionId: string, userId: string): Promise<{ error: st
 ```
 
 ### Calendar Sync Service (`lib/calendar-sync.ts`)
-**⚠️ Server-only:** This module imports `lib/calendar.ts` which uses `googleapis` (Node.js only). Do NOT import in client components.
+**⚠️ Server-only:** This module uses the server Supabase client and `createMomentWithMatching` directly. Do NOT import in client components.
 
 For client-side code, use the API route instead: `POST /api/calendar/check-moments`
 
@@ -1368,13 +1368,23 @@ syncAllCalendars(): Promise<{ synced: number; error: string | null }>
 runCalendarCheck(): Promise<void>  // Syncs calendars then creates moments
 ```
 
-**Critical:** `checkForUpcomingEvents()` queries `calendar_events_cache` for events where `moment_created = false` and `start_time` is within the user's configured `lead_time_minutes`. It creates moments and marks cache entries as processed.
+**Critical:** `checkForUpcomingEvents()` queries `calendar_events_cache` for events where `moment_created = false` and `start_time` is within the user's configured `lead_time_minutes`. It calls `createMomentWithMatching` directly and marks cache entries as processed.
 
-### Moments Service (`lib/moments.ts`)
+### Moment Creation Service (`lib/moments/create-moment.ts`)
+Single source of truth for creating moments with full AI matching pipeline.
 ```typescript
-createMoment(description: string, source?: MomentSource, calendarData?: CalendarEventData): Promise<{ moment: Moment | null; error: string | null }>
+createMomentWithMatching(supabase: SupabaseClient, params: CreateMomentParams): Promise<CreateMomentResult>
+// Handles: DB insert, gem fetch, learned thoughts, AI matching, moment_gems insert, match count update
+```
+
+Used by: `app/api/moments/route.ts` (POST handler) and `lib/calendar-sync.ts`.
+
+### Moments Client Service (`lib/moments.ts`)
+Client-side CRUD operations for moments.
+```typescript
+createMoment(description, source?, calendarData?): Promise<{ moment: Moment | null; error: string | null }>  // DB-only insert, no AI matching — use createMomentWithMatching for full pipeline
 getMoment(momentId: string): Promise<{ moment: MomentWithThoughts | null; error: string | null }>
-getRecentMoments(limit?: number): Promise<{ moments: Moment[]; error: string | null }>
+getRecentMoments(limit?: number, statusFilter?: MomentStatus): Promise<{ moments: Moment[]; error: string | null }>
 getAllMoments(sourceFilter?: MomentSource): Promise<{ moments: Moment[]; error: string | null }>
 updateMomentStatus(momentId: string, status: MomentStatus): Promise<{ error: string | null }>
 updateMomentMatchResults(momentId: string, thoughtsMatchedCount: number, processingTimeMs: number): Promise<{ error: string | null }>
@@ -1610,13 +1620,9 @@ Background sync hook that automatically syncs calendar connections based on user
 - `lib/hooks/useCalendarAutoSync.ts` — Background auto-sync hook
 - `app/api/calendar/check-moments/route.ts` — API route for moment creation from cached events
 - `components/settings/CalendarSettings.tsx` — Calendar settings UI
-- `components/home/UpcomingMomentsCard.tsx` — Dashboard display (shows cached events + moments)
+- `components/home/ApplyQuadrant.tsx` — Dashboard display (shows upcoming moments, filters by status='active')
 
 **Important:** The `/api/calendar/check-moments` endpoint MUST be called after `/api/calendar/sync` to convert cached calendar events into moments. Without this call, events are cached but no moments are created. Client components should use the API route (not import `lib/calendar-sync.ts` directly) to avoid bundling server-only dependencies.
-
-**Dashboard Display:** The `UpcomingMomentsCard` displays both:
-- **Moments** (solid background) — Events within lead time that have become moments
-- **Upcoming events** (dashed border) — Events synced from calendar but not yet within lead time
 
 ### Retire Flow
 ```

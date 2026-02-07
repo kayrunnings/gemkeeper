@@ -1,16 +1,18 @@
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/server"
 import { getPendingEventsForMoments, syncCalendarEvents } from "@/lib/calendar"
+import { createMomentWithMatching } from "@/lib/moments/create-moment"
 import type { CalendarEvent } from "@/types/calendar"
 
 /**
- * Check for upcoming events and create moments for them
+ * Check for upcoming events and create moments for them.
+ * Server-side only — uses createMomentWithMatching directly.
  */
 export async function checkForUpcomingEvents(): Promise<{
   momentsCreated: number
   events: Array<{ event: CalendarEvent; momentId: string }>
   error: string | null
 }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -18,7 +20,7 @@ export async function checkForUpcomingEvents(): Promise<{
   }
 
   // Get pending events within lead time
-  const { events: pendingEvents, error: fetchError } = await getPendingEventsForMoments()
+  const { events: pendingEvents, error: fetchError } = await getPendingEventsForMoments(supabase)
 
   if (fetchError) {
     return { momentsCreated: 0, events: [], error: fetchError }
@@ -32,37 +34,28 @@ export async function checkForUpcomingEvents(): Promise<{
 
   for (const event of pendingEvents) {
     try {
-      // Create moment for this event
-      const response = await fetch("/api/moments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          description: event.title,
-          source: "calendar",
-          calendarData: {
-            event_id: event.external_event_id,
-            title: event.title,
-            start_time: event.start_time,
-          },
-        }),
+      const { moment, error } = await createMomentWithMatching(supabase, {
+        userId: user.id,
+        description: event.title,
+        source: "calendar",
+        calendarData: {
+          event_id: event.external_event_id,
+          title: event.title,
+          start_time: event.start_time,
+        },
       })
 
-      if (response.ok) {
-        const data = await response.json()
-        const momentId = data.moment?.id
+      if (!error && moment) {
+        // Mark event as having moment created
+        await supabase
+          .from("calendar_events_cache")
+          .update({
+            moment_created: true,
+            moment_id: moment.id,
+          })
+          .eq("id", event.id)
 
-        if (momentId) {
-          // Mark event as having moment created
-          await supabase
-            .from("calendar_events_cache")
-            .update({
-              moment_created: true,
-              moment_id: momentId,
-            })
-            .eq("id", event.id)
-
-          createdMoments.push({ event, momentId })
-        }
+        createdMoments.push({ event, momentId: moment.id })
       }
     } catch (err) {
       console.error(`Failed to create moment for event: ${event.title}`, err)
@@ -83,7 +76,7 @@ export async function syncAllCalendars(): Promise<{
   synced: number
   error: string | null
 }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -103,7 +96,7 @@ export async function syncAllCalendars(): Promise<{
   let synced = 0
 
   for (const conn of connections) {
-    const { result } = await syncCalendarEvents(conn.id)
+    const { result } = await syncCalendarEvents(conn.id, supabase)
     if (result) {
       synced += result.events_synced
     }
@@ -113,8 +106,8 @@ export async function syncAllCalendars(): Promise<{
 }
 
 /**
- * Hook to periodically check for upcoming events
- * Call this on app initialization or page focus
+ * Hook to periodically check for upcoming events.
+ * Server-side only — call from API routes or server actions.
  */
 export async function runCalendarCheck(): Promise<void> {
   try {
