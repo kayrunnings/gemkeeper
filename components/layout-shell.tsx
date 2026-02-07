@@ -38,6 +38,7 @@ import { useSidebar } from "@/lib/sidebar-context"
 import { GlobalSearch } from "@/components/search/GlobalSearch"
 import { useGlobalShortcuts } from "@/lib/hooks/useGlobalShortcuts"
 import { useCalendarAutoSync } from "@/lib/hooks/useCalendarAutoSync"
+import { SyncHealthIndicator } from "@/components/calendar/SyncHealthIndicator"
 import { BottomNavigation } from "@/components/layout/BottomNavigation"
 import { FloatingMomentButton } from "@/components/moments/FloatingMomentButton"
 import { AICaptureModal } from "@/components/capture/AICaptureModal"
@@ -110,8 +111,8 @@ export function LayoutShell({
   const router = useRouter()
   const supabase = createClient()
 
-  // Auto-sync calendar in the background based on user's configured frequency
-  useCalendarAutoSync()
+  // Auto-sync calendar in the background; exposes health state for Story 16.3
+  const { lastSyncAt, syncError, isSyncing } = useCalendarAutoSync()
 
   // Sync sidebar state when preference changes (e.g., from settings page)
   useEffect(() => {
@@ -367,8 +368,17 @@ export function LayoutShell({
             })}
           </nav>
 
-          {/* Collapse toggle */}
-          <div className="p-3 border-t border-[var(--glass-sidebar-border)]">
+          {/* Collapse toggle + Sync health */}
+          <div className="p-3 border-t border-[var(--glass-sidebar-border)] space-y-2">
+            {/* Story 16.3: Sync health indicator */}
+            {calendarConnected && !isSidebarCollapsed && (
+              <SyncHealthIndicator
+                lastSyncAt={lastSyncAt}
+                syncError={syncError}
+                isSyncing={isSyncing}
+                className="px-3"
+              />
+            )}
             <Button
               variant="ghost"
               size="sm"
