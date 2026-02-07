@@ -1,20 +1,35 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Target, CheckCircle, Shuffle, Clock, DiamondsFour } from "@phosphor-icons/react"
+import { Target, CheckCircle, Shuffle } from "@phosphor-icons/react"
+import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { HomeQuadrant } from "./HomeQuadrant"
 import { Button } from "@/components/ui/button"
 import { Thought } from "@/lib/types/thought"
 import type { ContextWithCount } from "@/lib/types/context"
 import type { Moment } from "@/types/moments"
-import { format } from "date-fns"
+import type { CalendarEvent } from "@/types/calendar"
+import { format, differenceInMinutes } from "date-fns"
+
+// Unified item for the combined list of moments + un-momentified events
+interface ApplyItem {
+  type: "moment" | "event"
+  id: string
+  title: string
+  startTime: string | null
+  momentId?: string
+  eventCacheId?: string
+  matchCount: number
+}
 
 interface ApplyQuadrantProps {
   dailyThought: Thought | null
   alreadyCheckedIn: boolean
   contexts: ContextWithCount[]
   upcomingMoments: Moment[]
+  upcomingEvents?: CalendarEvent[]
   todayMomentsCount: number
   onShuffle?: () => void
   className?: string
@@ -25,11 +40,13 @@ export function ApplyQuadrant({
   alreadyCheckedIn,
   contexts,
   upcomingMoments,
+  upcomingEvents = [],
   todayMomentsCount,
   onShuffle,
   className,
 }: ApplyQuadrantProps) {
   const router = useRouter()
+  const [creatingMomentForEvent, setCreatingMomentForEvent] = useState<string | null>(null)
 
   const getContextName = (contextId: string | null | undefined) => {
     if (!contextId) return undefined
@@ -46,6 +63,110 @@ export function ApplyQuadrant({
   const graduationProgress = dailyThought
     ? Math.min((dailyThought.application_count || 0) / 5 * 100, 100)
     : 0
+
+  // Story 17.1: Build combined list of moments + un-momentified events
+  const momentEventIds = new Set(
+    upcomingMoments
+      .filter((m) => m.calendar_event_id)
+      .map((m) => m.calendar_event_id)
+  )
+
+  const momentItems: ApplyItem[] = upcomingMoments.map((m) => ({
+    type: "moment",
+    id: m.id,
+    title: m.calendar_event_title || m.description,
+    startTime: m.calendar_event_start || m.created_at,
+    momentId: m.id,
+    matchCount: m.gems_matched_count || 0,
+  }))
+
+  const unMomentifiedEvents: ApplyItem[] = upcomingEvents
+    .filter((e) => !e.moment_created && !momentEventIds.has(e.external_event_id))
+    .map((e) => ({
+      type: "event",
+      id: e.id,
+      title: e.title,
+      startTime: e.start_time,
+      eventCacheId: e.id,
+      matchCount: 0,
+    }))
+
+  const combinedItems = [...momentItems, ...unMomentifiedEvents]
+    .sort((a, b) => {
+      const aTime = a.startTime ? new Date(a.startTime).getTime() : 0
+      const bTime = b.startTime ? new Date(b.startTime).getTime() : 0
+      return aTime - bTime
+    })
+    .slice(0, 3)
+
+  // Story 17.1: Handle tap on item
+  const handleEventClick = async (item: ApplyItem) => {
+    if (item.type === "moment" && item.momentId) {
+      router.push(`/moments/${item.momentId}/prepare`)
+      return
+    }
+
+    if (item.type === "event" && item.eventCacheId) {
+      setCreatingMomentForEvent(item.eventCacheId)
+      try {
+        const response = await fetch("/api/moments/from-event", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event_cache_id: item.eventCacheId }),
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          router.push(`/moments/${data.moment_id}/prepare`)
+        }
+      } catch (err) {
+        console.error("Failed to create moment from event:", err)
+      } finally {
+        setCreatingMomentForEvent(null)
+      }
+    }
+  }
+
+  // Story 17.2: Urgency level for display styling
+  const getUrgencyInfo = (startTime: string | null) => {
+    if (!startTime) return { level: "normal" as const, label: "--:--" }
+    const start = new Date(startTime)
+    const now = new Date()
+    const minutesAway = differenceInMinutes(start, now)
+
+    if (minutesAway <= 0) {
+      return { level: "imminent" as const, label: "Now" }
+    }
+    if (minutesAway < 30) {
+      return { level: "imminent" as const, label: `${minutesAway}m` }
+    }
+    if (minutesAway < 120) {
+      const hours = Math.floor(minutesAway / 60)
+      const mins = minutesAway % 60
+      return { level: "soon" as const, label: hours > 0 ? `${hours}h ${mins}m` : `${mins}m` }
+    }
+    return {
+      level: "normal" as const,
+      label: format(start, "MMM d, h:mm a"),
+    }
+  }
+
+  // Story 17.3: Quality badge based on match count
+  const getQualityBadge = (matchCount: number, isEvent: boolean) => {
+    if (isEvent) {
+      return { label: "Tap to prepare", className: "text-blue-500 bg-blue-500/10 border-blue-500/20" }
+    }
+    if (matchCount === 0) {
+      return { label: "Needs context", className: "text-muted-foreground bg-muted/50 border-border" }
+    }
+    if (matchCount >= 3) {
+      return { label: "Ready", className: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" }
+    }
+    return {
+      label: `${matchCount} thought${matchCount !== 1 ? "s" : ""}`,
+      className: "text-muted-foreground bg-[var(--glass-card-bg)] border-[var(--glass-card-border)]",
+    }
+  }
 
   return (
     <HomeQuadrant
@@ -175,30 +296,61 @@ export function ApplyQuadrant({
         </div>
       )}
 
-      {/* Upcoming moments */}
-      {upcomingMoments.length > 0 && (
+      {/* Upcoming moments + calendar events (Stories 17.1/17.2/17.3) */}
+      {combinedItems.length > 0 && (
         <div className="mt-auto">
           <div className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2">
-            Upcoming moments
+            Upcoming
           </div>
           <div className="space-y-0">
-            {upcomingMoments.slice(0, 2).map((moment) => {
-              const eventTime = moment.calendar_event_start || moment.created_at
+            {combinedItems.map((item) => {
+              const urgency = getUrgencyInfo(item.startTime)
+              const quality = getQualityBadge(item.matchCount, item.type === "event")
+              const isCreating = creatingMomentForEvent === item.eventCacheId
+
               return (
                 <div
-                  key={moment.id}
-                  onClick={() => router.push(`/moments/${moment.id}/prepare`)}
-                  className="flex items-center justify-between py-2 border-b border-[var(--glass-card-border)] last:border-b-0 cursor-pointer hover:bg-[var(--glass-hover-bg)] -mx-1 px-1 rounded transition-colors"
+                  key={item.id}
+                  onClick={() => !isCreating && handleEventClick(item)}
+                  className={cn(
+                    "flex items-center justify-between py-2 border-b border-[var(--glass-card-border)] last:border-b-0 cursor-pointer -mx-1 px-1 rounded transition-all",
+                    urgency.level === "imminent"
+                      ? "bg-amber-500/5 hover:bg-amber-500/10 border-l-2 border-l-amber-500 pl-2"
+                      : "hover:bg-[var(--glass-hover-bg)]",
+                    isCreating && "opacity-60 pointer-events-none"
+                  )}
                 >
-                  <span className="text-xs text-amber-500 font-semibold w-20 flex-shrink-0">
-                    {eventTime ? format(new Date(eventTime), "MMM d, h:mm a") : "--:--"}
+                  {/* Time badge (Story 17.2) */}
+                  <span
+                    className={cn(
+                      "text-xs font-semibold w-20 flex-shrink-0",
+                      urgency.level === "imminent" ? "text-amber-500" : "text-muted-foreground"
+                    )}
+                  >
+                    {urgency.level === "imminent" && (
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 mr-1 animate-pulse" />
+                    )}
+                    {urgency.label}
                   </span>
+
+                  {/* Title */}
                   <span className="text-sm text-foreground flex-1 truncate mx-2">
-                    {moment.calendar_event_title || moment.description}
+                    {item.title}
                   </span>
-                  <span className="text-[10px] text-muted-foreground bg-[var(--glass-card-bg)] px-2 py-0.5 rounded-full border border-[var(--glass-card-border)]">
-                    {moment.gems_matched_count || 0} thought{(moment.gems_matched_count || 0) !== 1 ? 's' : ''}
-                  </span>
+
+                  {/* Quality badge (Story 17.3) */}
+                  {isCreating ? (
+                    <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
+                  ) : (
+                    <span
+                      className={cn(
+                        "text-[10px] px-2 py-0.5 rounded-full border whitespace-nowrap",
+                        quality.className
+                      )}
+                    >
+                      {quality.label}
+                    </span>
+                  )}
                 </div>
               )
             })}

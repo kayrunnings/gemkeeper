@@ -20,6 +20,7 @@ import { EnhancedNoteEditor } from "@/components/notes/enhanced-note-editor"
 import { useToast } from "@/components/error-toast"
 import { LoadingState } from "@/components/ui/loading-state"
 import type { Moment } from "@/types/moments"
+import type { CalendarEvent } from "@/types/calendar"
 
 interface HomeStats {
   streak: {
@@ -63,6 +64,7 @@ export default function HomePage() {
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [userName, setUserName] = useState<string | null>(null)
   const [calendarConnected, setCalendarConnected] = useState(false)
+  const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([])
   const [checkinEnabled, setCheckinEnabled] = useState(true)
   const [hasAIConsent, setHasAIConsent] = useState(false)
 
@@ -158,7 +160,7 @@ export default function HomePage() {
         setHasAIConsent(profile?.ai_consent_given ?? false)
 
         // Fetch all data in parallel
-        const [thoughtResult, momentsResult, contextsResult, calendarResult] =
+        const [thoughtResult, momentsResult, contextsResult, calendarResult, eventsResult] =
           await Promise.all([
             getDailyThought(),
             getRecentMoments(10, 'active'),
@@ -169,11 +171,25 @@ export default function HomePage() {
               .eq("user_id", user.id)
               .eq("is_active", true)
               .maybeSingle(),
+            // Story 17.1: Fetch upcoming calendar events (next 24 hours)
+            supabase
+              .from("calendar_events_cache")
+              .select("*")
+              .eq("user_id", user.id)
+              .gte("start_time", new Date().toISOString())
+              .lte("start_time", new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString())
+              .order("start_time", { ascending: true })
+              .limit(10),
           ])
 
         // Check calendar connection
         if (calendarResult.data) {
           setCalendarConnected(true)
+        }
+
+        // Story 17.1: Set upcoming calendar events
+        if (eventsResult.data) {
+          setUpcomingEvents(eventsResult.data)
         }
 
         if (thoughtResult.thought) {
@@ -368,6 +384,7 @@ export default function HomePage() {
               alreadyCheckedIn={alreadyCheckedIn}
               contexts={contexts}
               upcomingMoments={upcomingMoments}
+              upcomingEvents={upcomingEvents}
               todayMomentsCount={todayMomentsCount}
               onShuffle={handleShuffleDailyThought}
             />
