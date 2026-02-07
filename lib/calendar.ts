@@ -413,9 +413,12 @@ export async function syncCalendarEvents(
 /**
  * Get pending events that need moments created
  * @param externalSupabase - Optional Supabase client (use server client when calling from API routes)
+ * @param options.catchUp - If true, also include events that already started
+ *   but are still ongoing (within 1 hour of start time). Story 16.2.
  */
 export async function getPendingEventsForMoments(
-  externalSupabase?: AnySupabaseClient
+  externalSupabase?: AnySupabaseClient,
+  options?: { catchUp?: boolean }
 ): Promise<{
   events: CalendarEvent[]
   error: string | null
@@ -440,11 +443,17 @@ export async function getPendingEventsForMoments(
   }
 
   const allEvents: CalendarEvent[] = []
+  const now = new Date()
 
   for (const conn of connections) {
     const leadTimeMs = conn.lead_time_minutes * 60 * 1000
-    const now = new Date()
     const windowEnd = new Date(now.getTime() + leadTimeMs)
+
+    // Story 16.2: In catch-up mode, look back 1 hour for events that
+    // already started but are still ongoing (late prep opportunity)
+    const windowStart = options?.catchUp
+      ? new Date(now.getTime() - 60 * 60 * 1000)
+      : now
 
     const { data: events } = await supabase
       .from("calendar_events_cache")
@@ -452,7 +461,7 @@ export async function getPendingEventsForMoments(
       .eq("connection_id", conn.id)
       .eq("user_id", user.id)
       .eq("moment_created", false)
-      .gte("start_time", now.toISOString())
+      .gte("start_time", windowStart.toISOString())
       .lte("start_time", windowEnd.toISOString())
 
     if (events) {
